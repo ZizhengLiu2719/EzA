@@ -1,0 +1,170 @@
+.planner {
+  padding: 80px 0;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: 40px;
+}
+
+.header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.header p {
+  color: #6b7280;
+  font-size: 18px;
+}
+
+.plannerContent {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 32px;
+}
+
+.sidebar {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  height: fit-content;
+}
+
+.courseList h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 16px;
+}
+
+.courseItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.courseItem:hover {
+  background: #f3f4f6;
+}
+
+.courseItem:last-child {
+  margin-bottom: 0;
+}
+
+.courseName {
+  font-weight: 500;
+  color: #374151;
+}
+
+.taskCount {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.mainContent {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.weekView h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 20px;
+}
+
+.weekGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 16px;
+}
+
+.dayColumn {
+  min-height: 200px;
+}
+
+.dayColumn h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 12px;
+  text-align: center;
+  padding: 8px;
+  background: #f3f4f6;
+  border-radius: 6px;
+}
+
+.dayTasks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.taskCard {
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.taskCard:hover {
+  background: #dbeafe;
+  transform: translateY(-1px);
+}
+
+.taskTitle {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e40af;
+  margin-bottom: 4px;
+}
+
+.taskTime {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .planner {
+    padding: 60px 0;
+  }
+  
+  .plannerContent {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .weekGrid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+  }
+  
+  .dayColumn {
+    min-height: 150px;
+  }
+  
+  .taskCard {
+    padding: 8px;
+  }
+  
+  .taskTitle {
+    font-size: 12px;
+  }
+} 

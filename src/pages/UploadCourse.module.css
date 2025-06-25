@@ -1,0 +1,146 @@
+.uploadPage {
+  padding: 80px 0;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 16px;
+}
+
+.header p {
+  color: #6b7280;
+  font-size: 18px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.uploadForm {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.dropZone {
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 60px 20px;
+  text-align: center;
+  background: white;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.dropZone:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+}
+
+.dragActive {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.fileInput {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.dropContent {
+  pointer-events: none;
+}
+
+.dropIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.dropContent h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.dropContent p {
+  color: #6b7280;
+  font-size: 16px;
+}
+
+.fileList {
+  margin-top: 24px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.fileList h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 16px;
+}
+
+.fileItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.fileItem:last-child {
+  margin-bottom: 0;
+}
+
+.fileSize {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.submitBtn {
+  width: 100%;
+  margin-top: 24px;
+  padding: 16px;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .uploadPage {
+    padding: 60px 0;
+  }
+  
+  .header h1 {
+    font-size: 28px;
+  }
+  
+  .header p {
+    font-size: 16px;
+  }
+  
+  .dropZone {
+    padding: 40px 20px;
+  }
+} 
