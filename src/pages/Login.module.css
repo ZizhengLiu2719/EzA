@@ -104,6 +104,17 @@
   text-decoration: underline;
 }
 
+.error {
+  color: #ef4444;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  padding: 10px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  text-align: center;
+}
+
 @media (max-width: 480px) {
   .loginContainer {
     padding: 32px 24px;

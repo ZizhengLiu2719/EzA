@@ -1,22 +1,28 @@
+import { useUser } from '@/context/UserContext'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import styles from './Login.module.css'
 
 const Login = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const { signIn } = useUser()
+  const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    
-    // TODO: 实现Supabase登录逻辑
-    console.log('Login attempt:', { email, password })
-    
-    setTimeout(() => {
+    setError('')
+    try {
+      await signIn(email, password)
+      navigate('/dashboard')
+    } catch (err: any) {
+      setError(err.message || '登录失败')
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   return (
@@ -27,7 +33,7 @@ const Login = () => {
           <h1>欢迎回来</h1>
           <p>登录你的EzA账户，继续你的学习之旅</p>
         </div>
-        
+        {error && <div className={styles.error}>{error}</div>}
         <form className={styles.loginForm} onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
             <label htmlFor="email">邮箱地址</label>
@@ -40,7 +46,6 @@ const Login = () => {
               required
             />
           </div>
-          
           <div className={styles.formGroup}>
             <label htmlFor="password">密码</label>
             <input
@@ -52,7 +57,6 @@ const Login = () => {
               required
             />
           </div>
-          
           <button 
             type="submit" 
             className={`btn btn-primary ${styles.submitBtn}`}
@@ -61,7 +65,6 @@ const Login = () => {
             {isLoading ? '登录中...' : '登录'}
           </button>
         </form>
-        
         <div className={styles.loginFooter}>
           <p>
             还没有账户？{' '}

@@ -1,5 +1,6 @@
+import { useUser } from '@/context/UserContext'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import styles from './Register.module.css'
 
 const Register = () => {
@@ -7,17 +8,29 @@ const Register = () => {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const { signUp } = useUser()
+  const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
+    setSuccess('')
+    if (password !== confirmPassword) {
+      setError('两次输入的密码不一致')
+      return
+    }
     setIsLoading(true)
-    
-    // TODO: 实现Supabase注册逻辑
-    console.log('Register attempt:', { email, password })
-    
-    setTimeout(() => {
+    try {
+      await signUp(email, password)
+      setSuccess('注册成功，请前往邮箱激活账户！')
+      setTimeout(() => navigate('/login'), 2000)
+    } catch (err: any) {
+      setError(err.message || '注册失败')
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   return (
@@ -28,7 +41,8 @@ const Register = () => {
           <h1>创建账户</h1>
           <p>开始你的智能学习之旅</p>
         </div>
-        
+        {error && <div className={styles.error}>{error}</div>}
+        {success && <div className={styles.success}>{success}</div>}
         <form className={styles.registerForm} onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
             <label htmlFor="email">邮箱地址</label>
@@ -41,7 +55,6 @@ const Register = () => {
               required
             />
           </div>
-          
           <div className={styles.formGroup}>
             <label htmlFor="password">密码</label>
             <input
@@ -53,7 +66,6 @@ const Register = () => {
               required
             />
           </div>
-          
           <div className={styles.formGroup}>
             <label htmlFor="confirmPassword">确认密码</label>
             <input
@@ -65,7 +77,6 @@ const Register = () => {
               required
             />
           </div>
-          
           <button 
             type="submit" 
             className={`btn btn-primary ${styles.submitBtn}`}
@@ -74,7 +85,6 @@ const Register = () => {
             {isLoading ? '创建账户中...' : '创建账户'}
           </button>
         </form>
-        
         <div className={styles.registerFooter}>
           <p>
             已有账户？{' '}
