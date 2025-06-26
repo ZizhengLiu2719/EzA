@@ -1,4 +1,4 @@
-import { AIAssistantConfig, AIConversation, AIMessage, ApiResponse, ReviewCard, WeeklyReport } from '@/types'
+import { AIAssistantConfig, AIConversation, AIMessage, ApiResponse, ReviewCard, WeeklyReport } from '@/types';
 
 // AI 配置和提示词管理
 const AI_PROMPTS = {
@@ -188,14 +188,9 @@ const AI_PROMPTS = {
 }
 
 // OpenAI API 配置
-const OPENAI_CONFIG = {
-  model: 'gpt-4',
-  max_tokens: 1000,
-  temperature: 0.7,
-  top_p: 1,
-  frequency_penalty: 0,
-  presence_penalty: 0
-}
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const OPENAI_MODEL = 'gpt-3.5-turbo';
 
 // AI 服务类
 class AIService {
@@ -208,7 +203,7 @@ class AIService {
   }
 
   // 调用 OpenAI API
-  async callOpenAI(messages: any[], config?: Partial<typeof OPENAI_CONFIG>): Promise<string> {
+  async callOpenAI(messages: any[], config?: Partial<any>): Promise<string> {
     try {
       if (!this.apiKey) {
         throw new Error('OpenAI API key not configured')
@@ -221,13 +216,13 @@ class AIService {
           'Authorization': `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
-          model: config?.model || OPENAI_CONFIG.model,
+          model: config?.model || 'gpt-3.5-turbo',
           messages,
-          max_tokens: config?.max_tokens || OPENAI_CONFIG.max_tokens,
-          temperature: config?.temperature || OPENAI_CONFIG.temperature,
-          top_p: config?.top_p || OPENAI_CONFIG.top_p,
-          frequency_penalty: config?.frequency_penalty || OPENAI_CONFIG.frequency_penalty,
-          presence_penalty: config?.presence_penalty || OPENAI_CONFIG.presence_penalty
+          max_tokens: config?.max_tokens || 1500,
+          temperature: config?.temperature || 0.2,
+          top_p: config?.top_p || 1,
+          frequency_penalty: config?.frequency_penalty || 0,
+          presence_penalty: config?.presence_penalty || 0
         })
       })
 
@@ -356,51 +351,41 @@ ${tasks.map(task => `- ${task.title}: ${task.status}`).join('\n')}
 
   // 解析课程材料
   async parseCourseMaterials(materials: any[]): Promise<any> {
-    const systemPrompt = `你是一位专业的课程材料解析专家。请分析提供的课程材料，提取关键信息并生成结构化数据。
-
-要求：
-1. 识别课程名称、学期、年份
-2. 提取所有任务、作业、考试信息
-3. 识别评分政策和课程重点
-4. 生成任务时间线
-5. 提供课程描述
-
-请以 JSON 格式返回解析结果，格式如下：
-{
-  "course_name": "课程名称",
-  "semester": "学期",
-  "year": 年份,
-  "course_description": "课程描述",
-  "grading_policy": "评分政策",
-  "tasks": [
-    {
-      "title": "任务标题",
-      "type": "reading|writing|assignment|exam|quiz|project|presentation",
-      "due_date": "YYYY-MM-DD",
-      "priority": "low|medium|high",
-      "estimated_hours": 数字,
-      "description": "任务描述"
-    }
-  ]
-}`
-
+    // 拼接所有材料文本
+    const materialsText = materials.map(m => `${m.name}:\n${m.extracted_text || '无文本内容'}`).join('\n\n');
+    const systemPrompt = `你是一位专业的课程材料解析专家。请分析提供的课程材料，提取关键信息并生成结构化数据。\n\n要求：\n1. 识别课程名称、学期、年份\n2. 提取所有任务、作业、考试信息\n3. 识别评分政策和课程重点\n4. 生成任务时间线\n5. 提供课程描述\n\n请以 JSON 格式返回解析结果，格式如下：\n{\n  "course_name": "课程名称",\n  "semester": "学期",\n  "year": 年份,\n  "course_description": "课程描述",\n  "grading_policy": "评分政策",\n  "tasks": [\n    {\n      "title": "任务标题",\n      "type": "reading|writing|assignment|exam|quiz|project|presentation",\n      "due_date": "YYYY-MM-DD",\n      "priority": "low|medium|high",\n      "estimated_hours": 数字,\n      "description": "任务描述"\n    }\n  ]\n}`;
     try {
-      const materialsText = materials.map(m => `${m.name}: ${m.extracted_text || '无文本内容'}`).join('\n\n')
-      
-      const response = await this.callOpenAI([
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `请解析以下课程材料：\n\n${materialsText}` }
-      ])
-
-      const jsonMatch = response.match(/\{[\s\S]*\}/)
+      console.log('OPENAI_API_KEY:', OPENAI_API_KEY);
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      };
+      console.log('OpenAI fetch headers:', headers);
+      const response = await fetch(OPENAI_API_URL, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: OPENAI_MODEL,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `请解析以下课程材料：\n\n${materialsText}` }
+          ],
+          temperature: 0.2,
+          max_tokens: 1500,
+        }),
+      });
+      const result = await response.json();
+      const content = result.choices?.[0]?.message?.content || '';
+      // 尝试提取JSON
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0])
+        return JSON.parse(jsonMatch[0]);
       }
-
-      return this.getDefaultCourseParse()
+      // fallback
+      return this.getDefaultCourseParse();
     } catch (error) {
-      console.error('Failed to parse course materials:', error)
-      return this.getDefaultCourseParse()
+      console.error('AI解析失败:', error);
+      return this.getDefaultCourseParse();
     }
   }
 
@@ -772,4 +757,5 @@ export const courseParseApi = {
 }
 
 // 导入 supabase 客户端
-import { supabase } from './supabase'
+import { supabase } from './supabase';
+
