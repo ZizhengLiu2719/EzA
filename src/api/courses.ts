@@ -385,7 +385,12 @@ export const courseParseApi = {
   // 保存解析的任务
   async saveParsedTasks(courseId: string, tasks: Omit<Task, 'id' | 'course_id' | 'created_at' | 'updated_at'>[]): Promise<void> {
     try {
-      const tasksWithCourseId = tasks.map(task => ({
+      // 过滤非法日期
+      const cleanedTasks = tasks.map(task => ({
+        ...task,
+        due_date: /^\d{4}-\d{2}-\d{2}$/.test(task.due_date || '') ? task.due_date : null
+      }));
+      const tasksWithCourseId = cleanedTasks.map(task => ({
         ...task,
         course_id: courseId
       }))
