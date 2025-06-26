@@ -1,5 +1,6 @@
 import { ApiResponse, Course, CourseMaterial, CourseParseResult, Task } from '@/types'
 import { validateFileSize, validateFileType } from '@/utils'
+import { courseParseApi as aiCourseParseApi } from './ai'
 import { supabase } from './supabase'
 
 // 课程管理 API
@@ -118,6 +119,18 @@ export const materialsApi = {
         .from('syllabus')
         .getPublicUrl(fileName)
 
+      // 提取文本内容（这里需要 OCR 或文本提取）
+      let extractedText = ''
+      if (file.type === 'text/plain') {
+        extractedText = await file.text()
+      } else if (file.type === 'application/pdf') {
+        // TODO: 实现 PDF 文本提取
+        extractedText = await this.extractTextFromPDF(file)
+      } else if (file.type.startsWith('image/')) {
+        // TODO: 实现图片 OCR
+        extractedText = await this.extractTextFromImage(file)
+      }
+
       // 保存到数据库
       const { data, error } = await supabase
         .from('course_materials')
@@ -126,7 +139,8 @@ export const materialsApi = {
           name: file.name,
           type,
           file_url: publicUrl,
-          file_size: file.size
+          file_size: file.size,
+          extracted_text: extractedText
         }])
         .select()
         .single()
@@ -136,6 +150,20 @@ export const materialsApi = {
     } catch (error: any) {
       return { data: {} as CourseMaterial, error: error.message }
     }
+  },
+
+  // 从 PDF 提取文本
+  async extractTextFromPDF(file: File): Promise<string> {
+    // TODO: 实现 PDF 文本提取
+    // 可以使用 pdf.js 或其他 PDF 处理库
+    return 'PDF 文本提取功能待实现'
+  },
+
+  // 从图片提取文本（OCR）
+  async extractTextFromImage(file: File): Promise<string> {
+    // TODO: 实现图片 OCR
+    // 可以使用 Tesseract.js 或其他 OCR 服务
+    return '图片 OCR 功能待实现'
   },
 
   // 获取课程的所有材料
@@ -186,65 +214,21 @@ export const courseParseApi = {
 
       if (materialsError) throw materialsError
 
-      // 提取文本内容（这里需要 OCR 或文本提取服务）
-      const extractedTexts = await Promise.all(
-        materials.map(async (material) => {
-          // TODO: 实现 OCR 和文本提取
-          // 目前返回模拟数据
-          return {
-            id: material.id,
-            text: `这是从 ${material.name} 提取的文本内容...`
-          }
-        })
-      )
+      // 使用 AI 解析课程材料
+      const parseResult = await aiCourseParseApi.parseCourseMaterials(materials || [])
 
-      // 合并所有文本
-      const combinedText = extractedTexts.map(item => item.text).join('\n\n')
-
-      // 调用 AI 解析（这里需要 OpenAI API）
-      const parseResult = await this.parseWithAI(combinedText)
-
-      // 保存解析结果到数据库
-      if (parseResult.tasks.length > 0) {
-        await this.saveParsedTasks(courseId, parseResult.tasks)
+      if (parseResult.error) {
+        throw new Error(parseResult.error)
       }
 
-      return { data: parseResult }
+      // 保存解析的任务到数据库
+      if (parseResult.data.tasks && parseResult.data.tasks.length > 0) {
+        await this.saveParsedTasks(courseId, parseResult.data.tasks)
+      }
+
+      return parseResult
     } catch (error: any) {
       return { data: {} as CourseParseResult, error: error.message }
-    }
-  },
-
-  // 使用 AI 解析课程内容
-  async parseWithAI(text: string): Promise<CourseParseResult> {
-    // TODO: 实现 OpenAI API 调用
-    // 这里返回模拟数据
-    return {
-      course_name: '解析的课程名称',
-      semester: 'Fall',
-      year: 2024,
-      tasks: [
-        {
-          title: '第一周阅读作业',
-          description: '阅读教材第一章',
-          type: 'reading',
-          due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          priority: 'medium',
-          status: 'pending',
-          estimated_hours: 2
-        },
-        {
-          title: '期中论文',
-          description: '撰写关于课程主题的论文',
-          type: 'writing',
-          due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          priority: 'high',
-          status: 'pending',
-          estimated_hours: 8
-        }
-      ],
-      grading_policy: '作业 40%，考试 60%',
-      course_description: '课程描述'
     }
   },
 
@@ -261,16 +245,13 @@ export const courseParseApi = {
         .insert(tasksWithCourseId)
 
       if (error) throw error
-    } catch (error) {
-      console.error('保存解析任务失败:', error)
+    } catch (error: any) {
+      console.error('Failed to save parsed tasks:', error)
       throw error
     }
-  }
-}
+  },
 
-// 任务管理 API
-export const tasksApi = {
-  // 获取课程的所有任务
+  // 获取课程任务
   async getCourseTasks(courseId: string): Promise<ApiResponse<Task[]>> {
     try {
       const { data, error } = await supabase
@@ -284,8 +265,11 @@ export const tasksApi = {
     } catch (error: any) {
       return { data: [], error: error.message }
     }
-  },
+  }
+}
 
+// 任务管理 API
+export const tasksApi = {
   // 获取用户的所有任务
   async getUserTasks(): Promise<ApiResponse<Task[]>> {
     try {

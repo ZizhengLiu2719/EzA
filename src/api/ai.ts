@@ -1,5 +1,452 @@
 import { AIAssistantConfig, AIConversation, AIMessage, ApiResponse, ReviewCard, WeeklyReport } from '@/types'
 
+// AI 配置和提示词管理
+const AI_PROMPTS = {
+  writing: {
+    bullet_tutor: `你是一位专业的学术写作导师。请帮助学生提高写作能力，但不要直接代写。请：
+1. 引导学生思考文章结构和论点
+2. 提供写作技巧和建议
+3. 帮助学生改进语法和表达
+4. 鼓励学生独立思考和创作
+
+当前任务：{task_title}
+学生问题：{user_message}
+
+请以引导式的方式回应，帮助学生找到自己的写作思路。`,
+    
+    socratic_bot: `你是一位苏格拉底式的写作导师。通过提问引导学生思考，而不是直接给出答案。请：
+1. 提出深入的问题帮助学生思考
+2. 引导学生发现自己的论点
+3. 帮助学生理清逻辑关系
+4. 鼓励批判性思维
+
+当前任务：{task_title}
+学生问题：{user_message}
+
+请通过提问的方式引导学生思考。`,
+    
+    quick_fix: `你是一位高效的写作编辑。请快速识别并提供具体的改进建议：
+1. 指出文章中的问题
+2. 提供具体的修改建议
+3. 解释修改的原因
+4. 保持简洁明了
+
+当前任务：{task_title}
+学生问题：{user_message}
+
+请直接提供具体的改进建议。`,
+    
+    diagram_ai: `你是一位视觉化写作导师。请帮助学生通过图表和结构图来组织写作：
+1. 创建文章结构图
+2. 设计论点关系图
+3. 提供视觉化写作工具
+4. 帮助学生理清思路
+
+当前任务：{task_title}
+学生问题：{user_message}
+
+请提供视觉化的写作指导。`
+  },
+  
+  stem: {
+    bullet_tutor: `你是一位专业的STEM导师。请帮助学生理解数学和科学概念，但不要直接给出答案。请：
+1. 引导学生理解问题本质
+2. 提供解题思路和方法
+3. 帮助学生建立概念联系
+4. 鼓励学生独立解题
+
+当前问题：{task_title}
+学生问题：{user_message}
+
+请以引导式的方式帮助学生理解问题。`,
+    
+    socratic_bot: `你是一位苏格拉底式的STEM导师。通过提问引导学生发现解题方法：
+1. 提出关键问题引导学生思考
+2. 帮助学生识别已知条件和目标
+3. 引导学生发现解题策略
+4. 鼓励学生验证答案
+
+当前问题：{task_title}
+学生问题：{user_message}
+
+请通过提问的方式引导学生解题。`,
+    
+    quick_fix: `你是一位高效的STEM问题解决者。请快速识别问题并提供解决方案：
+1. 分析问题类型和难度
+2. 提供清晰的解题步骤
+3. 解释关键概念
+4. 提供类似练习
+
+当前问题：{task_title}
+学生问题：{user_message}
+
+请提供清晰的解题指导。`,
+    
+    diagram_ai: `你是一位视觉化STEM导师。请通过图表和图示帮助学生理解概念：
+1. 创建概念关系图
+2. 设计解题流程图
+3. 提供可视化解释
+4. 帮助学生建立空间思维
+
+当前问题：{task_title}
+学生问题：{user_message}
+
+请提供视觉化的解题指导。`
+  },
+  
+  reading: {
+    bullet_tutor: `你是一位专业的阅读导师。请帮助学生提高阅读理解能力：
+1. 引导学生分析文章结构
+2. 帮助学生识别主要论点
+3. 提供阅读策略建议
+4. 鼓励批判性思考
+
+当前阅读材料：{task_title}
+学生问题：{user_message}
+
+请以引导式的方式帮助学生理解阅读材料。`,
+    
+    socratic_bot: `你是一位苏格拉底式的阅读导师。通过提问引导学生深入理解：
+1. 提出关于文章内容的问题
+2. 引导学生分析作者意图
+3. 帮助学生建立文本联系
+4. 鼓励独立思考
+
+当前阅读材料：{task_title}
+学生问题：{user_message}
+
+请通过提问的方式引导学生理解。`,
+    
+    quick_fix: `你是一位高效的阅读助手。请快速提供阅读指导：
+1. 总结文章要点
+2. 解释关键概念
+3. 提供阅读技巧
+4. 帮助理解难点
+
+当前阅读材料：{task_title}
+学生问题：{user_message}
+
+请提供直接的阅读指导。`,
+    
+    diagram_ai: `你是一位视觉化阅读导师。请通过图表帮助理解文章：
+1. 创建文章结构图
+2. 设计概念关系图
+3. 提供思维导图
+4. 帮助理清思路
+
+当前阅读材料：{task_title}
+学生问题：{user_message}
+
+请提供视觉化的阅读指导。`
+  },
+  
+  programming: {
+    bullet_tutor: `你是一位专业的编程导师。请帮助学生理解编程概念和解决问题：
+1. 引导学生理解问题需求
+2. 提供编程思路和方法
+3. 帮助学生调试代码
+4. 鼓励独立编程
+
+当前编程任务：{task_title}
+学生问题：{user_message}
+
+请以引导式的方式帮助学生编程。`,
+    
+    socratic_bot: `你是一位苏格拉底式的编程导师。通过提问引导学生思考：
+1. 提出关于算法的问题
+2. 引导学生分析问题复杂度
+3. 帮助学生选择数据结构
+4. 鼓励逻辑思维
+
+当前编程任务：{task_title}
+学生问题：{user_message}
+
+请通过提问的方式引导学生编程。`,
+    
+    quick_fix: `你是一位高效的编程助手。请快速提供编程指导：
+1. 分析代码问题
+2. 提供解决方案
+3. 解释编程概念
+4. 提供最佳实践
+
+当前编程任务：{task_title}
+学生问题：{user_message}
+
+请提供直接的编程指导。`,
+    
+    diagram_ai: `你是一位视觉化编程导师。请通过图表帮助理解程序：
+1. 创建算法流程图
+2. 设计数据结构图
+3. 提供程序架构图
+4. 帮助理清逻辑
+
+当前编程任务：{task_title}
+学生问题：{user_message}
+
+请提供视觉化的编程指导。`
+  }
+}
+
+// OpenAI API 配置
+const OPENAI_CONFIG = {
+  model: 'gpt-4',
+  max_tokens: 1000,
+  temperature: 0.7,
+  top_p: 1,
+  frequency_penalty: 0,
+  presence_penalty: 0
+}
+
+// AI 服务类
+class AIService {
+  private apiKey: string
+  private baseUrl: string
+
+  constructor() {
+    this.apiKey = import.meta.env.VITE_OPENAI_API_KEY
+    this.baseUrl = 'https://api.openai.com/v1'
+  }
+
+  // 调用 OpenAI API
+  async callOpenAI(messages: any[], config?: Partial<typeof OPENAI_CONFIG>): Promise<string> {
+    try {
+      if (!this.apiKey) {
+        throw new Error('OpenAI API key not configured')
+      }
+
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`
+        },
+        body: JSON.stringify({
+          model: config?.model || OPENAI_CONFIG.model,
+          messages,
+          max_tokens: config?.max_tokens || OPENAI_CONFIG.max_tokens,
+          temperature: config?.temperature || OPENAI_CONFIG.temperature,
+          top_p: config?.top_p || OPENAI_CONFIG.top_p,
+          frequency_penalty: config?.frequency_penalty || OPENAI_CONFIG.frequency_penalty,
+          presence_penalty: config?.presence_penalty || OPENAI_CONFIG.presence_penalty
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(`OpenAI API error: ${error.error?.message || response.statusText}`)
+      }
+
+      const data = await response.json()
+      return data.choices[0]?.message?.content || '抱歉，我无法生成回复。'
+    } catch (error: any) {
+      console.error('OpenAI API call failed:', error)
+      throw new Error(`AI 服务暂时不可用: ${error.message}`)
+    }
+  }
+
+  // 生成对话回复
+  async generateConversationResponse(
+    conversation: AIConversation,
+    userMessage: string,
+    config?: AIAssistantConfig
+  ): Promise<string> {
+    const assistantType = conversation.assistant_type
+    const mode = config?.mode || 'bullet_tutor'
+    
+    // 获取对应的提示词模板
+    const promptTemplate = AI_PROMPTS[assistantType]?.[mode] || AI_PROMPTS[assistantType]?.bullet_tutor
+    
+    if (!promptTemplate) {
+      throw new Error(`不支持的助手类型: ${assistantType}`)
+    }
+
+    // 构建系统提示词
+    const systemPrompt = promptTemplate
+      .replace('{task_title}', conversation.task_id ? '相关任务' : '学习辅导')
+      .replace('{user_message}', userMessage)
+
+    // 构建消息历史
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userMessage }
+    ]
+
+    return await this.callOpenAI(messages)
+  }
+
+  // 生成复习卡片
+  async generateReviewCards(courseContent: any): Promise<Omit<ReviewCard, 'id' | 'course_id' | 'created_at'>[]> {
+    const systemPrompt = `你是一位专业的课程复习卡片生成专家。请根据提供的课程内容生成高质量的复习卡片。
+
+要求：
+1. 生成 5-8 张复习卡片
+2. 每张卡片包含问题和答案
+3. 涵盖基础概念、应用理论和重点公式
+4. 难度分布：简单 30%，中等 50%，困难 20%
+5. 问题要具体且有启发性
+6. 答案要准确且易于理解
+
+课程内容：${JSON.stringify(courseContent, null, 2)}
+
+请以 JSON 格式返回复习卡片数组，格式如下：
+[
+  {
+    "question": "问题内容",
+    "answer": "答案内容", 
+    "category": "分类",
+    "difficulty": "easy|medium|hard"
+  }
+]`
+
+    try {
+      const response = await this.callOpenAI([
+        { role: 'system', content: systemPrompt }
+      ])
+
+      // 尝试解析 JSON 响应
+      const jsonMatch = response.match(/\[[\s\S]*\]/)
+      if (jsonMatch) {
+        const cards = JSON.parse(jsonMatch[0])
+        return cards.map((card: any) => ({
+          ...card,
+          mastery_level: 0
+        }))
+      }
+
+      // 如果无法解析 JSON，返回默认卡片
+      return this.getDefaultReviewCards()
+    } catch (error) {
+      console.error('Failed to generate review cards:', error)
+      return this.getDefaultReviewCards()
+    }
+  }
+
+  // 生成周报告建议
+  async generateWeeklyRecommendations(stats: any, tasks: any[]): Promise<string[]> {
+    const systemPrompt = `你是一位专业的学习教练。请根据学生的学习数据生成个性化的建议。
+
+学习统计：
+- 任务完成率: ${stats.completion_rate}%
+- 学习时间: ${stats.study_hours} 小时
+- 拖延指数: ${stats.procrastination_index}/10
+- 专注度评分: ${stats.focus_score}/100
+
+任务情况：
+${tasks.map(task => `- ${task.title}: ${task.status}`).join('\n')}
+
+请生成 3-5 条具体、可操作的建议，帮助学生在下周提高学习效率。建议要：
+1. 针对性强，基于具体数据
+2. 可操作，有明确的行动步骤
+3. 积极正面，鼓励学生
+4. 不超过 50 字
+
+请直接返回建议列表，每条建议一行。`
+
+    try {
+      const response = await this.callOpenAI([
+        { role: 'system', content: systemPrompt }
+      ])
+
+      return response.split('\n').filter(line => line.trim().length > 0)
+    } catch (error) {
+      console.error('Failed to generate recommendations:', error)
+      return ['本周表现良好，继续保持！']
+    }
+  }
+
+  // 解析课程材料
+  async parseCourseMaterials(materials: any[]): Promise<any> {
+    const systemPrompt = `你是一位专业的课程材料解析专家。请分析提供的课程材料，提取关键信息并生成结构化数据。
+
+要求：
+1. 识别课程名称、学期、年份
+2. 提取所有任务、作业、考试信息
+3. 识别评分政策和课程重点
+4. 生成任务时间线
+5. 提供课程描述
+
+请以 JSON 格式返回解析结果，格式如下：
+{
+  "course_name": "课程名称",
+  "semester": "学期",
+  "year": 年份,
+  "course_description": "课程描述",
+  "grading_policy": "评分政策",
+  "tasks": [
+    {
+      "title": "任务标题",
+      "type": "reading|writing|assignment|exam|quiz|project|presentation",
+      "due_date": "YYYY-MM-DD",
+      "priority": "low|medium|high",
+      "estimated_hours": 数字,
+      "description": "任务描述"
+    }
+  ]
+}`
+
+    try {
+      const materialsText = materials.map(m => `${m.name}: ${m.extracted_text || '无文本内容'}`).join('\n\n')
+      
+      const response = await this.callOpenAI([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `请解析以下课程材料：\n\n${materialsText}` }
+      ])
+
+      const jsonMatch = response.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0])
+      }
+
+      return this.getDefaultCourseParse()
+    } catch (error) {
+      console.error('Failed to parse course materials:', error)
+      return this.getDefaultCourseParse()
+    }
+  }
+
+  // 默认复习卡片
+  private getDefaultReviewCards(): Omit<ReviewCard, 'id' | 'course_id' | 'created_at'>[] {
+    return [
+      {
+        question: '什么是课程的核心概念？',
+        answer: '根据课程材料，核心概念包括基础理论、重要方法和关键应用。',
+        category: '基础概念',
+        difficulty: 'easy',
+        mastery_level: 0
+      },
+      {
+        question: '如何应用课程中的主要理论？',
+        answer: '主要理论的应用需要理解其基本原理，结合实际案例进行分析和验证。',
+        category: '应用理论',
+        difficulty: 'medium',
+        mastery_level: 0
+      },
+      {
+        question: '课程中最重要的公式或方法是什么？',
+        answer: '最重要的公式和方法是课程的核心工具，需要熟练掌握其推导和应用。',
+        category: '公式记忆',
+        difficulty: 'hard',
+        mastery_level: 0
+      }
+    ]
+  }
+
+  // 默认课程解析
+  private getDefaultCourseParse() {
+    return {
+      course_name: '示例课程',
+      semester: 'Fall',
+      year: 2024,
+      course_description: '课程描述',
+      grading_policy: '基于作业和考试',
+      tasks: []
+    }
+  }
+}
+
+// 创建 AI 服务实例
+const aiService = new AIService()
+
 // AI 对话 API
 export const aiConversationApi = {
   // 创建新的 AI 对话
@@ -81,7 +528,7 @@ export const aiConversationApi = {
       if (userMsgError) throw userMsgError
 
       // 调用 AI API 获取回复
-      const aiResponse = await this.callAIAPI(conversation, message, config)
+      const aiResponse = await aiService.generateConversationResponse(conversation, message, config)
 
       // 保存 AI 回复
       const aiMessage: Omit<AIMessage, 'id'> = {
@@ -109,43 +556,6 @@ export const aiConversationApi = {
     } catch (error: any) {
       return { data: {} as AIMessage, error: error.message }
     }
-  },
-
-  // 调用 AI API（这里需要集成 OpenAI）
-  async callAIAPI(
-    conversation: AIConversation,
-    userMessage: string,
-    config?: AIAssistantConfig
-  ): Promise<string> {
-    // TODO: 实现 OpenAI API 调用
-    // 这里返回模拟回复
-    const responses = {
-      writing: [
-        "我来帮你分析这个写作任务。首先，让我们明确论文的主题和结构。你能告诉我更多关于这个主题的信息吗？",
-        "对于这个写作任务，我建议采用以下结构：1. 引言 2. 主体段落 3. 结论。你想从哪个部分开始？",
-        "这是一个很好的写作主题。我注意到你需要遵循学术写作规范，让我为你提供一些具体的建议。"
-      ],
-      stem: [
-        "让我帮你分析这个数学问题。首先，我们需要理解问题的核心概念。你能告诉我你目前的理解吗？",
-        "对于这类问题，我建议采用分步骤的方法。让我们先确定已知条件和目标。",
-        "这是一个典型的STEM问题。让我为你提供解题思路，而不是直接给出答案。"
-      ],
-      reading: [
-        "我来帮你分析这个阅读材料。首先，让我们识别文章的主要论点和支持证据。",
-        "对于这个阅读任务，我建议采用SQ3R方法：Survey, Question, Read, Recite, Review。",
-        "这是一个很好的阅读材料。让我为你总结关键概念和重要信息。"
-      ],
-      programming: [
-        "我来帮你分析这个编程问题。首先，让我们理解问题的需求和约束条件。",
-        "对于这个编程任务，我建议采用模块化的方法。让我们先设计算法结构。",
-        "这是一个典型的编程问题。让我为你提供解题思路和代码结构建议。"
-      ]
-    }
-
-    const typeResponses = responses[conversation.assistant_type] || responses.writing
-    const randomIndex = Math.floor(Math.random() * typeResponses.length)
-    
-    return typeResponses[randomIndex]
   },
 
   // 获取对话的所有消息
@@ -188,7 +598,7 @@ export const reviewCardsApi = {
       }
 
       // 调用 AI 生成复习卡片
-      const cards = await this.generateCardsWithAI(courseContent)
+      const cards = await aiService.generateReviewCards(courseContent)
 
       // 保存到数据库
       const cardsWithCourseId = cards.map(card => ({
@@ -206,35 +616,6 @@ export const reviewCardsApi = {
     } catch (error: any) {
       return { data: [], error: error.message }
     }
-  },
-
-  // 使用 AI 生成复习卡片
-  async generateCardsWithAI(courseContent: any): Promise<Omit<ReviewCard, 'id' | 'course_id' | 'created_at'>[]> {
-    // TODO: 实现 OpenAI API 调用
-    // 这里返回模拟数据
-    return [
-      {
-        question: '什么是课程的核心概念？',
-        answer: '根据课程材料，核心概念包括...',
-        category: '基础概念',
-        difficulty: 'easy',
-        mastery_level: 0
-      },
-      {
-        question: '如何应用课程中的主要理论？',
-        answer: '主要理论的应用方法包括...',
-        category: '应用理论',
-        difficulty: 'medium',
-        mastery_level: 0
-      },
-      {
-        question: '课程中最重要的公式是什么？',
-        answer: '最重要的公式是...',
-        category: '公式记忆',
-        difficulty: 'hard',
-        mastery_level: 0
-      }
-    ]
   },
 
   // 获取课程的复习卡片
@@ -297,7 +678,7 @@ export const weeklyReportApi = {
       const stats = this.calculateWeeklyStats(tasks || [])
 
       // 生成 AI 建议
-      const recommendations = await this.generateAIRecommendations(stats, tasks || [])
+      const recommendations = await aiService.generateWeeklyRecommendations(stats, tasks || [])
 
       // 创建周报告
       const reportData: Omit<WeeklyReport, 'id' | 'created_at'> = {
@@ -357,32 +738,6 @@ export const weeklyReportApi = {
     return Math.min(Math.max(Math.round(score), 0), 100)
   },
 
-  // 生成 AI 建议
-  async generateAIRecommendations(stats: any, tasks: any[]): Promise<string[]> {
-    // TODO: 实现 OpenAI API 调用
-    // 这里返回模拟建议
-    const recommendations = []
-
-    if (stats.completion_rate < 70) {
-      recommendations.push('建议提高任务完成率，可以尝试番茄工作法来提高专注度')
-    }
-
-    if (stats.procrastination_index > 5) {
-      recommendations.push('拖延指数较高，建议制定更详细的时间计划，避免任务堆积')
-    }
-
-    if (stats.focus_score < 80) {
-      recommendations.push('专注度有待提升，建议减少干扰，创造更好的学习环境')
-    }
-
-    const overdueTasks = tasks.filter(task => task.status === 'overdue')
-    if (overdueTasks.length > 0) {
-      recommendations.push(`有 ${overdueTasks.length} 个任务已逾期，建议优先处理这些任务`)
-    }
-
-    return recommendations.length > 0 ? recommendations : ['本周表现良好，继续保持！']
-  },
-
   // 获取用户的周报告历史
   async getUserWeeklyReports(): Promise<ApiResponse<WeeklyReport[]>> {
     try {
@@ -399,6 +754,19 @@ export const weeklyReportApi = {
       return { data: data || [] }
     } catch (error: any) {
       return { data: [], error: error.message }
+    }
+  }
+}
+
+// 课程解析 API
+export const courseParseApi = {
+  // 解析课程材料
+  async parseCourseMaterials(materials: any[]): Promise<ApiResponse<any>> {
+    try {
+      const result = await aiService.parseCourseMaterials(materials)
+      return { data: result }
+    } catch (error: any) {
+      return { data: {}, error: error.message }
     }
   }
 }
