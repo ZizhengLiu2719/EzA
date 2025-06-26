@@ -1,3 +1,4 @@
+import BackToDashboardButton from '@/components/BackToDashboardButton'
 import { useState } from 'react'
 import styles from './Review.module.css'
 
@@ -33,7 +34,8 @@ const Review = () => {
   ]
 
   return (
-    <div className={styles.review}>
+    <div className={styles.review} style={{ position: 'relative' }}>
+      <BackToDashboardButton />
       <div className="container">
         <div className={styles.header}>
           <h1>复习与考试准备</h1>

@@ -64,6 +64,15 @@ export const coursesApi = {
   // 删除课程
   async deleteCourse(courseId: string): Promise<ApiResponse<void>> {
     try {
+      // 1. 删除Storage中该课程所有文件（无论数据库是否有记录）
+      const folderPrefix = `syllabus/${courseId}/`;
+      const { data: listData, error: listError } = await supabase.storage.from('syllabus').list(folderPrefix, { limit: 1000 });
+      if (listError) throw listError;
+      if (listData && listData.length > 0) {
+        const filePaths = listData.map(item => folderPrefix + item.name);
+        await supabase.storage.from('syllabus').remove(filePaths);
+      }
+      // 2. 删除数据库中的课程（级联删除相关数据）
       const { error } = await supabase
         .from('courses')
         .delete()
@@ -419,6 +428,20 @@ export const courseParseApi = {
       return { data: data || [] }
     } catch (error: any) {
       return { data: [], error: error.message }
+    }
+  },
+
+  // 批量删除某课程下所有任务
+  async deleteAllTasksForCourse(courseId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('course_id', courseId)
+      if (error) throw error
+    } catch (error: any) {
+      console.error('Failed to delete all tasks for course:', error)
+      throw error
     }
   }
 }

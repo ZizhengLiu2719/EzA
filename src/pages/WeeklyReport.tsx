@@ -1,3 +1,4 @@
+import BackToDashboardButton from '@/components/BackToDashboardButton'
 import styles from './WeeklyReport.module.css'
 
 const WeeklyReport = () => {
@@ -24,7 +25,8 @@ const WeeklyReport = () => {
   ]
 
   return (
-    <div className={styles.report}>
+    <div className={styles.report} style={{ position: 'relative' }}>
+      <BackToDashboardButton />
       <div className="container">
         <div className={styles.header}>
           <h1>本周学习报告</h1>

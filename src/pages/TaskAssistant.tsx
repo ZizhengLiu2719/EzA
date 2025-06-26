@@ -1,3 +1,4 @@
+import BackToDashboardButton from '@/components/BackToDashboardButton'
 import { useState } from 'react'
 import styles from './TaskAssistant.module.css'
 
@@ -35,7 +36,8 @@ const TaskAssistant = () => {
   }
 
   return (
-    <div className={styles.assistant}>
+    <div className={styles.assistant} style={{ position: 'relative' }}>
+      <BackToDashboardButton />
       <div className="container">
         <div className={styles.header}>
           <h1>AI 学习助理</h1>

@@ -1,4 +1,5 @@
 import { courseParseApi, materialsApi } from '@/api/courses'
+import BackToDashboardButton from '@/components/BackToDashboardButton'
 import CourseParseResultEditor from '@/components/CourseParseResultEditor'
 import { useCourses } from '@/hooks/useCourses'
 import { CourseMaterial, CourseParseResult } from '@/types'
@@ -145,8 +146,8 @@ const UploadCourse = () => {
         description: edited.course_description,
         grading_policy: edited.grading_policy,
       });
-      // 先删除原有任务（可选，视需求）
-      // await tasksApi.deleteAllTasksForCourse(finalCourseId);
+      // 先删除原有任务，防止重复
+      await courseParseApi.deleteAllTasksForCourse(finalCourseId);
       // 批量保存任务
       if (edited.tasks.length > 0) {
         await courseParseApi.saveParsedTasks(finalCourseId, edited.tasks);
@@ -222,14 +223,17 @@ const UploadCourse = () => {
       setEditMode(true)
       setSuccess('课程创建成功！请完善结构化信息后保存。')
 
-      // 4. 更新课程信息
-      if (parseResponse.data.course_name && parseResponse.data.course_name !== courseName) {
-        await createCourse({
-          ...courseData,
+      // 4. 更新课程信息（如AI解析出新课程名/描述/评分政策，仅更新，不再新建课程）
+      if (parseResponse.data.course_name && (
+        parseResponse.data.course_name !== courseName ||
+        parseResponse.data.course_description ||
+        parseResponse.data.grading_policy
+      )) {
+        await updateCourse(newCourse.id, {
           name: parseResponse.data.course_name,
           description: parseResponse.data.course_description || '',
           grading_policy: parseResponse.data.grading_policy || ''
-        })
+        });
       }
 
       // 5. 跳转到课程页面
@@ -261,7 +265,8 @@ const UploadCourse = () => {
   }
 
   return (
-    <div className={styles.uploadPage}>
+    <div className={styles.uploadPage} style={{ position: 'relative' }}>
+      <BackToDashboardButton />
       <div className="container">
         <div className={styles.header}>
           <h1>上传课程资料</h1>
