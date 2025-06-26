@@ -1,4 +1,4 @@
-import { tasksApi } from '@/api/courses'
+import { courseParseApi, tasksApi } from '@/api/courses'
 import { ApiResponse, Task } from '@/types'
 import { calculateTaskPriority, getDaysUntil, isOverdue } from '@/utils'
 import { useEffect, useState } from 'react'
@@ -17,15 +17,19 @@ export const useTasks = (courseId?: string) => {
       let response: ApiResponse<Task[]>
       
       if (courseId) {
-        response = await tasksApi.getCourseTasks(courseId)
+        const response = await courseParseApi.getCourseTasks(courseId)
+        if (response.error) {
+          setError(response.error)
+        } else {
+          setTasks(response.data)
+        }
       } else {
-        response = await tasksApi.getUserTasks()
-      }
-      
-      if (response.error) {
-        setError(response.error)
-      } else {
-        setTasks(response.data)
+        const response = await tasksApi.getUserTasks()
+        if (response.error) {
+          setError(response.error)
+        } else {
+          setTasks(response.data)
+        }
       }
     } catch (err: any) {
       setError(err.message)

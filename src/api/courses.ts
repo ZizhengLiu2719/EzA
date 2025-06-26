@@ -1,5 +1,6 @@
 import { ApiResponse, Course, CourseMaterial, CourseParseResult, Task } from '@/types'
 import { validateFileSize, validateFileType } from '@/utils'
+import { FileParser, FileTypeDetector, FileUploadProgress } from '@/utils/fileParser'
 import { courseParseApi as aiCourseParseApi } from './ai'
 import { supabase } from './supabase'
 
@@ -82,7 +83,8 @@ export const materialsApi = {
   async uploadMaterial(
     courseId: string,
     file: File,
-    type: CourseMaterial['type']
+    type: CourseMaterial['type'],
+    onProgress?: (progress: number) => void
   ): Promise<ApiResponse<CourseMaterial>> {
     try {
       // 验证文件类型和大小
@@ -92,7 +94,9 @@ export const materialsApi = {
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'text/plain',
         'image/jpeg',
-        'image/png'
+        'image/png',
+        'image/gif',
+        'image/webp'
       ]
       
       if (!validateFileType(file, allowedTypes)) {
@@ -103,12 +107,17 @@ export const materialsApi = {
         throw new Error('文件大小超过限制')
       }
 
+      // 检查文件是否支持解析
+      if (!FileTypeDetector.isSupported(file)) {
+        throw new Error('文件类型不支持解析')
+      }
+
       // 生成唯一文件名
       const fileExt = file.name.split('.').pop()
       const fileName = `${courseId}/${Date.now()}.${fileExt}`
       
       // 上传到 Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('syllabus')
         .upload(fileName, file)
 
@@ -119,16 +128,24 @@ export const materialsApi = {
         .from('syllabus')
         .getPublicUrl(fileName)
 
-      // 提取文本内容（这里需要 OCR 或文本提取）
+      // 解析文件内容
       let extractedText = ''
-      if (file.type === 'text/plain') {
-        extractedText = await file.text()
-      } else if (file.type === 'application/pdf') {
-        // TODO: 实现 PDF 文本提取
-        extractedText = await this.extractTextFromPDF(file)
-      } else if (file.type.startsWith('image/')) {
-        // TODO: 实现图片 OCR
-        extractedText = await this.extractTextFromImage(file)
+
+      try {
+        const uploadProgress = new FileUploadProgress(
+          onProgress,
+          (result) => {
+            extractedText = result.text
+          },
+          (error) => {
+            console.warn('文件解析失败，但文件已上传:', error.message)
+          }
+        )
+
+        await uploadProgress.parseWithProgress(file)
+      } catch (parseError) {
+        console.warn('文件解析失败，但文件已上传:', parseError)
+        // 即使解析失败，也继续保存文件信息
       }
 
       // 保存到数据库
@@ -152,18 +169,93 @@ export const materialsApi = {
     }
   },
 
-  // 从 PDF 提取文本
-  async extractTextFromPDF(file: File): Promise<string> {
-    // TODO: 实现 PDF 文本提取
-    // 可以使用 pdf.js 或其他 PDF 处理库
-    return 'PDF 文本提取功能待实现'
+  // 批量上传课程材料
+  async uploadMultipleMaterials(
+    courseId: string,
+    files: File[],
+    type: CourseMaterial['type'],
+    onProgress?: (fileIndex: number, progress: number) => void
+  ): Promise<ApiResponse<CourseMaterial[]>> {
+    try {
+      const results: CourseMaterial[] = []
+      const errors: string[] = []
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        
+        try {
+          const result = await this.uploadMaterial(
+            courseId,
+            file,
+            type,
+            (progress) => onProgress?.(i, progress)
+          )
+          
+          if (result.error) {
+            errors.push(`${file.name}: ${result.error}`)
+          } else {
+            results.push(result.data)
+          }
+        } catch (error: any) {
+          errors.push(`${file.name}: ${error.message}`)
+        }
+      }
+
+      if (errors.length > 0) {
+        return { 
+          data: results, 
+          error: `部分文件上传失败: ${errors.join('; ')}` 
+        }
+      }
+
+      return { data: results }
+    } catch (error: any) {
+      return { data: [], error: error.message }
+    }
   },
 
-  // 从图片提取文本（OCR）
-  async extractTextFromImage(file: File): Promise<string> {
-    // TODO: 实现图片 OCR
-    // 可以使用 Tesseract.js 或其他 OCR 服务
-    return '图片 OCR 功能待实现'
+  // 重新解析课程材料
+  async reparseMaterial(materialId: string): Promise<ApiResponse<CourseMaterial>> {
+    try {
+      // 获取材料信息
+      const { data: material, error: materialError } = await supabase
+        .from('course_materials')
+        .select('*')
+        .eq('id', materialId)
+        .single()
+
+      if (materialError) throw materialError
+
+      // 从 Storage 下载文件
+      const fileName = material.file_url.split('/').pop()
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from('syllabus')
+        .download(fileName || '')
+
+      if (downloadError) throw downloadError
+
+      // 创建 File 对象
+      const file = new File([fileData], material.name, { type: material.file_url.split('.').pop() || '' })
+
+      // 重新解析文件
+      const parser = FileParser.getInstance()
+      const parseResult = await parser.parseFile(file)
+
+      // 更新数据库
+      const { data, error } = await supabase
+        .from('course_materials')
+        .update({
+          extracted_text: parseResult.text
+        })
+        .eq('id', materialId)
+        .select()
+        .single()
+
+      if (error) throw error
+      return { data }
+    } catch (error: any) {
+      return { data: {} as CourseMaterial, error: error.message }
+    }
   },
 
   // 获取课程的所有材料
@@ -185,6 +277,24 @@ export const materialsApi = {
   // 删除课程材料
   async deleteMaterial(materialId: string): Promise<ApiResponse<void>> {
     try {
+      // 获取材料信息以删除 Storage 中的文件
+      const { data: material, error: materialError } = await supabase
+        .from('course_materials')
+        .select('*')
+        .eq('id', materialId)
+        .single()
+
+      if (materialError) throw materialError
+
+      // 删除 Storage 中的文件
+      const fileName = material.file_url.split('/').pop()
+      if (fileName) {
+        await supabase.storage
+          .from('syllabus')
+          .remove([fileName])
+      }
+
+      // 删除数据库记录
       const { error } = await supabase
         .from('course_materials')
         .delete()
@@ -194,6 +304,46 @@ export const materialsApi = {
       return { data: undefined }
     } catch (error: any) {
       return { data: undefined, error: error.message }
+    }
+  },
+
+  // 获取材料解析统计
+  async getMaterialStats(courseId: string): Promise<ApiResponse<{
+    totalMaterials: number
+    parsedMaterials: number
+    totalWords: number
+    fileTypes: Record<string, number>
+  }>> {
+    try {
+      const { data: materials, error } = await supabase
+        .from('course_materials')
+        .select('*')
+        .eq('course_id', courseId)
+
+      if (error) throw error
+
+      const stats = {
+        totalMaterials: materials?.length || 0,
+        parsedMaterials: materials?.filter(m => m.extracted_text).length || 0,
+        totalWords: materials?.reduce((sum, m) => {
+          if (m.extracted_text) {
+            const words = m.extracted_text.split(/\s+/).length
+            return sum + words
+          }
+          return sum
+        }, 0) || 0,
+        fileTypes: {} as Record<string, number>
+      }
+
+      // 统计文件类型
+      materials?.forEach(material => {
+        const fileType = FileTypeDetector.getFileTypeDescription(material as any)
+        stats.fileTypes[fileType] = (stats.fileTypes[fileType] || 0) + 1
+      })
+
+      return { data: stats }
+    } catch (error: any) {
+      return { data: {} as any, error: error.message }
     }
   }
 }

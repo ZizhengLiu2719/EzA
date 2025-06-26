@@ -519,7 +519,7 @@ export const aiConversationApi = {
         timestamp: new Date().toISOString()
       }
 
-      const { data: savedUserMessage, error: userMsgError } = await supabase
+      const { error: userMsgError } = await supabase
         .from('ai_messages')
         .insert([userMessage])
         .select()
