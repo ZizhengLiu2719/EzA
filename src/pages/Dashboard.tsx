@@ -1,53 +1,62 @@
+import { LucideBarChart2, LucideBookOpen, LucideBot, LucideBrain, LucideCalendar } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import styles from './Dashboard.module.css'
+
+const modules = [
+  {
+    icon: <LucideBookOpen size={48} color="#3b82f6" />,
+    title: '课程导入中心',
+    desc: '上传syllabus、教材、讲义，1分钟内掌握整个学期结构',
+    to: '/upload',
+    emoji: '📚',
+  },
+  {
+    icon: <LucideCalendar size={48} color="#10b981" />,
+    title: '智能任务引擎',
+    desc: '自动生成学习路径图，子任务拆解，与日历同步',
+    to: '/planner',
+    emoji: '📅',
+  },
+  {
+    icon: <LucideBot size={48} color="#f59e0b" />,
+    title: 'AI学习助理',
+    desc: '写作引导、STEM解题、阅读摘要，全方位AI辅导',
+    to: '/assistant',
+    emoji: '🤖',
+  },
+  {
+    icon: <LucideBarChart2 size={48} color="#6366f1" />,
+    title: '每周反馈教练',
+    desc: '任务完成率分析、拖延指数、个性化建议',
+    to: '/weekly-report',
+    emoji: '📊',
+  },
+  {
+    icon: <LucideBrain size={48} color="#ec4899" />,
+    title: '复习与考试准备',
+    desc: '自动生成复习卡、模拟题、错题追踪',
+    to: '/review',
+    emoji: '🧠',
+  },
+]
 
 const Dashboard = () => {
   return (
-    <div className={styles.dashboard}>
-      <div className="container">
-        <div className={styles.header}>
-          <h1>欢迎回来，学生！</h1>
-          <p>这是你的学习总览面板</p>
-        </div>
-        
-        <div className={styles.stats}>
-          <div className={styles.statCard}>
-            <h3>进行中的课程</h3>
-            <p className={styles.statNumber}>3</p>
-          </div>
-          <div className={styles.statCard}>
-            <h3>本周任务</h3>
-            <p className={styles.statNumber}>12</p>
-          </div>
-          <div className={styles.statCard}>
-            <h3>完成率</h3>
-            <p className={styles.statNumber}>78%</p>
-          </div>
-        </div>
-        
-        <div className={styles.content}>
-          <div className={styles.section}>
-            <h2>最近任务</h2>
-            <div className={styles.taskList}>
-              <div className={styles.taskItem}>
-                <span className={styles.taskTitle}>历史论文初稿</span>
-                <span className={styles.taskDue}>明天截止</span>
-              </div>
-              <div className={styles.taskItem}>
-                <span className={styles.taskTitle}>数学作业</span>
-                <span className={styles.taskDue}>3天后截止</span>
-              </div>
+    <div className={styles.dashboardModules}>
+      <div className={styles.header}>
+        <h1>欢迎回来，学生！</h1>
+        <p>请选择你要进入的 EzA 核心模块</p>
+      </div>
+      <div className={styles.modulesGrid}>
+        {modules.map((mod, idx) => (
+          <Link to={mod.to} className={styles.moduleCard} key={mod.title}>
+            <div className={styles.moduleIcon}>{mod.emoji}</div>
+            <div className={styles.moduleContent}>
+              <h2 className={styles.moduleTitle}>{mod.title}</h2>
+              <p className={styles.moduleDesc}>{mod.desc}</p>
             </div>
-          </div>
-          
-          <div className={styles.section}>
-            <h2>快速操作</h2>
-            <div className={styles.actions}>
-              <button className="btn btn-primary">上传新课程</button>
-              <button className="btn btn-secondary">查看学习计划</button>
-              <button className="btn btn-secondary">开始复习</button>
-            </div>
-          </div>
-        </div>
+          </Link>
+        ))}
       </div>
     </div>
   )
