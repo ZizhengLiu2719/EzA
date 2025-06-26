@@ -1,0 +1,59 @@
+.editorRoot {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 32px;
+  margin-bottom: 32px;
+}
+.section {
+  margin-bottom: 20px;
+}
+.section label {
+  font-weight: 500;
+  margin-right: 8px;
+}
+.section input, .section textarea, .section select {
+  margin-right: 8px;
+  margin-bottom: 4px;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 15px;
+}
+.section textarea {
+  min-width: 300px;
+  min-height: 40px;
+}
+.taskItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.addTaskRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.saveBtn {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 12px;
+}
+.cancelBtn {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+} 

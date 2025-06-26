@@ -1,4 +1,5 @@
 import { courseParseApi, materialsApi } from '@/api/courses'
+import CourseParseResultEditor from '@/components/CourseParseResultEditor'
 import { useCourses } from '@/hooks/useCourses'
 import { CourseMaterial, CourseParseResult } from '@/types'
 import { formatFileSize, validateFileSize, validateFileType } from '@/utils'
@@ -8,7 +9,7 @@ import styles from './UploadCourse.module.css'
 
 const UploadCourse = () => {
   const navigate = useNavigate()
-  const { createCourse } = useCourses()
+  const { createCourse, updateCourse } = useCourses()
   
   const [dragActive, setDragActive] = useState(false)
   const [files, setFiles] = useState<File[]>([])
@@ -20,6 +21,8 @@ const UploadCourse = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [parseResult, setParseResult] = useState<CourseParseResult | null>(null)
+  const [editMode, setEditMode] = useState(false)
+  const [finalCourseId, setFinalCourseId] = useState<string | null>(null)
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -84,6 +87,35 @@ const UploadCourse = () => {
     setFiles(prev => prev.filter((_, i) => i !== index))
   }
 
+  const handleSaveStructured = async (edited: CourseParseResult) => {
+    if (!finalCourseId) return;
+    setUploading(true);
+    setError('');
+    try {
+      // 更新课程信息
+      await updateCourse(finalCourseId, {
+        name: edited.course_name,
+        semester: edited.semester,
+        year: edited.year,
+        description: edited.course_description,
+        grading_policy: edited.grading_policy,
+      });
+      // 先删除原有任务（可选，视需求）
+      // await tasksApi.deleteAllTasksForCourse(finalCourseId);
+      // 批量保存任务
+      if (edited.tasks.length > 0) {
+        await courseParseApi.saveParsedTasks(finalCourseId, edited.tasks);
+      }
+      setSuccess('课程信息和任务已保存！');
+      setEditMode(false);
+      // 可选：跳转或刷新
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -141,7 +173,9 @@ const UploadCourse = () => {
       }
 
       setParseResult(parseResponse.data)
-      setSuccess('课程创建成功！正在解析课程内容...')
+      setFinalCourseId(newCourse.id)
+      setEditMode(true)
+      setSuccess('课程创建成功！请完善结构化信息后保存。')
 
       // 4. 更新课程信息
       if (parseResponse.data.course_name && parseResponse.data.course_name !== courseName) {
@@ -154,9 +188,9 @@ const UploadCourse = () => {
       }
 
       // 5. 跳转到课程页面
-      setTimeout(() => {
-        navigate('/dashboard')
-      }, 2000)
+      // setTimeout(() => {
+      //   navigate('/dashboard')
+      // }, 2000)
 
     } catch (err: any) {
       setError(err.message)
@@ -189,131 +223,140 @@ const UploadCourse = () => {
           <p>上传你的syllabus、教材或讲义，让EzA为你自动规划学习路径</p>
         </div>
         
-        <form onSubmit={handleSubmit} className={styles.uploadForm}>
-          {/* 课程基本信息 */}
-          <div className={styles.courseInfo}>
-            <h3>课程信息</h3>
-            <div className={styles.formRow}>
-              <div className={styles.formGroup}>
-                <label htmlFor="courseName">课程名称</label>
-                <input
-                  type="text"
-                  id="courseName"
-                  value={courseName}
-                  onChange={(e) => setCourseName(e.target.value)}
-                  placeholder="例如：高等数学"
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label htmlFor="semester">学期</label>
-                <select
-                  id="semester"
-                  value={semester}
-                  onChange={(e) => setSemester(e.target.value)}
-                >
-                  <option value="Fall">秋季学期</option>
-                  <option value="Spring">春季学期</option>
-                  <option value="Summer">夏季学期</option>
-                </select>
-              </div>
-              <div className={styles.formGroup}>
-                <label htmlFor="year">年份</label>
-                <input
-                  type="number"
-                  id="year"
-                  value={year}
-                  onChange={(e) => setYear(parseInt(e.target.value))}
-                  min={2020}
-                  max={2030}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 文件上传区域 */}
-          <div className={styles.uploadSection}>
-            <h3>上传课程材料</h3>
-            <div 
-              className={`${styles.dropZone} ${dragActive ? styles.dragActive : ''}`}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-            >
-              <input
-                type="file"
-                multiple
-                accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
-                onChange={handleChange}
-                className={styles.fileInput}
-              />
-              <div className={styles.dropContent}>
-                <div className={styles.dropIcon}>📚</div>
-                <h3>拖拽文件到这里或点击选择</h3>
-                <p>支持 PDF、Word、文本文件和图片（最大 10MB）</p>
-              </div>
-            </div>
-          </div>
-          
-          {/* 文件列表 */}
-          {files.length > 0 && (
-            <div className={styles.fileList}>
-              <h3>已选择的文件：</h3>
-              {files.map((file, index) => (
-                <div key={index} className={styles.fileItem}>
-                  <div className={styles.fileInfo}>
-                    <span className={styles.fileName}>{file.name}</span>
-                    <span className={styles.fileSize}>
-                      {formatFileSize(file.size)}
-                    </span>
-                    <span className={styles.fileType}>
-                      {getFileType(file.name)}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeFile(index)}
-                    className={styles.removeFile}
-                  >
-                    ✕
-                  </button>
+        {editMode && parseResult ? (
+          <CourseParseResultEditor
+            initialData={parseResult}
+            onSave={handleSaveStructured}
+            onCancel={() => setEditMode(false)}
+          />
+        ) : (
+          <form onSubmit={handleSubmit} className={styles.uploadForm}>
+            {/* 课程基本信息 */}
+            <div className={styles.courseInfo}>
+              <h3>课程信息</h3>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="courseName">课程名称</label>
+                  <input
+                    type="text"
+                    id="courseName"
+                    value={courseName}
+                    onChange={(e) => setCourseName(e.target.value)}
+                    placeholder="例如：高等数学"
+                    required
+                  />
                 </div>
-              ))}
-            </div>
-          )}
-
-          {/* 错误和成功消息 */}
-          {error && <div className={styles.error}>{error}</div>}
-          {success && <div className={styles.success}>{success}</div>}
-
-          {/* 解析结果预览 */}
-          {parseResult && (
-            <div className={styles.parseResult}>
-              <h3>解析结果预览</h3>
-              <div className={styles.resultContent}>
-                <p><strong>课程名称：</strong>{parseResult.course_name}</p>
-                <p><strong>学期：</strong>{parseResult.semester} {parseResult.year}</p>
-                {parseResult.course_description && (
-                  <p><strong>课程描述：</strong>{parseResult.course_description}</p>
-                )}
-                {parseResult.grading_policy && (
-                  <p><strong>评分政策：</strong>{parseResult.grading_policy}</p>
-                )}
-                <p><strong>识别到的任务：</strong>{parseResult.tasks.length} 个</p>
+                <div className={styles.formGroup}>
+                  <label htmlFor="semester">学期</label>
+                  <select
+                    id="semester"
+                    value={semester}
+                    onChange={(e) => setSemester(e.target.value)}
+                  >
+                    <option value="Fall">秋季学期</option>
+                    <option value="Spring">春季学期</option>
+                    <option value="Summer">夏季学期</option>
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="year">年份</label>
+                  <input
+                    type="number"
+                    id="year"
+                    value={year}
+                    onChange={(e) => setYear(parseInt(e.target.value))}
+                    min={2020}
+                    max={2030}
+                  />
+                </div>
               </div>
             </div>
-          )}
-          
-          {/* 提交按钮 */}
-          <button 
-            type="submit" 
-            className={`btn btn-primary ${styles.submitBtn}`}
-            disabled={files.length === 0 || uploading || parsing}
-          >
-            {uploading ? '上传中...' : parsing ? '解析中...' : '开始解析课程'}
-          </button>
-        </form>
+
+            {/* 文件上传区域 */}
+            <div className={styles.uploadSection}>
+              <h3>上传课程材料</h3>
+              <div 
+                className={`${styles.dropZone} ${dragActive ? styles.dragActive : ''}`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                  onChange={handleChange}
+                  className={styles.fileInput}
+                />
+                <div className={styles.dropContent}>
+                  <div className={styles.dropIcon}>📚</div>
+                  <h3>拖拽文件到这里或点击选择</h3>
+                  <p>支持 PDF、Word、文本文件和图片（最大 10MB）</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* 文件列表 */}
+            {files.length > 0 && (
+              <div className={styles.fileList}>
+                <h3>已选择的文件：</h3>
+                {files.map((file, index) => (
+                  <div key={index} className={styles.fileItem}>
+                    <div className={styles.fileInfo}>
+                      <span className={styles.fileName}>{file.name}</span>
+                      <span className={styles.fileSize}>
+                        {formatFileSize(file.size)}
+                      </span>
+                      <span className={styles.fileType}>
+                        {getFileType(file.name)}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className={styles.removeFile}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 错误和成功消息 */}
+            {error && <div className={styles.error}>{error}</div>}
+            {success && <div className={styles.success}>{success}</div>}
+
+            {/* 解析结果预览 */}
+            {parseResult && !editMode && (
+              <div className={styles.parseResult}>
+                <h3>解析结果预览</h3>
+                <div className={styles.resultContent}>
+                  <p><strong>课程名称：</strong>{parseResult.course_name}</p>
+                  <p><strong>学期：</strong>{parseResult.semester} {parseResult.year}</p>
+                  {parseResult.course_description && (
+                    <p><strong>课程描述：</strong>{parseResult.course_description}</p>
+                  )}
+                  {parseResult.grading_policy && (
+                    <p><strong>评分政策：</strong>{parseResult.grading_policy}</p>
+                  )}
+                  <p><strong>识别到的任务：</strong>{parseResult.tasks.length} 个</p>
+                  <button type="button" onClick={() => setEditMode(true)} className={styles.saveBtn}>进入结构化编辑</button>
+                </div>
+              </div>
+            )}
+            
+            {/* 提交按钮 */}
+            <button 
+              type="submit" 
+              className={`btn btn-primary ${styles.submitBtn}`}
+              disabled={files.length === 0 || uploading || parsing}
+            >
+              {uploading ? '上传中...' : parsing ? '解析中...' : '开始解析课程'}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   )
