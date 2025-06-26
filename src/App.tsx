@@ -1,3 +1,4 @@
+import CourseDetail from '@/pages/CourseDetail'
 import CourseList from '@/pages/CourseList'
 import Home from '@/pages/Home'
 import Login from '@/pages/Login'
@@ -25,6 +26,7 @@ function App() {
         <Route path="/assistant" element={<TaskAssistant />} />
         <Route path="/review" element={<Review />} />
         <Route path="/weekly-report" element={<WeeklyReport />} />
+        <Route path="/courses/:courseId" element={<CourseDetail />} />
       </Routes>
     </div>
   )

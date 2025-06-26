@@ -45,6 +45,7 @@ const CourseList = () => {
                 <td style={{ padding: '10px 8px' }}>{course.semester}</td>
                 <td style={{ padding: '10px 8px' }}>{course.year}</td>
                 <td style={{ padding: '10px 8px', display: 'flex', gap: 8 }}>
+                  <Link to={`/courses/${course.id}`}><button style={{ background: '#e0f2fe', color: '#0369a1', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 500, cursor: 'pointer' }}>展示</button></Link>
                   <Link to={`/upload-course/${course.id}`}><button style={{ background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 500, cursor: 'pointer' }}>编辑syllabus</button></Link>
                   <button onClick={() => handleDelete(course.id)} style={{ background: '#fee2e2', color: '#b91c1c', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 500, cursor: 'pointer' }}>删除</button>
                 </td>
