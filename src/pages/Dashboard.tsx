@@ -11,6 +11,13 @@ const modules = [
     emoji: '📚',
   },
   {
+    icon: <LucideBookOpen size={48} color="#06b6d4" />,
+    title: '本学期课程总览',
+    desc: '查看所有已上传课程，快速访问 syllabus 编辑',
+    to: '/courses',
+    emoji: '📖',
+  },
+  {
     icon: <LucideCalendar size={48} color="#10b981" />,
     title: '智能任务引擎',
     desc: '自动生成学习路径图，子任务拆解，与日历同步',

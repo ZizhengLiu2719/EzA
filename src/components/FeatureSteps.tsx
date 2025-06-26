@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom'
-import styles from './FeatureSteps.module.css'
+import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import styles from './FeatureSteps.module.css';
 
 const steps = [
   {
@@ -36,38 +37,45 @@ const steps = [
   }
 ]
 
-const FeatureSteps = () => (
-  <section className={styles.features}>
-    <div className="container">
-      <div className={styles.header}>
-        <h2 className={styles.title}>EzA 六大核心模块</h2>
-        <p className={styles.subtitle}>
-          从课程导入到考试准备，一站式智能学习解决方案
-        </p>
-      </div>
-      <div className={styles.stepsGrid}>
-        {steps.map((step, index) =>
-          step.link ? (
-            <Link to={step.link} key={index} className={styles.step} style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div className={styles.stepIcon}>{step.icon}</div>
-              <div className={styles.stepContent}>
-                <h3 className={styles.stepTitle}>{step.title}</h3>
-                <p className={styles.stepDescription}>{step.description}</p>
+const FeatureSteps = () => {
+  useEffect(() => {
+    setTimeout(() => {
+    }, 100);
+  }, []);
+
+  return (
+    <section className={styles.features}>
+      <div className="container">
+        <div className={styles.header}>
+          <h2 className={styles.title}>EzA 六大核心模块</h2>
+          <p className={styles.subtitle}>
+            从课程导入到考试准备，一站式智能学习解决方案
+          </p>
+        </div>
+        <div className={styles.stepsGrid}>
+          {steps.map((step, index) => {
+            return step.link ? (
+              <Link to={step.link} key={index + '-' + step.title} className={styles.step} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <div className={styles.stepIcon}>{step.icon}</div>
+                <div className={styles.stepContent}>
+                  <h3 className={styles.stepTitle}>{step.title}</h3>
+                  <p className={styles.stepDescription}>{step.description}</p>
+                </div>
+              </Link>
+            ) : (
+              <div key={index + '-' + step.title} className={styles.step}>
+                <div className={styles.stepIcon}>{step.icon}</div>
+                <div className={styles.stepContent}>
+                  <h3 className={styles.stepTitle}>{step.title}</h3>
+                  <p className={styles.stepDescription}>{step.description}</p>
+                </div>
               </div>
-            </Link>
-          ) : (
-            <div key={index} className={styles.step}>
-              <div className={styles.stepIcon}>{step.icon}</div>
-              <div className={styles.stepContent}>
-                <h3 className={styles.stepTitle}>{step.title}</h3>
-                <p className={styles.stepDescription}>{step.description}</p>
-              </div>
-            </div>
-          )
-        )}
+            );
+          })}
+        </div>
       </div>
-    </div>
-  </section>
-)
+    </section>
+  )
+}
 
 export default FeatureSteps
