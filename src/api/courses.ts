@@ -108,14 +108,14 @@ export const materialsApi = {
       
       // 上传到 Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('course-materials')
+        .from('syllabus')
         .upload(fileName, file)
 
       if (uploadError) throw uploadError
 
       // 获取文件 URL
       const { data: { publicUrl } } = supabase.storage
-        .from('course-materials')
+        .from('syllabus')
         .getPublicUrl(fileName)
 
       // 保存到数据库
