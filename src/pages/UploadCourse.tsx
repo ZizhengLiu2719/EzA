@@ -3,13 +3,14 @@ import CourseParseResultEditor from '@/components/CourseParseResultEditor'
 import { useCourses } from '@/hooks/useCourses'
 import { CourseMaterial, CourseParseResult } from '@/types'
 import { formatFileSize, validateFileSize, validateFileType } from '@/utils'
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import styles from './UploadCourse.module.css'
 
 const UploadCourse = () => {
   const navigate = useNavigate()
   const { createCourse, updateCourse } = useCourses()
+  const { courseId } = useParams<{ courseId?: string }>()
   
   const [dragActive, setDragActive] = useState(false)
   const [files, setFiles] = useState<File[]>([])
@@ -23,6 +24,50 @@ const UploadCourse = () => {
   const [parseResult, setParseResult] = useState<CourseParseResult | null>(null)
   const [editMode, setEditMode] = useState(false)
   const [finalCourseId, setFinalCourseId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchStructured = async () => {
+      if (!courseId) return;
+      setUploading(true);
+      setError('');
+      try {
+        // 获取课程详情
+        const courseRes = await import('@/api/courses').then(m => m.coursesApi.getUserCourses())
+        const course = courseRes.data.find((c: any) => c.id === courseId)
+        if (!course) throw new Error('未找到该课程')
+        // 获取任务
+        const tasksRes = await import('@/api/courses').then(m => m.courseParseApi.getCourseTasks(courseId))
+        const tasks = tasksRes.data || []
+        // 组装结构化信息
+        const structured: CourseParseResult = {
+          course_name: course.name,
+          semester: course.semester,
+          year: course.year,
+          grading_policy: course.grading_policy,
+          course_description: course.description,
+          tasks: tasks.map((t: any) => ({
+            title: t.title,
+            type: t.type,
+            due_date: t.due_date,
+            priority: t.priority,
+            estimated_hours: t.estimated_hours,
+            status: t.status,
+            description: t.description,
+            weight: t.weight
+          }))
+        }
+        setParseResult(structured)
+        setFinalCourseId(courseId)
+        setEditMode(true)
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setUploading(false)
+      }
+    }
+    fetchStructured()
+    // eslint-disable-next-line
+  }, [courseId])
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()

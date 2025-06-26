@@ -90,6 +90,17 @@ const CourseParseResultEditor: React.FC<Props> = ({ initialData, onSave, onCance
       <div className={styles.section}>
         <h3>任务列表</h3>
         {data.tasks.length === 0 && <div>暂无任务</div>}
+        {data.tasks.length > 0 && (
+          <div className={styles.taskHeader}>
+            <span>任务标题</span>
+            <span>类型</span>
+            <span>截止日期</span>
+            <span>优先级</span>
+            <span>预计耗时(小时)</span>
+            <span>任务描述</span>
+            <span>操作</span>
+          </div>
+        )}
         {data.tasks.map((task, idx) => (
           <div key={idx} className={styles.taskItem}>
             <input value={task.title} onChange={e => handleTaskChange(idx, 'title', e.target.value)} placeholder="任务标题" />
@@ -108,7 +119,7 @@ const CourseParseResultEditor: React.FC<Props> = ({ initialData, onSave, onCance
               <option value="medium">中</option>
               <option value="high">高</option>
             </select>
-            <input type="number" value={task.estimated_hours} min={0.5} step={0.5} onChange={e => handleTaskChange(idx, 'estimated_hours', Number(e.target.value))} style={{ width: 60 }} />
+            <input type="number" value={task.estimated_hours} min={0.5} step={0.5} onChange={e => handleTaskChange(idx, 'estimated_hours', Number(e.target.value))} style={{ width: '100%' }} />
             <input value={task.description || ''} onChange={e => handleTaskChange(idx, 'description', e.target.value)} placeholder="描述" />
             <button type="button" onClick={() => handleDeleteTask(idx)}>删除</button>
           </div>

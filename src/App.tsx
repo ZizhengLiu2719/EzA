@@ -1,3 +1,4 @@
+import CourseList from '@/pages/CourseList'
 import Home from '@/pages/Home'
 import Login from '@/pages/Login'
 import Planner from '@/pages/Planner'
@@ -18,6 +19,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/upload" element={<UploadCourse />} />
+        <Route path="/upload-course/:courseId" element={<UploadCourse />} />
+        <Route path="/courses" element={<CourseList />} />
         <Route path="/planner" element={<Planner />} />
         <Route path="/assistant" element={<TaskAssistant />} />
         <Route path="/review" element={<Review />} />

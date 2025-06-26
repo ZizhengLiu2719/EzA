@@ -25,9 +25,10 @@
   min-height: 40px;
 }
 .taskItem {
-  display: flex;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr 1fr 1.2fr 2.5fr 0.8fr;
   align-items: center;
-  gap: 8px;
+  gap: 0;
   margin-bottom: 8px;
 }
 .addTaskRow {
@@ -56,4 +57,19 @@
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
+}
+.taskHeader {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr 1fr 1.2fr 2.5fr 0.8fr;
+  font-weight: 600;
+  background: #f3f4f6;
+  padding: 8px 0;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+.taskHeader span {
+  text-align: left;
+  font-size: 15px;
+  color: #374151;
+  padding: 0 4px;
 } 
