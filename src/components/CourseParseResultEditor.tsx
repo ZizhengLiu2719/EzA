@@ -21,14 +21,24 @@ const emptyTask: Omit<Task, 'id' | 'course_id' | 'created_at' | 'updated_at'> = 
 // 工具函数：格式化日期为yyyy-MM-dd
 function formatDateInputValue(dateStr?: string) {
   if (!dateStr) return '';
-  // 只取前10位，且必须是有效日期
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return '';
   return d.toISOString().slice(0, 10);
 }
 
+// 格式化所有任务的 due_date 字段
+function normalizeTasksDate(tasks: any[]) {
+  return tasks.map(task => ({
+    ...task,
+    due_date: formatDateInputValue(task.due_date)
+  }));
+}
+
 const CourseParseResultEditor: React.FC<Props> = ({ initialData, onSave, onCancel }) => {
-  const [data, setData] = useState<CourseParseResult>(initialData);
+  const [data, setData] = useState<CourseParseResult>({
+    ...initialData,
+    tasks: normalizeTasksDate(initialData.tasks || [])
+  });
   const [editingTaskIdx, setEditingTaskIdx] = useState<number | null>(null);
   const [newTask, setNewTask] = useState<Omit<Task, 'id' | 'course_id' | 'created_at' | 'updated_at'>>(emptyTask);
 
