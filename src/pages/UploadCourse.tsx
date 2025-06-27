@@ -180,7 +180,19 @@ const UploadCourse = () => {
     setSuccess('')
 
     try {
-      // 1. 创建课程
+      // 1. 先本地解析所有文件内容并检查字符数
+      for (const file of files) {
+        const parser = (await import('@/utils/fileParser')).FileParser.getInstance();
+        const { text } = await parser.parseFile(file);
+        const sizeCheck = (await import('@/utils')).checkFileSizeLimit(text);
+        if (sizeCheck.isOverLimit) {
+          setError(`文件"${file.name}"内容过大！当前字符数：${sizeCheck.characterCount}，超过限制：${sizeCheck.limit}。请上传较小的文件或分割内容。`);
+          setUploading(false);
+          return;
+        }
+      }
+
+      // 2. 只有全部校验通过后，才创建课程
       const courseData = {
         name: courseName,
         semester,
@@ -194,7 +206,7 @@ const UploadCourse = () => {
         throw new Error('创建课程失败')
       }
 
-      // 2. 上传文件
+      // 3. 上传文件
       const uploadPromises = files.map(async (file) => {
         const fileType = getFileType(file.name)
         return await materialsApi.uploadMaterial(newCourse.id, file, fileType)
@@ -204,26 +216,22 @@ const UploadCourse = () => {
       const uploadErrors = uploadResults.filter(result => result.error)
       
       if (uploadErrors.length > 0) {
+        // 上传失败，删除刚创建的课程
+        await deleteCourse(newCourse.id)
         throw new Error(`部分文件上传失败: ${uploadErrors[0].error}`)
       }
 
       const uploadedMaterials = uploadResults.map(result => result.data)
 
-      // 3. 解析课程内容
+      // 4. 解析课程内容
       setParsing(true)
       const materialIds = uploadedMaterials.map(material => material.id)
       const parseResponse = await courseParseApi.parseCourseMaterials(newCourse.id, materialIds)
       
       if (parseResponse.error) {
-        // 检查是否是文件大小限制错误
-        if (parseResponse.error.includes('文件内容过大')) {
-          setError(parseResponse.error)
-          // 删除已创建的课程，因为解析失败
-          await deleteCourse(newCourse.id)
-        } else {
-          throw new Error(`课程解析失败: ${parseResponse.error}`)
-        }
-        return
+        // 解析失败，删除刚创建的课程
+        await deleteCourse(newCourse.id)
+        throw new Error(`课程解析失败: ${parseResponse.error}`)
       }
 
       setParseResult(parseResponse.data)
@@ -231,7 +239,7 @@ const UploadCourse = () => {
       setEditMode(true)
       setSuccess('课程创建成功！请完善结构化信息后保存。')
 
-      // 4. 更新课程信息（如AI解析出新课程名/描述/评分政策，仅更新，不再新建课程）
+      // 5. 更新课程信息（如AI解析出新课程名/描述/评分政策，仅更新，不再新建课程）
       if (parseResponse.data.course_name && (
         parseResponse.data.course_name !== courseName ||
         parseResponse.data.course_description ||
@@ -243,11 +251,6 @@ const UploadCourse = () => {
           grading_policy: parseResponse.data.grading_policy || ''
         });
       }
-
-      // 5. 跳转到课程页面
-      // setTimeout(() => {
-      //   navigate('/dashboard')
-      // }, 2000)
 
     } catch (err: any) {
       setError(err.message)
