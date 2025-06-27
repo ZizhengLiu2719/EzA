@@ -31,7 +31,6 @@ const CourseParseResultEditor: React.FC<Props> = ({ initialData, onSave, onCance
   const [data, setData] = useState<CourseParseResult>(initialData);
   const [editingTaskIdx, setEditingTaskIdx] = useState<number | null>(null);
   const [newTask, setNewTask] = useState<Omit<Task, 'id' | 'course_id' | 'created_at' | 'updated_at'>>(emptyTask);
-  const [nlTask, setNlTask] = useState('');
 
   // 课程信息编辑
   const handleFieldChange = (field: keyof CourseParseResult, value: any) => {
@@ -53,26 +52,6 @@ const CourseParseResultEditor: React.FC<Props> = ({ initialData, onSave, onCance
   const handleAddTask = () => {
     setData(prev => ({ ...prev, tasks: [...prev.tasks, newTask] }));
     setNewTask(emptyTask);
-  };
-
-  // 简单自然语言任务解析（仅演示，实际可用AI接口）
-  const handleAddNlTask = () => {
-    if (!nlTask.trim()) return;
-    // 例：下周一有 quiz
-    const match = nlTask.match(/(\d{4}-\d{2}-\d{2}|下周[一二三四五六日1234567])/);
-    const date = match ? match[0] : '';
-    setData(prev => ({
-      ...prev,
-      tasks: [
-        ...prev.tasks,
-        {
-          ...emptyTask,
-          title: nlTask,
-          due_date: date,
-        },
-      ],
-    }));
-    setNlTask('');
   };
 
   // 保存时排序
@@ -163,10 +142,6 @@ const CourseParseResultEditor: React.FC<Props> = ({ initialData, onSave, onCance
           </select>
           <input type="date" value={formatDateInputValue(newTask.due_date)} onChange={e => setNewTask({ ...newTask, due_date: e.target.value || '' })} />
           <button type="button" onClick={handleAddTask}>添加任务</button>
-        </div>
-        <div className={styles.addTaskRow}>
-          <input value={nlTask} onChange={e => setNlTask(e.target.value)} placeholder="自然语言添加任务，如'下周一有 quiz'" />
-          <button type="button" onClick={handleAddNlTask}>智能添加</button>
         </div>
       </div>
       <div className={styles.section} style={{ marginTop: 24 }}>
