@@ -154,7 +154,8 @@ const UploadCourse = () => {
       }
       setSuccess('课程信息和任务已保存！');
       setEditMode(false);
-      // 可选：跳转或刷新
+      // 保存成功后跳转到我的课程界面
+      navigate('/courses');
     } catch (err: any) {
       setError(err.message);
     } finally {
