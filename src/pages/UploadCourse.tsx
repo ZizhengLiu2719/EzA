@@ -10,7 +10,7 @@ import styles from './UploadCourse.module.css'
 
 const UploadCourse = () => {
   const navigate = useNavigate()
-  const { createCourse, updateCourse } = useCourses()
+  const { createCourse, updateCourse, deleteCourse } = useCourses()
   const { courseId } = useParams<{ courseId?: string }>()
   
   const [dragActive, setDragActive] = useState(false)
@@ -215,7 +215,15 @@ const UploadCourse = () => {
       const parseResponse = await courseParseApi.parseCourseMaterials(newCourse.id, materialIds)
       
       if (parseResponse.error) {
-        throw new Error(`课程解析失败: ${parseResponse.error}`)
+        // 检查是否是文件大小限制错误
+        if (parseResponse.error.includes('文件内容过大')) {
+          setError(parseResponse.error)
+          // 删除已创建的课程，因为解析失败
+          await deleteCourse(newCourse.id)
+        } else {
+          throw new Error(`课程解析失败: ${parseResponse.error}`)
+        }
+        return
       }
 
       setParseResult(parseResponse.data)
@@ -342,7 +350,7 @@ const UploadCourse = () => {
                 <div className={styles.dropContent}>
                   <div className={styles.dropIcon}>📚</div>
                   <h3>拖拽文件到这里或点击选择</h3>
-                  <p>支持 PDF、Word、文本文件和图片（最大 10MB）</p>
+                  <p>支持 PDF、Word、文本文件和图片（最大 10MB，内容不超过 16,000 字符）</p>
                 </div>
               </div>
             </div>

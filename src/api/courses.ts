@@ -1,5 +1,5 @@
 import { ApiResponse, Course, CourseMaterial, CourseParseResult, Task } from '@/types'
-import { validateFileSize, validateFileType } from '@/utils'
+import { checkFileSizeLimit, validateFileSize, validateFileType } from '@/utils'
 import { FileParser, FileTypeDetector, FileUploadProgress } from '@/utils/fileParser'
 import { courseParseApi as aiCourseParseApi } from './ai'
 import { supabase } from './supabase'
@@ -152,7 +152,20 @@ export const materialsApi = {
         )
 
         await uploadProgress.parseWithProgress(file)
-      } catch (parseError) {
+        
+        // 检查解析后的文本内容是否超过GPT-3.5的token限制
+        const sizeCheck = checkFileSizeLimit(extractedText)
+        if (sizeCheck.isOverLimit) {
+          // 删除已上传的文件
+          await supabase.storage.from('syllabus').remove([fileName])
+          throw new Error(`文件内容过大！当前字符数：${sizeCheck.characterCount.toLocaleString()}，超过GPT-3.5限制：${sizeCheck.limit.toLocaleString()}。请上传较小的文件或分割文件内容。`)
+        }
+      } catch (parseError: any) {
+        // 如果是文件大小限制错误，删除已上传的文件并抛出错误
+        if (parseError.message.includes('文件内容过大')) {
+          await supabase.storage.from('syllabus').remove([fileName])
+          throw parseError
+        }
         console.warn('文件解析失败，但文件已上传:', parseError)
         // 即使解析失败，也继续保存文件信息
       }
@@ -376,8 +389,9 @@ export const courseParseApi = {
       // 使用 AI 解析课程材料
       const parseResult = await aiCourseParseApi.parseCourseMaterials(materials || [])
 
+      // 如果AI解析失败，直接返回错误
       if (parseResult.error) {
-        throw new Error(parseResult.error)
+        return { data: {} as CourseParseResult, error: parseResult.error }
       }
 
       // 保存解析的任务到数据库

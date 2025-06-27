@@ -1,4 +1,5 @@
 import { AIAssistantConfig, AIConversation, AIMessage, ApiResponse, ReviewCard, WeeklyReport } from '@/types';
+import { checkFileSizeLimit } from '@/utils';
 
 // AI 配置和提示词管理
 const AI_PROMPTS = {
@@ -353,6 +354,13 @@ ${tasks.map(task => `- ${task.title}: ${task.status}`).join('\n')}
   async parseCourseMaterials(materials: any[]): Promise<any> {
     // 拼接所有材料文本
     const materialsText = materials.map(m => `${m.name}:\n${m.extracted_text || '无文本内容'}`).join('\n\n');
+    
+    // 检查文件内容是否超过GPT-3.5的token限制
+    const sizeCheck = checkFileSizeLimit(materialsText)
+    if (sizeCheck.isOverLimit) {
+      throw new Error(`文件内容过大！当前字符数：${sizeCheck.characterCount.toLocaleString()}，超过GPT-3.5限制：${sizeCheck.limit.toLocaleString()}。请上传较小的文件或分割文件内容。`)
+    }
+    
     const systemPrompt = `你是一位专业的课程材料解析专家。请分析提供的课程材料，提取关键信息并生成结构化数据。\n\n要求：\n1. 识别课程名称、学期、年份\n2. 提取所有任务、作业、考试信息\n3. 识别评分政策和课程重点\n4. 生成任务时间线\n5. 提供课程描述\n\n请以 JSON 格式返回解析结果，格式如下：\n{\n  "course_name": "课程名称",\n  "semester": "学期",\n  "year": 年份,\n  "course_description": "课程描述",\n  "grading_policy": "评分政策",\n  "tasks": [\n    {\n      "title": "任务标题",\n      "type": "reading|writing|assignment|exam|quiz|project|presentation",\n      "due_date": "YYYY-MM-DD",\n      "priority": "low|medium|high",\n      "estimated_hours": 数字,\n      "description": "任务描述"\n    }\n  ]\n}`;
     try {
       const headers = {
@@ -387,11 +395,16 @@ ${tasks.map(task => `- ${task.title}: ${task.status}`).join('\n')}
         }));
         return { ...parsedData, gradingNotice };
       }
-      // fallback
-      return this.getDefaultCourseParse();
+      // 如果AI解析失败，抛出错误而不是返回默认模板
+      throw new Error('AI解析失败，无法生成课程结构。请检查文件内容或稍后重试。');
     } catch (error) {
       console.error('AI解析失败:', error);
-      return this.getDefaultCourseParse();
+      // 如果是文件大小限制错误，直接抛出
+      if (error instanceof Error && error.message.includes('文件内容过大')) {
+        throw error;
+      }
+      // 其他错误也抛出，不再返回默认模板
+      throw new Error('AI解析失败，无法生成课程结构。请检查文件内容或稍后重试。');
     }
   }
 
