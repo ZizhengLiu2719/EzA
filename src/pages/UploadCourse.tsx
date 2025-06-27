@@ -285,11 +285,16 @@ const UploadCourse = () => {
         </div>
         
         {editMode && parseResult ? (
-          <CourseParseResultEditor
-            initialData={parseResult}
-            onSave={handleSaveStructured}
-            onCancel={() => setEditMode(false)}
-          />
+          <>
+            <div className={styles.infoTip} style={{marginBottom: 16, color: '#b45309', background: '#fef3c7', padding: '10px 16px', borderRadius: 6, fontSize: 15}}>
+              AI解析的任务列表只包含和本课程grading有关的任务，如果syllabus给于的信息不够明确，AI可能会提取不到相关信息，请学生们在学期的进行过程中自己根据课程的具体任务自行添加
+            </div>
+            <CourseParseResultEditor
+              initialData={parseResult}
+              onSave={handleSaveStructured}
+              onCancel={() => setEditMode(false)}
+            />
+          </>
         ) : (
           <form onSubmit={handleSubmit} className={styles.uploadForm}>
             {/* 课程基本信息 */}
@@ -391,21 +396,26 @@ const UploadCourse = () => {
 
             {/* 解析结果预览 */}
             {parseResult && !editMode && (
-              <div className={styles.parseResult}>
-                <h3>解析结果预览</h3>
-                <div className={styles.resultContent}>
-                  <p><strong>课程名称：</strong>{parseResult.course_name}</p>
-                  <p><strong>学期：</strong>{parseResult.semester} {parseResult.year}</p>
-                  {parseResult.course_description && (
-                    <p><strong>课程描述：</strong>{parseResult.course_description}</p>
-                  )}
-                  {parseResult.grading_policy && (
-                    <p><strong>评分政策：</strong>{parseResult.grading_policy}</p>
-                  )}
-                  <p><strong>识别到的任务：</strong>{parseResult.tasks.length} 个</p>
-                  <button type="button" onClick={() => setEditMode(true)} className={styles.saveBtn}>进入结构化编辑</button>
+              <>
+                <div className={styles.infoTip} style={{marginBottom: 16, color: '#b45309', background: '#fef3c7', padding: '10px 16px', borderRadius: 6, fontSize: 15}}>
+                  AI解析的任务列表只包含和本课程grading有关的任务，如果syllabus给于的信息不够明确，AI可能会提取不到相关信息，请学生们在学期的进行过程中自己根据课程的具体任务自行添加
                 </div>
-              </div>
+                <div className={styles.parseResult}>
+                  <h3>解析结果预览</h3>
+                  <div className={styles.resultContent}>
+                    <p><strong>课程名称：</strong>{parseResult.course_name}</p>
+                    <p><strong>学期：</strong>{parseResult.semester} {parseResult.year}</p>
+                    {parseResult.course_description && (
+                      <p><strong>课程描述：</strong>{parseResult.course_description}</p>
+                    )}
+                    {parseResult.grading_policy && (
+                      <p><strong>评分政策：</strong>{parseResult.grading_policy}</p>
+                    )}
+                    <p><strong>识别到的任务：</strong>{parseResult.tasks.length} 个</p>
+                    <button type="button" onClick={() => setEditMode(true)} className={styles.saveBtn}>进入结构化编辑</button>
+                  </div>
+                </div>
+              </>
             )}
             
             {/* 提交按钮 */}

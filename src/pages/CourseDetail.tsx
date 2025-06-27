@@ -73,7 +73,7 @@ const CourseDetail = () => {
               <tr key={task.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
                 <td style={{ padding: '8px' }}>{task.title}</td>
                 <td style={{ padding: '8px' }}>{task.type}</td>
-                <td style={{ padding: '8px' }}>{task.due_date ? new Date(task.due_date).toLocaleDateString() : ''}</td>
+                <td style={{ padding: '8px' }}>{task.due_date ? (task.due_date.length > 10 ? task.due_date.slice(0, 10) : task.due_date) : ''}</td>
                 <td style={{ padding: '8px' }}>{task.priority}</td>
                 <td style={{ padding: '8px' }}>{task.estimated_hours}</td>
                 <td style={{ padding: '8px' }}>{task.description}</td>

@@ -18,6 +18,15 @@ const emptyTask: Omit<Task, 'id' | 'course_id' | 'created_at' | 'updated_at'> = 
   description: '',
 };
 
+// 工具函数：格式化日期为yyyy-MM-dd
+function formatDateInputValue(dateStr?: string) {
+  if (!dateStr) return '';
+  // 只取前10位，且必须是有效日期
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  return d.toISOString().slice(0, 10);
+}
+
 const CourseParseResultEditor: React.FC<Props> = ({ initialData, onSave, onCancel }) => {
   const [data, setData] = useState<CourseParseResult>(initialData);
   const [editingTaskIdx, setEditingTaskIdx] = useState<number | null>(null);
@@ -66,26 +75,43 @@ const CourseParseResultEditor: React.FC<Props> = ({ initialData, onSave, onCance
     setNlTask('');
   };
 
+  // 保存时排序
+  const handleSave = () => {
+    // 排序：有截止日期的任务按日期升序排列，无截止日期的任务排最后
+    const sortedTasks = data.tasks.slice().sort((a, b) => {
+      if (a.due_date && b.due_date) {
+        return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+      } else if (a.due_date) {
+        return -1;
+      } else if (b.due_date) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+    onSave({ ...data, tasks: sortedTasks });
+  };
+
   return (
     <div className={styles.editorRoot}>
       <h2>课程结构化信息编辑</h2>
       <div className={styles.section}>
         <label>课程名称：</label>
-        <input value={data.course_name} onChange={e => handleFieldChange('course_name', e.target.value)} />
+        <input value={data.course_name ?? ''} onChange={e => handleFieldChange('course_name', e.target.value)} />
       </div>
       <div className={styles.section}>
         <label>学期：</label>
-        <input value={data.semester} onChange={e => handleFieldChange('semester', e.target.value)} style={{ width: 100 }} />
+        <input value={data.semester ?? ''} onChange={e => handleFieldChange('semester', e.target.value)} style={{ width: 100 }} />
         <label>年份：</label>
-        <input type="number" value={data.year} onChange={e => handleFieldChange('year', Number(e.target.value))} style={{ width: 80 }} />
+        <input type="number" value={data.year ?? ''} onChange={e => handleFieldChange('year', Number(e.target.value))} style={{ width: 80 }} />
       </div>
       <div className={styles.section}>
         <label>课程描述：</label>
-        <textarea value={data.course_description || ''} onChange={e => handleFieldChange('course_description', e.target.value)} />
+        <textarea value={data.course_description ?? ''} onChange={e => handleFieldChange('course_description', e.target.value)} />
       </div>
       <div className={styles.section}>
         <label>评分政策：</label>
-        <input value={data.grading_policy || ''} onChange={e => handleFieldChange('grading_policy', e.target.value)} />
+        <input value={data.grading_policy ?? ''} onChange={e => handleFieldChange('grading_policy', e.target.value)} />
       </div>
       <div className={styles.section}>
         <h3>任务列表</h3>
@@ -103,8 +129,8 @@ const CourseParseResultEditor: React.FC<Props> = ({ initialData, onSave, onCance
         )}
         {data.tasks.map((task, idx) => (
           <div key={idx} className={styles.taskItem}>
-            <input value={task.title} onChange={e => handleTaskChange(idx, 'title', e.target.value)} placeholder="任务标题" />
-            <select value={task.type} onChange={e => handleTaskChange(idx, 'type', e.target.value as any)}>
+            <input value={task.title ?? ''} onChange={e => handleTaskChange(idx, 'title', e.target.value)} placeholder="任务标题" />
+            <select value={task.type ?? ''} onChange={e => handleTaskChange(idx, 'type', e.target.value as any)}>
               <option value="reading">阅读</option>
               <option value="writing">写作</option>
               <option value="assignment">作业</option>
@@ -113,20 +139,20 @@ const CourseParseResultEditor: React.FC<Props> = ({ initialData, onSave, onCance
               <option value="project">项目</option>
               <option value="presentation">展示</option>
             </select>
-            <input type="date" value={task.due_date} onChange={e => handleTaskChange(idx, 'due_date', e.target.value)} />
-            <select value={task.priority} onChange={e => handleTaskChange(idx, 'priority', e.target.value as any)}>
+            <input type="date" value={formatDateInputValue(task.due_date)} onChange={e => handleTaskChange(idx, 'due_date', e.target.value || '')} />
+            <select value={task.priority ?? ''} onChange={e => handleTaskChange(idx, 'priority', e.target.value as any)}>
               <option value="low">低</option>
               <option value="medium">中</option>
               <option value="high">高</option>
             </select>
-            <input type="number" value={task.estimated_hours} min={0.5} step={0.5} onChange={e => handleTaskChange(idx, 'estimated_hours', Number(e.target.value))} style={{ width: '100%' }} />
-            <input value={task.description || ''} onChange={e => handleTaskChange(idx, 'description', e.target.value)} placeholder="描述" />
+            <input type="number" value={task.estimated_hours ?? ''} min={0.5} step={0.5} onChange={e => handleTaskChange(idx, 'estimated_hours', Number(e.target.value))} style={{ width: '100%' }} />
+            <input value={task.description ?? ''} onChange={e => handleTaskChange(idx, 'description', e.target.value)} placeholder="描述" />
             <button type="button" onClick={() => handleDeleteTask(idx)}>删除</button>
           </div>
         ))}
         <div className={styles.addTaskRow}>
-          <input value={newTask.title} onChange={e => setNewTask({ ...newTask, title: e.target.value })} placeholder="新任务标题" />
-          <select value={newTask.type} onChange={e => setNewTask({ ...newTask, type: e.target.value as any })}>
+          <input value={newTask.title ?? ''} onChange={e => setNewTask({ ...newTask, title: e.target.value })} placeholder="新任务标题" />
+          <select value={newTask.type ?? ''} onChange={e => setNewTask({ ...newTask, type: e.target.value as any })}>
             <option value="reading">阅读</option>
             <option value="writing">写作</option>
             <option value="assignment">作业</option>
@@ -135,7 +161,7 @@ const CourseParseResultEditor: React.FC<Props> = ({ initialData, onSave, onCance
             <option value="project">项目</option>
             <option value="presentation">展示</option>
           </select>
-          <input type="date" value={newTask.due_date} onChange={e => setNewTask({ ...newTask, due_date: e.target.value })} />
+          <input type="date" value={formatDateInputValue(newTask.due_date)} onChange={e => setNewTask({ ...newTask, due_date: e.target.value || '' })} />
           <button type="button" onClick={handleAddTask}>添加任务</button>
         </div>
         <div className={styles.addTaskRow}>
@@ -144,7 +170,7 @@ const CourseParseResultEditor: React.FC<Props> = ({ initialData, onSave, onCance
         </div>
       </div>
       <div className={styles.section} style={{ marginTop: 24 }}>
-        <button className={styles.saveBtn} onClick={() => onSave(data)}>保存/完成</button>
+        <button className={styles.saveBtn} onClick={handleSave}>保存/完成</button>
         {onCancel && <button className={styles.cancelBtn} onClick={onCancel}>取消</button>}
       </div>
     </div>
