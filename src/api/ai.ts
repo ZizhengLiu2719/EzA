@@ -377,7 +377,15 @@ ${tasks.map(task => `- ${task.title}: ${task.status}`).join('\n')}
       // 尝试提取JSON
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        const parsedData = JSON.parse(jsonMatch[0]);
+        // grading提示
+        const gradingNotice = '只自动生成了与评分权重有关的任务，其他任务请在下方手动补充。';
+        // 补全所有任务的estimated_hours字段，默认2小时
+        parsedData.tasks = parsedData.tasks.map((t: any) => ({
+          ...t,
+          estimated_hours: t.estimated_hours == null ? 2 : t.estimated_hours
+        }));
+        return { ...parsedData, gradingNotice };
       }
       // fallback
       return this.getDefaultCourseParse();
