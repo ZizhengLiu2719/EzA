@@ -1,143 +1,179 @@
-import BackToDashboardButton from '@/components/BackToDashboardButton'
-import { useTasks } from '@/hooks/useTasks'
-import { Task } from '@/types'
-import { useMemo, useState } from 'react'
-import styles from './Planner.module.css'
+import { courseParseApi, coursesApi } from '@/api/courses';
+import { Course, Task } from '@/types';
+import { formatDateTime, getPriorityColor, isOverdue } from '@/utils';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
+import FullCalendar from '@fullcalendar/react';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import styles from './Planner.module.css';
 
-const weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] as const
+const FILTERS = [
+  { key: 'all', label: '全部任务' },
+  { key: 'week', label: '本周任务' },
+  { key: 'overdue', label: '逾期任务' },
+  { key: 'completed', label: '已完成' },
+];
 
-type WeekDay = typeof weekDays[number]
+const getWeekRange = () => {
+  const now = new Date();
+  const start = new Date(now);
+  start.setDate(now.getDate() - now.getDay());
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+};
 
-type WeekPlan = Record<WeekDay, Task[]>
+const Planner: React.FC = () => {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [calendarView, setCalendarView] = useState('timeGridWeek');
+  const [filter, setFilter] = useState('week');
+  const navigate = useNavigate();
 
-type DayHours = Record<WeekDay, number>
-
-function getWeekStart(date = new Date()): Date {
-  const d = new Date(date)
-  d.setHours(0, 0, 0, 0)
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7)) // 周一为一周开始
-  return d
-}
-
-function getWeekDates(): Date[] {
-  const start = getWeekStart()
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(start)
-    d.setDate(start.getDate() + i)
-    return d
-  })
-}
-
-function scheduleTasksForWeek(tasks: Task[], maxHoursPerDay: number): WeekPlan {
-  const weekDates = getWeekDates()
-  const result: WeekPlan = weekDays.reduce((acc, day) => { acc[day] = []; return acc }, {} as WeekPlan)
-  const dayHours: DayHours = weekDays.reduce((acc, day) => { acc[day] = 0; return acc }, {} as DayHours)
-  const now = new Date()
-  const weekStart = getWeekStart()
-  const weekEnd = new Date(weekStart)
-  weekEnd.setDate(weekEnd.getDate() + 6)
-  const weekTasks = tasks.filter((t: Task) => {
-    if (t.status === 'completed') return false
-    const due = new Date(t.due_date)
-    return due >= weekStart && due <= weekEnd
-  })
-  weekTasks.sort((a: Task, b: Task) => {
-    const ad = new Date(a.due_date).getTime(), bd = new Date(b.due_date).getTime()
-    if (ad !== bd) return ad - bd
-    const p = { high: 0, medium: 1, low: 2 }
-    return (p[a.priority] - p[b.priority])
-  })
-  for (const task of weekTasks) {
-    let assigned = false
-    for (let i = 6; i >= 0; i--) {
-      const d = weekDates[i]
-      const dayStr = weekDays[i]
-      if (new Date(task.due_date).toDateString() === d.toDateString() && dayHours[dayStr] + task.estimated_hours <= maxHoursPerDay) {
-        result[dayStr].push(task)
-        dayHours[dayStr] += task.estimated_hours
-        assigned = true
-        break
-      }
-    }
-    if (!assigned) {
-      for (let i = 0; i < 7; i++) {
-        const dayStr = weekDays[i]
-        if (dayHours[dayStr] + task.estimated_hours <= maxHoursPerDay) {
-          result[dayStr].push(task)
-          dayHours[dayStr] += task.estimated_hours
-          assigned = true
-          break
+  // 获取所有课程和任务
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const courseRes = await coursesApi.getUserCourses();
+      if (courseRes.error) return setLoading(false);
+      setCourses(courseRes.data);
+      let allTasks: Task[] = [];
+      for (const course of courseRes.data) {
+        const taskRes = await courseParseApi.getCourseTasks(course.id);
+        if (taskRes.data) {
+          allTasks = allTasks.concat(taskRes.data.map((t: Task) => ({ ...t, course_id: course.id })));
         }
       }
-    }
-    if (!assigned) {
-      const dueIdx = weekDates.findIndex(d => new Date(task.due_date).toDateString() === d.toDateString())
-      if (dueIdx >= 0) result[weekDays[dueIdx]].push(task)
-    }
-  }
-  return result
-}
+      setTasks(allTasks);
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
 
-const Planner = () => {
-  const [maxHoursPerDay, setMaxHoursPerDay] = useState<number>(4)
-  const { tasks, loading } = useTasks()
-  const weekPlan = useMemo(() => scheduleTasksForWeek(tasks, maxHoursPerDay), [tasks, maxHoursPerDay])
+  // 任务筛选
+  const filteredTasks = useMemo(() => {
+    const now = new Date();
+    const { start, end } = getWeekRange();
+    switch (filter) {
+      case 'week':
+        return tasks.filter(t => {
+          const due = new Date(t.due_date);
+          return due >= start && due <= end;
+        });
+      case 'overdue':
+        return tasks.filter(t => isOverdue(t.due_date) && t.status !== 'completed');
+      case 'completed':
+        return tasks.filter(t => t.status === 'completed');
+      default:
+        return tasks;
+    }
+  }, [tasks, filter]);
+
+  // 日历事件
+  const calendarEvents = useMemo(() =>
+    tasks.map(task => ({
+      id: task.id,
+      title: `${task.title} (${task.type})`,
+      start: task.due_date,
+      end: task.due_date,
+      backgroundColor: getPriorityColor(task.priority),
+      borderColor: getPriorityColor(task.priority),
+      extendedProps: { ...task },
+    })),
+    [tasks]
+  );
+
+  // 日历事件点击
+  const handleEventClick = (info: any) => {
+    setSelectedTaskId(info.event.id);
+    const task = tasks.find(t => t.id === info.event.id);
+    if (task) {
+      document.getElementById(`task-${task.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  // 任务点击
+  const handleTaskClick = (taskId: string) => {
+    setSelectedTaskId(taskId);
+  };
+
+  // 任务高亮
+  const isTaskSelected = (taskId: string) => selectedTaskId === taskId;
+
+  // 课程名查找
+  const getCourseName = (courseId: string) => courses.find(c => c.id === courseId)?.name || '';
+
   return (
-    <div className={styles.planner} style={{ position: 'relative' }}>
-      <BackToDashboardButton />
-      <div className="container">
-        <div className={styles.header}>
-          <h1>智能学习计划</h1>
-          <p>你的个性化学习时间线和任务安排</p>
-          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <label>每日最大学习时长：</label>
-            <input type="number" min={1} max={12} value={maxHoursPerDay} onChange={e => setMaxHoursPerDay(Number(e.target.value))} style={{ width: 60 }} /> 小时
+    <div className={styles.smartPlannerRoot}>
+      <div className={styles.leftPanel}>
+        <div className={styles.calendarHeader}>
+          <span className={styles.title}>日历</span>
+          <div className={styles.viewSwitch}>
+            <button className={calendarView === 'dayGridMonth' ? styles.active : ''} onClick={() => setCalendarView('dayGridMonth')}>月</button>
+            <button className={calendarView === 'timeGridWeek' ? styles.active : ''} onClick={() => setCalendarView('timeGridWeek')}>周</button>
+            <button className={calendarView === 'timeGridDay' ? styles.active : ''} onClick={() => setCalendarView('timeGridDay')}>天</button>
+            <button className={calendarView === 'listWeek' ? styles.active : ''} onClick={() => setCalendarView('listWeek')}>列表</button>
           </div>
         </div>
-        <div className={styles.plannerContent}>
-          <div className={styles.sidebar}>
-            <div className={styles.courseList}>
-              <h3>我的课程</h3>
-              <div className={styles.courseItem}>
-                <span className={styles.courseName}>历史学概论</span>
-                <span className={styles.taskCount}>5个任务</span>
-              </div>
-              <div className={styles.courseItem}>
-                <span className={styles.courseName}>高等数学</span>
-                <span className={styles.taskCount}>8个任务</span>
-              </div>
-              <div className={styles.courseItem}>
-                <span className={styles.courseName}>心理学基础</span>
-                <span className={styles.taskCount}>3个任务</span>
-              </div>
-            </div>
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
+          initialView={calendarView}
+          headerToolbar={false}
+          height="auto"
+          events={calendarEvents}
+          eventClick={handleEventClick}
+          eventClassNames={arg => [styles.calendarEvent, isTaskSelected(arg.event.id) ? styles.selectedEvent : '']}
+          datesSet={arg => setCalendarView(arg.view.type)}
+        />
+      </div>
+      <div className={styles.rightPanel}>
+        <div className={styles.tasksHeader}>
+          <span className={styles.title}>任务活动</span>
+          <div className={styles.filterBar}>
+            {FILTERS.map(f => (
+              <button key={f.key} className={filter === f.key ? styles.active : ''} onClick={() => setFilter(f.key)}>{f.label}</button>
+            ))}
           </div>
-          <div className={styles.mainContent}>
-            <div className={styles.weekView}>
-              <h2>本周计划</h2>
-              <div className={styles.weekGrid}>
-                {weekDays.map((day, i) => (
-                  <div key={day} className={styles.dayColumn}>
-                    <h4>{day}</h4>
-                    <div className={styles.dayTasks}>
-                      {weekPlan[day].length === 0 && <div style={{ color: '#bbb', fontSize: 14 }}>无任务</div>}
-                      {weekPlan[day].map(task => (
-                        <div key={task.id} className={styles.taskCard}>
-                          <span className={styles.taskTitle}>{task.title}</span>
-                          <span className={styles.taskTime}>{task.estimated_hours}小时</span>
-                          <span className={styles.taskCourse}>{task.type}</span>
-                        </div>
-                      ))}
-                    </div>
+        </div>
+        <div className={styles.taskList}>
+          {loading ? <div className={styles.loading}>加载中...</div> :
+            filteredTasks.length === 0 ? <div className={styles.empty}>暂无任务</div> :
+              filteredTasks.map(task => (
+                <div
+                  key={task.id}
+                  id={`task-${task.id}`}
+                  className={[
+                    styles.taskItem,
+                    isTaskSelected(task.id) ? styles.selectedTask : '',
+                    isOverdue(task.due_date) && task.status !== 'completed' ? styles.overdue : '',
+                    styles[task.priority],
+                  ].join(' ')}
+                  onClick={() => handleTaskClick(task.id)}
+                >
+                  <div className={styles.taskTitleRow}>
+                    <span className={styles.taskTitle}>{task.title}</span>
+                    <span className={styles.taskType}>[{task.type}]</span>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                  <div className={styles.taskMeta}>
+                    <span className={styles.courseName}>{getCourseName(task.course_id)}</span>
+                    <span className={styles.dueDate}>{formatDateTime(task.due_date)}</span>
+                    <span className={styles.status}>{task.status === 'completed' ? '✅ 已完成' : isOverdue(task.due_date) ? '⚠️ 逾期' : ''}</span>
+                  </div>
+                  {task.description && <div className={styles.taskDesc}>{task.description}</div>}
+                </div>
+              ))
+          }
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Planner 
+export default Planner; 
