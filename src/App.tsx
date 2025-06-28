@@ -5,6 +5,7 @@ import Login from '@/pages/Login'
 import Planner from '@/pages/Planner'
 import Register from '@/pages/Register'
 import Review from '@/pages/Review'
+import Subscription from '@/pages/Subscription'
 import TaskAssistant from '@/pages/TaskAssistant'
 import UploadCourse from '@/pages/UploadCourse'
 import { Route, Routes } from 'react-router-dom'
@@ -26,6 +27,7 @@ function App() {
         <Route path="/assistant" element={<TaskAssistant />} />
         <Route path="/review" element={<Review />} />
         <Route path="/weekly-report" element={<WeeklyReport />} />
+        <Route path="/subscription" element={<Subscription />} />
         <Route path="/courses/:courseId" element={<CourseDetail />} />
       </Routes>
     </div>

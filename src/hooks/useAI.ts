@@ -10,7 +10,8 @@ export const useAI = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [aiConfig, setAIConfig] = useState<AIAssistantConfig>({
-    mode: 'bullet_tutor'
+    mode: 'bullet_tutor',
+    model: 'gpt-3.5-turbo' // 默认使用GPT-3.5-turbo
   })
 
   // 获取用户的所有对话
@@ -102,7 +103,10 @@ export const useAI = () => {
       const response = await aiConversationApi.sendMessage(
         currentConversation.id,
         message,
-        aiConfig
+        {
+          ...aiConfig,
+          model: aiConfig.model || 'gpt-3.5-turbo' // 确保有默认模型
+        }
       )
       
       if (response.error) {

@@ -225,7 +225,7 @@ export const getFromLocalStorage = <T>(key: string, defaultValue: T): T => {
   }
 }
 
-// 检查文件内容是否超过GPT-3.5的token限制
+// 检查文件内容是否超过GPT-4o的token限制
 export function checkFileSizeLimit(text: string): {
   isOverLimit: boolean
   characterCount: number
@@ -233,8 +233,8 @@ export function checkFileSizeLimit(text: string): {
   limit: number
 } {
   const characterCount = text.length
-  // GPT-3.5的token限制约为4000 tokens，约等于16000字符
-  const limit = 16000
+  // GPT-4o的token限制约为128000 tokens，约等于512000字符
+  const limit = 512000
   // 粗略估算：1个token约等于4个字符
   const estimatedTokens = Math.ceil(characterCount / 4)
   
@@ -252,8 +252,8 @@ export function getFileSizeLimitMessage(characterCount: number, limit: number): 
   const percentage = Math.round((characterCount / limit) * 100)
   
   if (isOverLimit) {
-    return `文件内容过大！当前字符数：${characterCount.toLocaleString()}，超过限制：${limit.toLocaleString()}（${percentage}%）。请上传较小的文件或分割文件内容。`
+    return `文件内容过大！当前字符数：${characterCount.toLocaleString()}，超过GPT-4o限制：${limit.toLocaleString()}（${percentage}%）。请上传较小的文件或分割文件内容。`
   } else {
-    return `文件大小正常。当前字符数：${characterCount.toLocaleString()}，限制：${limit.toLocaleString()}（${percentage}%）`
+    return `文件大小正常。当前字符数：${characterCount.toLocaleString()}，GPT-4o限制：${limit.toLocaleString()}（${percentage}%）`
   }
 } 

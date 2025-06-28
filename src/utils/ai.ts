@@ -227,11 +227,12 @@ export function validateAIConfig(config: AIAssistantConfig): boolean {
 // 生成 AI 配置描述
 export function getAIConfigDescription(config: AIAssistantConfig): string {
   const mode = AI_MODES[config.mode]?.name || '默认模式'
+  const model = config.model ? `，${config.model.toUpperCase()}` : '，GPT-3.5 Turbo'
   const style = config.writing_style ? `，${WRITING_STYLES[config.writing_style].name}风格` : ''
   const citation = config.citation_format ? `，${CITATION_FORMATS[config.citation_format].name}引用格式` : ''
   const difficulty = config.difficulty_level ? `，${DIFFICULTY_LEVELS[config.difficulty_level].name}级别` : ''
 
-  return `${mode}${style}${citation}${difficulty}`
+  return `${mode}${model}${style}${citation}${difficulty}`
 }
 
 // 获取 AI 模式图标

@@ -10,6 +10,9 @@ const Navbar = () => {
             EzA
           </Link>
           <div className={styles.navLinks}>
+            <Link to="/subscription" className={styles.navLink}>
+              订阅计划
+            </Link>
             <Link to="/login" className={styles.navLink}>
               登录
             </Link>

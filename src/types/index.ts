@@ -146,6 +146,7 @@ export interface CourseParseResult {
 // AI 助手配置类型
 export interface AIAssistantConfig {
   mode: 'bullet_tutor' | 'socratic_bot' | 'quick_fix' | 'diagram_ai'
+  model?: 'gpt-3.5-turbo' | 'gpt-4o'
   writing_style?: 'academic' | 'creative' | 'technical'
   citation_format?: 'mla' | 'apa' | 'chicago'
   difficulty_level?: 'beginner' | 'intermediate' | 'advanced'
@@ -162,4 +163,40 @@ export interface CalendarEvent {
   location?: string
   calendar_type: 'google' | 'apple' | 'internal'
   external_id?: string
+}
+
+// 订阅计划类型
+export type SubscriptionPlan = 'free' | 'pro' | 'elite'
+
+// 订阅计划配置
+export interface SubscriptionConfig {
+  plan: SubscriptionPlan
+  name: string
+  price: number
+  currency: string
+  aiModel: 'gpt-3.5-turbo' | 'gpt-4o'
+  monthlyConversations: number // -1 表示无限
+  monthlyCourses: number // -1 表示无限
+  features: string[]
+  description: string
+}
+
+// 用户订阅信息
+export interface UserSubscription {
+  id: string
+  user_id: string
+  plan: SubscriptionPlan
+  status: 'active' | 'cancelled' | 'expired'
+  current_period_start: string
+  current_period_end: string
+  created_at: string
+  updated_at: string
+}
+
+// 使用统计
+export interface UsageStats {
+  monthly_conversations_used: number
+  monthly_courses_used: number
+  monthly_conversations_limit: number
+  monthly_courses_limit: number
 } 

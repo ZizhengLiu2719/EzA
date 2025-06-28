@@ -1,4 +1,4 @@
-import { LucideBarChart2, LucideBookOpen, LucideBot, LucideBrain, LucideCalendar } from 'lucide-react'
+import { LucideBarChart2, LucideBookOpen, LucideBot, LucideBrain, LucideCalendar, LucideCrown } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import styles from './Dashboard.module.css'
 
@@ -44,6 +44,13 @@ const modules = [
     desc: '自动生成复习卡、模拟题、错题追踪',
     to: '/review',
     emoji: '🧠',
+  },
+  {
+    icon: <LucideCrown size={48} color="#8b5cf6" />,
+    title: '订阅计划',
+    desc: '查看和管理您的订阅，升级到更高级的计划',
+    to: '/subscription',
+    emoji: '👑',
   },
 ]
 

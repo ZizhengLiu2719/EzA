@@ -191,7 +191,7 @@ const AI_PROMPTS = {
 // OpenAI API 配置
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
-const OPENAI_MODEL = 'gpt-3.5-turbo';
+const OPENAI_MODEL = 'gpt-3.5-turbo'; // 默认使用GPT-3.5-turbo
 
 // AI 服务类
 class AIService {
@@ -210,6 +210,13 @@ class AIService {
         throw new Error('OpenAI API key not configured')
       }
 
+      // 确定使用的模型
+      const model = config?.model || 'gpt-3.5-turbo' // 默认使用GPT-3.5-turbo
+      
+      // 根据模型调整参数
+      const maxTokens = model === 'gpt-4o' ? 2000 : 1500
+      const temperature = model === 'gpt-4o' ? 0.3 : 0.2
+
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -217,10 +224,10 @@ class AIService {
           'Authorization': `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
-          model: config?.model || 'gpt-3.5-turbo',
+          model: model,
           messages,
-          max_tokens: config?.max_tokens || 1500,
-          temperature: config?.temperature || 0.2,
+          max_tokens: config?.max_tokens || maxTokens,
+          temperature: config?.temperature || temperature,
           top_p: config?.top_p || 1,
           frequency_penalty: config?.frequency_penalty || 0,
           presence_penalty: config?.presence_penalty || 0
@@ -355,10 +362,10 @@ ${tasks.map(task => `- ${task.title}: ${task.status}`).join('\n')}
     // 拼接所有材料文本
     const materialsText = materials.map(m => `${m.name}:\n${m.extracted_text || '无文本内容'}`).join('\n\n');
     
-    // 检查文件内容是否超过GPT-3.5的token限制
+    // 检查文件内容是否超过GPT-4o的token限制
     const sizeCheck = checkFileSizeLimit(materialsText)
     if (sizeCheck.isOverLimit) {
-      throw new Error(`文件内容过大！当前字符数：${sizeCheck.characterCount.toLocaleString()}，超过GPT-3.5限制：${sizeCheck.limit.toLocaleString()}。请上传较小的文件或分割文件内容。`)
+      throw new Error(`文件内容过大！当前字符数：${sizeCheck.characterCount.toLocaleString()}，超过GPT-4o限制：${sizeCheck.limit.toLocaleString()}。请上传较小的文件或分割文件内容。`)
     }
     
     const systemPrompt = `你是一位专业的课程材料解析专家。请分析提供的课程材料，提取关键信息并生成结构化数据。\n\n要求：\n1. 识别课程名称、学期、年份\n2. 提取所有任务、作业、考试信息\n3. 识别评分政策和课程重点\n4. 生成任务时间线\n5. 提供课程描述\n\n请以 JSON 格式返回解析结果，格式如下：\n{\n  "course_name": "课程名称",\n  "semester": "学期",\n  "year": 年份,\n  "course_description": "课程描述",\n  "grading_policy": "评分政策",\n  "tasks": [\n    {\n      "title": "任务标题",\n      "type": "reading|writing|assignment|exam|quiz|project|presentation",\n      "due_date": "YYYY-MM-DD",\n      "priority": "low|medium|high",\n      "estimated_hours": 数字,\n      "description": "任务描述"\n    }\n  ]\n}`;

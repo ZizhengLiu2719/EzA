@@ -1,0 +1,158 @@
+.container {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.planBadge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.planBadge.free {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.planBadge.pro {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.planBadge.elite {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.content {
+  display: grid;
+  gap: 16px;
+}
+
+.planInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.planDescription {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0;
+}
+
+.planPrice {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+/* 使用统计 */
+.usageStats {
+  display: grid;
+  gap: 12px;
+}
+
+.usageItem {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.usageItem span:first-child {
+  color: #6b7280;
+}
+
+.usageItem span:nth-child(2) {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.progressBar {
+  grid-column: 1 / -1;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.progressFill.overLimit {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+/* 升级按钮 */
+.upgradeButton {
+  background: #3b82f6;
+  color: white;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  transition: background-color 0.2s ease;
+}
+
+.upgradeButton:hover {
+  background: #2563eb;
+}
+
+/* 警告信息 */
+.warning {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.warning span {
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+  
+  .planInfo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .usageItem {
+    font-size: 12px;
+  }
+} 

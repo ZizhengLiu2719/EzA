@@ -6,6 +6,8 @@ import { AIAssistantConfig, Task } from '@/types'
 import { formatDateTime } from '@/utils'
 import { LucideBot, LucideLightbulb, LucideMessageSquare, LucidePlus, LucideRefreshCw, LucideSend, LucideSettings, LucideUser } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import AILearningProgress from '../components/AILearningProgress'
+import SubscriptionStatus from '../components/SubscriptionStatus'
 import styles from './TaskAssistant.module.css'
 
 const TaskAssistant = () => {
@@ -31,6 +33,7 @@ const TaskAssistant = () => {
   const [showConfig, setShowConfig] = useState(false)
   const [showTaskSelector, setShowTaskSelector] = useState(false)
   const [showQuickPrompts, setShowQuickPrompts] = useState(false)
+  const [showProgress, setShowProgress] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -121,6 +124,24 @@ const TaskAssistant = () => {
       default: return '#6b7280'
     }
   }
+
+  // 模拟用户订阅状态
+  const [userSubscription] = useState({
+    plan: 'free' as const,
+    usageStats: {
+      monthly_conversations_used: 15,
+      monthly_courses_used: 2,
+      monthly_conversations_limit: 50,
+      monthly_courses_limit: 5
+    }
+  })
+
+  useEffect(() => {
+    // 自动创建第一个对话
+    if (conversations.length === 0) {
+      createConversation('writing')
+    }
+  }, [conversations.length, createConversation])
 
   return (
     <div className={styles.assistant}>
@@ -274,6 +295,12 @@ const TaskAssistant = () => {
                 ))}
               </div>
             </div>
+
+            {/* 订阅状态 */}
+            <SubscriptionStatus 
+              currentPlan={userSubscription.plan}
+              usageStats={userSubscription.usageStats}
+            />
           </div>
 
           {/* 主聊天区域 */}
@@ -377,6 +404,30 @@ const TaskAssistant = () => {
               
               <div className={styles.configContent}>
                 <div className={styles.configSection}>
+                  <h4>AI模型</h4>
+                  <div className={styles.configOptions}>
+                    {[
+                      { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo', desc: '快速响应，成本较低' },
+                      { value: 'gpt-4o', label: 'GPT-4o', desc: '更高质量，理解力更强 (Elite版)' }
+                    ].map((model) => (
+                      <label key={model.value} className={styles.configOption}>
+                        <input
+                          type="radio"
+                          name="model"
+                          value={model.value}
+                          checked={aiConfig.model === model.value}
+                          onChange={(e) => handleConfigChange({ model: e.target.value as any })}
+                        />
+                        <div className={styles.configOptionInfo}>
+                          <span className={styles.configOptionLabel}>{model.label}</span>
+                          <span className={styles.configOptionDesc}>{model.desc}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={styles.configSection}>
                   <h4>写作风格</h4>
                   <div className={styles.configOptions}>
                     {['academic', 'creative', 'technical'].map((style) => (
@@ -446,6 +497,22 @@ const TaskAssistant = () => {
               />
             </div>
           )}
+
+          {/* 学习进度 */}
+          <div className={styles.progressPanel}>
+            <div className={styles.panelHeader}>
+              <h3>学习进度</h3>
+              <button 
+                className={styles.toggleButton}
+                onClick={() => setShowProgress(!showProgress)}
+              >
+                {showProgress ? '−' : '+'}
+              </button>
+            </div>
+            {showProgress && (
+              <AILearningProgress />
+            )}
+          </div>
         </div>
       </div>
     </div>
