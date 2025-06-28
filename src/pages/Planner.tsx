@@ -1,4 +1,4 @@
-import { courseParseApi, coursesApi } from '@/api/courses';
+import { courseParseApi, coursesApi, tasksApi } from '@/api/courses';
 import { Course, Task } from '@/types';
 import { formatDateTime, getPriorityColor, isOverdue } from '@/utils';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -11,8 +11,8 @@ import { useNavigate } from 'react-router-dom';
 import styles from './Planner.module.css';
 
 const FILTERS = [
-  { key: 'all', label: '全部任务' },
-  { key: 'week', label: '本周任务' },
+  { key: 'all', label: '未完成任务' },
+  { key: 'week', label: '本周内逾期任务' },
   { key: 'overdue', label: '逾期任务' },
   { key: 'completed', label: '已完成' },
 ];
@@ -38,6 +38,8 @@ const Planner: React.FC = () => {
   const [calendarRef, setCalendarRef] = useState<any>(null);
   const navigate = useNavigate();
   const taskListRef = useRef<HTMLDivElement>(null);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [modalTask, setModalTask] = useState<Task | null>(null);
 
   // 获取所有课程和任务
   useEffect(() => {
@@ -84,10 +86,12 @@ const Planner: React.FC = () => {
     const now = new Date();
     const { start, end } = getWeekRange();
     switch (filter) {
+      case 'all':
+        return tasks.filter(t => t.status !== 'completed');
       case 'week':
         return tasks.filter(t => {
           const due = new Date(t.due_date);
-          return due >= start && due <= end;
+          return due >= start && due <= end && isOverdue(t.due_date) && t.status !== 'completed';
         });
       case 'overdue':
         return tasks.filter(t => isOverdue(t.due_date) && t.status !== 'completed');
@@ -117,6 +121,8 @@ const Planner: React.FC = () => {
     setSelectedTaskId(info.event.id);
     const task = tasks.find(t => t.id === info.event.id);
     if (task) {
+      setModalTask(task);
+      setShowStatusModal(true);
       document.getElementById(`task-${task.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   };
@@ -151,22 +157,40 @@ const Planner: React.FC = () => {
     },
   };
 
-  // 拖拽到日历后，更新任务时间
-  const handleEventReceive = (info: any) => {
+  // 拖拽到日历后，更新任务时间并同步到后端
+  const handleEventReceive = async (info: any) => {
     const { event } = info;
     const newDate = event.start;
     setTasks(prev => prev.map(t => t.id === event.id ? { ...t, due_date: newDate.toISOString() } : t));
-    // 可选：同步到后端
-    // courseParseApi.updateTask(event.id, { due_date: newDate.toISOString() });
+    try {
+      await tasksApi.updateTask(event.id, { due_date: newDate.toISOString() });
+    } catch (e) {
+      alert('保存任务时间失败，请重试');
+    }
   };
 
   // 日历内拖拽调整时间
-  const handleEventDrop = (info: any) => {
+  const handleEventDrop = async (info: any) => {
     const { event } = info;
     const newDate = event.start;
     setTasks(prev => prev.map(t => t.id === event.id ? { ...t, due_date: newDate.toISOString() } : t));
-    // 可选：同步到后端
-    // courseParseApi.updateTask(event.id, { due_date: newDate.toISOString() });
+    try {
+      await tasksApi.updateTask(event.id, { due_date: newDate.toISOString() });
+    } catch (e) {
+      alert('保存任务时间失败，请重试');
+    }
+  };
+
+  // 切换任务完成状态
+  const toggleTaskStatus = async (task: Task) => {
+    const newStatus = task.status === 'completed' ? 'pending' : 'completed';
+    setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
+    try {
+      await tasksApi.updateTask(task.id, { status: newStatus });
+    } catch (e) {
+      alert('保存任务状态失败，请重试');
+    }
+    setShowStatusModal(false);
   };
 
   return (
@@ -201,6 +225,21 @@ const Planner: React.FC = () => {
             eventDrop={handleEventDrop}
           />
         </div>
+        {showStatusModal && modalTask && (
+          <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.18)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <div style={{background:'#fff',borderRadius:16,padding:32,minWidth:320,boxShadow:'0 4px 24px 0 rgba(59,130,246,0.12)'}}>
+              <h3 style={{marginBottom:18,fontSize:'1.2rem',color:'#2563eb'}}>任务状态</h3>
+              <div style={{marginBottom:18}}>
+                <div style={{fontWeight:600,fontSize:'1.1rem',marginBottom:6}}>{modalTask.title}</div>
+                <div style={{color:'#64748b',fontSize:'0.98rem'}}>{modalTask.status === 'completed' ? '已完成' : '未完成'}</div>
+              </div>
+              <button style={{background:'#3b82f6',color:'#fff',border:'none',borderRadius:8,padding:'8px 24px',fontWeight:600,fontSize:'1rem',marginRight:12,cursor:'pointer'}} onClick={()=>toggleTaskStatus(modalTask)}>
+                {modalTask.status === 'completed' ? '标记为未完成' : '标记为已完成'}
+              </button>
+              <button style={{background:'#f3f4f6',color:'#374151',border:'none',borderRadius:8,padding:'8px 18px',fontWeight:500,fontSize:'1rem',cursor:'pointer'}} onClick={()=>setShowStatusModal(false)}>取消</button>
+            </div>
+          </div>
+        )}
       </div>
       <div className={styles.rightPanel}>
         <div className={styles.tasksHeader}>
