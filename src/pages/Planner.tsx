@@ -224,7 +224,7 @@ const Planner: React.FC = () => {
             eventReceive={handleEventReceive}
             eventDrop={handleEventDrop}
           />
-        </div>
+              </div>
         {showStatusModal && modalTask && (
           <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.18)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}}>
             <div style={{background:'#fff',borderRadius:16,padding:32,minWidth:320,boxShadow:'0 4px 24px 0 rgba(59,130,246,0.12)'}}>
@@ -240,15 +240,15 @@ const Planner: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
+                        </div>
       <div className={styles.rightPanel}>
         <div className={styles.tasksHeader}>
           <span className={styles.title}>任务活动</span>
           <div className={styles.filterBar}>
             {FILTERS.map(f => (
               <button key={f.key} className={filter === f.key ? styles.active : ''} onClick={() => setFilter(f.key)}>{f.label}</button>
-            ))}
-          </div>
+                      ))}
+                    </div>
         </div>
         <div className={styles.taskList} ref={taskListRef}>
           {loading ? <div className={styles.loading}>加载中...</div> :
@@ -276,9 +276,9 @@ const Planner: React.FC = () => {
                     <span className={styles.courseName}>{getCourseName(task.course_id)}</span>
                     <span className={styles.dueDate}>{formatDateTime(task.due_date)}</span>
                     <span className={styles.status}>{task.status === 'completed' ? '✅ 已完成' : isOverdue(task.due_date) ? '⚠️ 逾期' : ''}</span>
-                  </div>
+              </div>
                   {task.description && <div className={styles.taskDesc}>{task.description}</div>}
-                </div>
+            </div>
               ))
           }
         </div>
