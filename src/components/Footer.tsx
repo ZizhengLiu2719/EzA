@@ -8,33 +8,33 @@ const Footer = () => {
           <div className={styles.footerSection}>
             <h3 className={styles.footerTitle}>EzA</h3>
             <p className={styles.footerDescription}>
-              AI驱动的学习成功系统，让每个学生都能轻松掌控学期节奏。
+              AI-powered learning success system, helping every student easily master their semester rhythm.
             </p>
           </div>
           
           <div className={styles.footerSection}>
-            <h4 className={styles.sectionTitle}>产品</h4>
+            <h4 className={styles.sectionTitle}>Product</h4>
             <ul className={styles.footerLinks}>
-              <li><a href="#features">功能特色</a></li>
-              <li><a href="#pricing">定价</a></li>
-              <li><a href="#demo">演示</a></li>
+              <li><a href="#features">Features</a></li>
+              <li><a href="#pricing">Pricing</a></li>
+              <li><a href="#demo">Demo</a></li>
             </ul>
           </div>
           
           <div className={styles.footerSection}>
-            <h4 className={styles.sectionTitle}>支持</h4>
+            <h4 className={styles.sectionTitle}>Support</h4>
             <ul className={styles.footerLinks}>
-              <li><a href="#help">帮助中心</a></li>
-              <li><a href="#contact">联系我们</a></li>
-              <li><a href="#feedback">反馈</a></li>
+              <li><a href="#help">Help Center</a></li>
+              <li><a href="#contact">Contact Us</a></li>
+              <li><a href="#feedback">Feedback</a></li>
             </ul>
           </div>
           
           <div className={styles.footerSection}>
-            <h4 className={styles.sectionTitle}>法律</h4>
+            <h4 className={styles.sectionTitle}>Legal</h4>
             <ul className={styles.footerLinks}>
-              <li><a href="#privacy">隐私政策</a></li>
-              <li><a href="#terms">服务条款</a></li>
+              <li><a href="#privacy">Privacy Policy</a></li>
+              <li><a href="#terms">Terms of Service</a></li>
             </ul>
           </div>
         </div>

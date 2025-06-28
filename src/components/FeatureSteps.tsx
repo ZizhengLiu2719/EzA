@@ -5,35 +5,35 @@ import styles from './FeatureSteps.module.css';
 const steps = [
   {
     icon: '📚',
-    title: '课程导入中心',
-    description: '上传syllabus、教材、讲义，1分钟内掌握整个学期结构',
+    title: 'Course Import Center',
+    description: 'Upload syllabus, textbooks, lecture notes, master entire semester structure in 1 minute',
     link: '/upload'
   },
   {
     icon: '📖',
-    title: '本学期课程总览',
-    description: '查看和管理你本学期所有已上传syllabus的课程信息',
+    title: 'Current Semester Course Overview',
+    description: 'View and manage all uploaded courses for the current semester',
     link: '/courses'
   },
   {
     icon: '📅',
-    title: '智能任务引擎',
-    description: '自动生成学习路径图，子任务拆解，与日历同步'
+    title: 'Smart Task Engine',
+    description: 'Automatically generate learning path maps, subtask breakdown, calendar sync'
   },
   {
     icon: '🤖',
-    title: 'AI学习助理',
-    description: '写作引导、STEM解题、阅读摘要，全方位AI辅导'
+    title: 'AI Learning Assistant',
+    description: 'Writing guidance, STEM problem solving, reading summaries, comprehensive AI tutoring'
   },
   {
     icon: '📊',
-    title: '每周反馈教练',
-    description: '任务完成率分析、拖延指数、个性化建议'
+    title: 'Weekly Feedback Coach',
+    description: 'Task completion rate analysis, procrastination index, personalized recommendations'
   },
   {
     icon: '🧠',
-    title: '复习与考试准备',
-    description: '自动生成复习卡、模拟题、错题追踪'
+    title: 'Review & Exam Preparation',
+    description: 'Automatically generate review cards, practice questions, error tracking'
   }
 ]
 
@@ -47,9 +47,9 @@ const FeatureSteps = () => {
     <section className={styles.features}>
       <div className="container">
         <div className={styles.header}>
-          <h2 className={styles.title}>EzA 六大核心模块</h2>
+          <h2 className={styles.title}>EzA Core Modules</h2>
           <p className={styles.subtitle}>
-            从课程导入到考试准备，一站式智能学习解决方案
+            From course import to exam preparation, a comprehensive AI-powered learning solution
           </p>
         </div>
         <div className={styles.stepsGrid}>

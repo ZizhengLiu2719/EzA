@@ -382,8 +382,17 @@ const TaskAssistant = () => {
             </div>
 
             {/* 对话历史 */}
-            <div className={styles.section}>
-              <h3>Chat History</h3>
+            <div className={`${styles.section} ${styles.chatHistorySection}`}>
+              <div className={styles.sectionHeader}>
+                <h3>Chat History</h3>
+                <button 
+                  className={styles.newChatBtn}
+                  onClick={handleNewConversation}
+                  title="Start new conversation"
+                >
+                  <LucidePlus size={16} />
+                </button>
+              </div>
               <div className={styles.conversationList}>
                 {conversations.map((conversation) => (
                   <div 

@@ -13,16 +13,16 @@ const Hero = () => {
               <span className={styles.highlight}>I'll handle the rest.</span>
             </h1>
             <p className={styles.subtitle}>
-              让AI引导你整个学期，真正从混乱中走向掌控。
+              Let AI guide you through the entire semester, transforming chaos into control.
               <br />
-              从课程开始，一路顺利走向成功。
+              From course start to successful completion.
             </p>
             <div className={styles.ctaGroup}>
               <Link to="/register" className={`btn btn-primary ${styles.ctaPrimary}`}>
-                立即开始免费试用
+                Start Free Trial
               </Link>
               <Link to="/login" className={`btn btn-secondary ${styles.ctaSecondary}`}>
-                已有账户？登录
+                Already have an account? Sign In
               </Link>
             </div>
           </div>
@@ -30,7 +30,7 @@ const Hero = () => {
             <div className={styles.placeholder}>
               <div className={styles.placeholderContent}>
                 <div className={styles.placeholderIcon}>📚</div>
-                <p>智能学习界面预览</p>
+                <p>Smart Learning Interface Preview</p>
               </div>
             </div>
           </div>

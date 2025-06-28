@@ -270,6 +270,16 @@
   cursor: not-allowed;
 }
 
+/* 聊天历史部分的新建对话按钮样式 */
+.chatHistorySection .newChatBtn {
+  padding: 6px 8px;
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .errorBanner {
   display: flex;
   justify-content: space-between;
@@ -315,6 +325,27 @@
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
+}
+
+/* 聊天历史部分更紧凑的样式 */
+.section:has(.conversationList) {
+  padding: 16px;
+}
+
+/* 针对不支持 :has() 伪类的浏览器的回退方案 */
+.chatHistorySection {
+  padding: 16px;
+}
+
+/* 聊天历史部分的标题样式 */
+.chatHistorySection h3 {
+  font-size: 16px;
+  margin: 0;
+}
+
+/* 聊天历史部分的头部样式 */
+.chatHistorySection .sectionHeader {
+  margin-bottom: 12px;
 }
 
 .sectionHeader {
@@ -514,6 +545,32 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 4px;
+  
+  /* 自定义滚动条样式 */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* WebKit浏览器滚动条样式 */
+.conversationList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.conversationList::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.conversationList::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.conversationList::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .conversationItem {

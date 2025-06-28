@@ -38,7 +38,7 @@ export const FileUploadDemo: React.FC<FileUploadDemoProps> = ({
       const { valid, errors } = validateFiles(files)
       
       if (errors.length > 0) {
-        alert(`以下文件有问题:\n${errors.join('\n')}`)
+        alert(`The following files have issues:\n${errors.join('\n')}`)
       }
       
       if (valid.length > 0) {
@@ -65,7 +65,7 @@ export const FileUploadDemo: React.FC<FileUploadDemoProps> = ({
       const { valid, errors } = validateFiles(files)
       
       if (errors.length > 0) {
-        alert(`以下文件有问题:\n${errors.join('\n')}`)
+        alert(`The following files have issues:\n${errors.join('\n')}`)
       }
       
       if (valid.length > 0) {
@@ -126,16 +126,16 @@ export const FileUploadDemo: React.FC<FileUploadDemoProps> = ({
     <div className={styles.container}>
       {/* 文件类型选择 */}
       <div className={styles.typeSelector}>
-        <label>文件类型：</label>
+        <label>File Type:</label>
         <select 
           value={selectedType} 
           onChange={(e) => setSelectedType(e.target.value as any)}
         >
-          <option value="syllabus">课程大纲</option>
-          <option value="textbook">教材</option>
-          <option value="lecture_notes">讲义</option>
-          <option value="assignment">作业</option>
-          <option value="other">其他</option>
+          <option value="syllabus">Syllabus</option>
+          <option value="textbook">Textbook</option>
+          <option value="lecture_notes">Lecture Notes</option>
+          <option value="assignment">Assignment</option>
+          <option value="other">Other</option>
         </select>
       </div>
 
@@ -147,9 +147,9 @@ export const FileUploadDemo: React.FC<FileUploadDemoProps> = ({
         onClick={() => fileInputRef.current?.click()}
       >
         <Upload className={styles.uploadIcon} />
-        <p>拖拽文件到此处或点击选择文件</p>
+        <p>Drag files here or click to select files</p>
         <p className={styles.supportedTypes}>
-          支持：PDF、Word、图片、文本文件（最大 10MB）
+          Supported: PDF, Word, Image, Text files (Max 10MB)
         </p>
         <input
           ref={fileInputRef}
@@ -165,12 +165,12 @@ export const FileUploadDemo: React.FC<FileUploadDemoProps> = ({
       {uploadState.files.length > 0 && (
         <div className={styles.fileList}>
           <div className={styles.fileListHeader}>
-            <h3>文件列表 ({uploadState.files.length})</h3>
+            <h3>File List ({uploadState.files.length})</h3>
             <button 
               onClick={clearFiles}
               className={styles.clearButton}
             >
-              清空
+              Clear
             </button>
           </div>
           
@@ -217,19 +217,19 @@ export const FileUploadDemo: React.FC<FileUploadDemoProps> = ({
       {uploadState.files.length > 0 && (
         <div className={styles.stats}>
           <div className={styles.statItem}>
-            <span>总文件数：</span>
+            <span>Total Files:</span>
             <span>{stats.total}</span>
           </div>
           <div className={styles.statItem}>
-            <span>已完成：</span>
+            <span>Completed:</span>
             <span>{stats.completed}</span>
           </div>
           <div className={styles.statItem}>
-            <span>错误：</span>
+            <span>Errors:</span>
             <span>{stats.error}</span>
           </div>
           <div className={styles.statItem}>
-            <span>总大小：</span>
+            <span>Total Size:</span>
             <span>{stats.totalSizeFormatted}</span>
           </div>
         </div>
@@ -238,7 +238,7 @@ export const FileUploadDemo: React.FC<FileUploadDemoProps> = ({
       {/* 文件类型统计 */}
       {Object.keys(typeStats).length > 0 && (
         <div className={styles.typeStats}>
-          <h4>文件类型分布：</h4>
+          <h4>File Type Distribution:</h4>
           <div className={styles.typeList}>
             {Object.entries(typeStats).map(([type, count]) => (
               <span key={type} className={styles.typeTag}>
@@ -257,7 +257,7 @@ export const FileUploadDemo: React.FC<FileUploadDemoProps> = ({
             className={styles.uploadButton}
             disabled={uploadState.files.filter(f => f.status === 'pending').length === 0}
           >
-            开始上传 ({uploadState.files.filter(f => f.status === 'pending').length})
+            Start Upload ({uploadState.files.filter(f => f.status === 'pending').length})
           </button>
         )}
         
@@ -266,13 +266,13 @@ export const FileUploadDemo: React.FC<FileUploadDemoProps> = ({
             onClick={handleRetry}
             className={styles.retryButton}
           >
-            重试失败文件 ({stats.error})
+            Retry Failed Files ({stats.error})
           </button>
         )}
         
         {isAllCompleted() && (
           <div className={styles.successMessage}>
-            ✅ 所有文件上传完成！
+            ✅ All files uploaded successfully!
           </div>
         )}
       </div>
@@ -280,7 +280,7 @@ export const FileUploadDemo: React.FC<FileUploadDemoProps> = ({
       {/* 错误信息 */}
       {getErrors().length > 0 && (
         <div className={styles.errorList}>
-          <h4>错误详情：</h4>
+          <h4>Error Details:</h4>
           {getErrors().map((error, index) => (
             <div key={index} className={styles.errorItem}>
               <strong>{error.fileName}:</strong> {error.error}

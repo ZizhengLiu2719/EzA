@@ -11,13 +11,13 @@ const Navbar = () => {
           </Link>
           <div className={styles.navLinks}>
             <Link to="/subscription" className={styles.navLink}>
-              订阅计划
+              Subscription
             </Link>
             <Link to="/login" className={styles.navLink}>
-              登录
+              Login
             </Link>
             <Link to="/register" className={`${styles.navLink} ${styles.cta}`}>
-              立即开始
+              Get Started
             </Link>
           </div>
         </div>
