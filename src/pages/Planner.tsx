@@ -2,11 +2,11 @@ import { courseParseApi, coursesApi } from '@/api/courses';
 import { Course, Task } from '@/types';
 import { formatDateTime, getPriorityColor, isOverdue } from '@/utils';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
+import interactionPlugin, { Draggable } from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Planner.module.css';
 
@@ -37,6 +37,7 @@ const Planner: React.FC = () => {
   const [filter, setFilter] = useState('week');
   const [calendarRef, setCalendarRef] = useState<any>(null);
   const navigate = useNavigate();
+  const taskListRef = useRef<HTMLDivElement>(null);
 
   // 获取所有课程和任务
   useEffect(() => {
@@ -57,6 +58,26 @@ const Planner: React.FC = () => {
     };
     fetchData();
   }, []);
+
+  // 注册任务列表为可拖拽源
+  useEffect(() => {
+    if (taskListRef.current) {
+      new Draggable(taskListRef.current, {
+        itemSelector: `.${styles.taskItem}`,
+        eventData: function (el) {
+          const id = el.getAttribute('data-task-id');
+          const task = tasks.find(t => t.id === id);
+          if (!task) return {};
+          return {
+            id: task.id,
+            title: task.title,
+            duration: { hours: Math.max(1, Math.round(task.estimated_hours || 1)) },
+            extendedProps: { ...task },
+          };
+        },
+      });
+    }
+  }, [tasks]);
 
   // 任务筛选
   const filteredTasks = useMemo(() => {
@@ -130,6 +151,24 @@ const Planner: React.FC = () => {
     },
   };
 
+  // 拖拽到日历后，更新任务时间
+  const handleEventReceive = (info: any) => {
+    const { event } = info;
+    const newDate = event.start;
+    setTasks(prev => prev.map(t => t.id === event.id ? { ...t, due_date: newDate.toISOString() } : t));
+    // 可选：同步到后端
+    // courseParseApi.updateTask(event.id, { due_date: newDate.toISOString() });
+  };
+
+  // 日历内拖拽调整时间
+  const handleEventDrop = (info: any) => {
+    const { event } = info;
+    const newDate = event.start;
+    setTasks(prev => prev.map(t => t.id === event.id ? { ...t, due_date: newDate.toISOString() } : t));
+    // 可选：同步到后端
+    // courseParseApi.updateTask(event.id, { due_date: newDate.toISOString() });
+  };
+
   return (
     <div className={styles.smartPlannerRoot}>
       <button className={styles.backToMenuBtn} onClick={() => navigate('/dashboard')}>返回主界面</button>
@@ -156,6 +195,10 @@ const Planner: React.FC = () => {
             eventClassNames={arg => [styles.calendarEvent, isTaskSelected(arg.event.id) ? styles.selectedEvent : '']}
             datesSet={arg => setCalendarView(arg.view.type)}
             buttonText={{ today: 'Today' }}
+            droppable={true}
+            editable={true}
+            eventReceive={handleEventReceive}
+            eventDrop={handleEventDrop}
           />
         </div>
       </div>
@@ -168,13 +211,14 @@ const Planner: React.FC = () => {
             ))}
           </div>
         </div>
-        <div className={styles.taskList}>
+        <div className={styles.taskList} ref={taskListRef}>
           {loading ? <div className={styles.loading}>加载中...</div> :
             filteredTasks.length === 0 ? <div className={styles.empty}>暂无任务</div> :
               filteredTasks.map(task => (
                 <div
                   key={task.id}
                   id={`task-${task.id}`}
+                  data-task-id={task.id}
                   className={[
                     styles.taskItem,
                     isTaskSelected(task.id) ? styles.selectedTask : '',
@@ -182,6 +226,8 @@ const Planner: React.FC = () => {
                     styles[task.priority],
                   ].join(' ')}
                   onClick={() => handleTaskClick(task.id)}
+                  draggable
+                  style={{ cursor: 'grab' }}
                 >
                   <div className={styles.taskTitleRow}>
                     <span className={styles.taskTitle}>{task.title}</span>
