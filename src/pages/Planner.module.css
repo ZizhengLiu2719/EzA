@@ -1,170 +1,355 @@
-.planner {
-  padding: 80px 0;
-  background: #f8fafc;
-  min-height: 100vh;
+:root {
+  --msl-blue: #3b82f6;
+  --msl-blue-light: #e0f2fe;
+  --msl-bg: #f8fafc;
+  --msl-card: #fff;
+  --msl-border: #e5e7eb;
+  --msl-shadow: 0 4px 24px 0 rgba(59,130,246,0.08);
+  --msl-radius: 18px;
+  --msl-sidebar: #f1f5f9;
 }
 
-.header {
-  margin-bottom: 40px;
-}
-
-.header h1 {
-  font-size: 32px;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 8px;
-}
-
-.header p {
-  color: #6b7280;
-  font-size: 18px;
-}
-
-.plannerContent {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 32px;
-}
-
-.sidebar {
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-  height: fit-content;
-}
-
-.courseList h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 16px;
-}
-
-.courseItem {
+.smartPlannerRoot {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  background: #f9fafb;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+  min-height: 0;
+  height: 80vh;
+  max-height: 80vh;
+  background: linear-gradient(120deg, #e0f2fe 0%, #f8fafc 100%);
+  border-radius: var(--msl-radius);
+  box-shadow: var(--msl-shadow);
+  padding: 64px 24px 32px 24px;
+  gap: 32px;
+  position: relative;
 }
 
-.courseItem:hover {
-  background: #f3f4f6;
-}
-
-.courseItem:last-child {
-  margin-bottom: 0;
-}
-
-.courseName {
-  font-weight: 500;
-  color: #374151;
-}
-
-.taskCount {
-  font-size: 14px;
-  color: #6b7280;
-}
-
-.mainContent {
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-}
-
-.weekView h2 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 20px;
-}
-
-.weekGrid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 16px;
-}
-
-.dayColumn {
-  min-height: 200px;
-}
-
-.dayColumn h4 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 12px;
-  text-align: center;
-  padding: 8px;
-  background: #f3f4f6;
-  border-radius: 6px;
-}
-
-.dayTasks {
+.leftPanel {
+  flex: 1.2;
+  background: var(--msl-card);
+  border-radius: var(--msl-radius);
+  box-shadow: var(--msl-shadow);
+  padding: 24px 18px 18px 18px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  min-width: 420px;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  margin-top: 12px;
 }
 
-.taskCard {
-  background: #eff6ff;
-  border: 1px solid #dbeafe;
-  border-radius: 8px;
-  padding: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.rightPanel {
+  flex: 1;
+  background: var(--msl-card);
+  border-radius: var(--msl-radius);
+  box-shadow: var(--msl-shadow);
+  padding: 24px 18px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  min-width: 340px;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  margin-top: 12px;
 }
 
-.taskCard:hover {
-  background: #dbeafe;
-  transform: translateY(-1px);
+.calendarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
 }
-
-.taskTitle {
-  display: block;
-  font-size: 14px;
+.title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--msl-blue);
+  letter-spacing: 1px;
+}
+.viewSwitch button {
+  background: var(--msl-blue-light);
+  color: var(--msl-blue);
+  border: none;
+  border-radius: 12px;
+  padding: 6px 18px;
+  margin-left: 6px;
+  font-size: 1rem;
   font-weight: 500;
-  color: #1e40af;
-  margin-bottom: 4px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.viewSwitch .active {
+  background: var(--msl-blue);
+  color: #fff;
 }
 
-.taskTime {
-  font-size: 12px;
-  color: #6b7280;
+/* FullCalendar 美化 */
+.fc {
+  background: transparent;
+  font-family: 'Segoe UI', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+  border-radius: var(--msl-radius);
+}
+.fc-toolbar {
+  margin-bottom: 0 !important;
+}
+.fc-toolbar-title {
+  font-size: 1.2rem;
+  color: var(--msl-blue);
+  font-weight: 700;
+}
+.fc-button {
+  background: var(--msl-blue-light) !important;
+  color: var(--msl-blue) !important;
+  border-radius: 10px !important;
+  border: none !important;
+  margin: 0 2px;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+}
+.fc-button-active, .fc-button-primary:not(:disabled).fc-button-active {
+  background: var(--msl-blue) !important;
+  color: #fff !important;
+}
+.fc-event {
+  background: var(--msl-blue-light) !important;
+  color: var(--msl-blue) !important;
+  border-radius: 8px !important;
+  border: none !important;
+  font-size: 1rem;
+  box-shadow: 0 1px 4px rgba(59,130,246,0.08);
+  padding: 2px 8px;
+}
+.fc-day-today {
+  background: #f0f9ff !important;
+}
+.fc-col-header-cell-cushion {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--msl-blue);
+}
+.fc-timegrid-slot-label {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+.fc-scrollgrid {
+  border-radius: var(--msl-radius);
+  border: 1.5px solid var(--msl-border);
 }
 
-@media (max-width: 768px) {
-  .planner {
-    padding: 60px 0;
+/* 任务活动区域 */
+.tasksHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.filterBar button {
+  background: var(--msl-blue-light);
+  color: var(--msl-blue);
+  border: none;
+  border-radius: 12px;
+  padding: 6px 16px;
+  margin-left: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.filterBar .active {
+  background: var(--msl-blue);
+  color: #fff;
+}
+.taskList {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.taskItem {
+  background: var(--msl-blue-light);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px 0 rgba(59,130,246,0.06);
+  padding: 18px 18px 12px 18px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.taskItem:hover, .selectedTask {
+  border: 2px solid var(--msl-blue);
+  background: #e0eaff;
+  box-shadow: 0 4px 16px 0 rgba(59,130,246,0.10);
+}
+.taskTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--msl-blue);
+}
+.taskType {
+  font-size: 0.95rem;
+  color: #64748b;
+  background: #e0f2fe;
+  border-radius: 8px;
+  padding: 2px 8px;
+  margin-left: 8px;
+}
+.taskMeta {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 6px;
+  font-size: 0.98rem;
+  color: #64748b;
+}
+.courseName {
+  font-weight: 500;
+  color: var(--msl-blue);
+}
+.dueDate {
+  color: #2563eb;
+}
+.status {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+.taskDesc {
+  margin-top: 8px;
+  color: #334155;
+  font-size: 0.98rem;
+}
+.overdue {
+  border: 2px solid #ef4444 !important;
+  background: #fef2f2 !important;
+}
+.high {
+  box-shadow: 0 0 0 2px #ef444433;
+}
+.medium {
+  box-shadow: 0 0 0 2px #f59e0b33;
+}
+.low {
+  box-shadow: 0 0 0 2px #10b98133;
+}
+.loading {
+  color: #64748b;
+  font-size: 1.1rem;
+  text-align: center;
+  margin-top: 32px;
+}
+.empty {
+  color: #b6c2d6;
+  font-size: 1.1rem;
+  text-align: center;
+  margin-top: 32px;
+}
+
+/* 返回主菜单按钮 */
+.backToMenuBtn {
+  position: absolute;
+  top: 18px;
+  right: 32px;
+  z-index: 10;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 8px 22px;
+  box-shadow: 0 2px 8px 0 rgba(59,130,246,0.08);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.backToMenuBtn:hover {
+  background: #2563eb;
+}
+
+@media (max-width: 1100px) {
+  .smartPlannerRoot {
+    flex-direction: column;
+    padding: 56px 4px 16px 4px;
+    gap: 16px;
+    height: 90vh;
+    max-height: 90vh;
   }
-  
-  .plannerContent {
-    grid-template-columns: 1fr;
-    gap: 24px;
+  .leftPanel, .rightPanel {
+    min-width: unset;
+    padding: 12px 6px 8px 6px;
+    margin-top: 8px;
   }
-  
-  .weekGrid {
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-  }
-  
-  .dayColumn {
-    min-height: 150px;
-  }
-  
-  .taskCard {
-    padding: 8px;
-  }
-  
-  .taskTitle {
-    font-size: 12px;
-  }
+}
+
+.mslCalendarToolbarWrap .fc-header-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background: linear-gradient(90deg, #f1f5fa 0%, #e0f2fe 100%);
+  border-radius: 22px;
+  padding: 18px 32px 18px 32px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 12px 0 rgba(59,130,246,0.04);
+  gap: 24px;
+}
+.mslCalendarToolbarWrap .fc-toolbar-chunk {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.mslCalendarToolbarWrap .fc-toolbar-title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #22223b;
+  letter-spacing: 1px;
+  margin-right: 18px;
+}
+.mslCalendarToolbarWrap .fc-button {
+  background: #fff !important;
+  color: #22223b !important;
+  border-radius: 18px !important;
+  border: none !important;
+  font-size: 1.1rem;
+  font-weight: 500;
+  box-shadow: 0 1px 4px rgba(59,130,246,0.06);
+  padding: 8px 28px !important;
+  margin: 0 6px;
+  transition: background 0.2s, color 0.2s;
+}
+.mslCalendarToolbarWrap .fc-button-active, .mslCalendarToolbarWrap .fc-button-primary:not(:disabled).fc-button-active {
+  background: #3b82f6 !important;
+  color: #fff !important;
+}
+.mslCalendarToolbarWrap .fc-today-button {
+  background: #fff !important;
+  color: #22223b !important;
+  border-radius: 18px !important;
+  font-weight: 600;
+  font-size: 1.1rem;
+  box-shadow: 0 1px 4px rgba(59,130,246,0.06);
+  padding: 8px 32px !important;
+  margin: 0 12px;
+  border: none !important;
+}
+.mslCalendarToolbarWrap .fc-prev-button, .mslCalendarToolbarWrap .fc-next-button {
+  background: #fff !important;
+  color: #22223b !important;
+  border-radius: 50% !important;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(59,130,246,0.06);
+  border: none !important;
+  margin: 0 6px;
+  transition: background 0.2s, color 0.2s;
+}
+.mslCalendarToolbarWrap .fc-prev-button:hover, .mslCalendarToolbarWrap .fc-next-button:hover {
+  background: #e0f2fe !important;
+  color: #3b82f6 !important;
 } 

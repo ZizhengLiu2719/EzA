@@ -35,6 +35,7 @@ const Planner: React.FC = () => {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [calendarView, setCalendarView] = useState('timeGridWeek');
   const [filter, setFilter] = useState('week');
+  const [calendarRef, setCalendarRef] = useState<any>(null);
   const navigate = useNavigate();
 
   // 获取所有课程和任务
@@ -110,8 +111,28 @@ const Planner: React.FC = () => {
   // 课程名查找
   const getCourseName = (courseId: string) => courses.find(c => c.id === courseId)?.name || '';
 
+  // FullCalendar headerToolbar 配置
+  const headerToolbar = {
+    left: '',
+    center: 'prev today next',
+    right: 'title'
+  };
+
+  // customButtons 配置
+  const customButtons = {
+    today: {
+      text: 'Today',
+      click: () => {
+        if (calendarRef) {
+          calendarRef.getApi().today();
+        }
+      },
+    },
+  };
+
   return (
     <div className={styles.smartPlannerRoot}>
+      <button className={styles.backToMenuBtn} onClick={() => navigate('/dashboard')}>返回主界面</button>
       <div className={styles.leftPanel}>
         <div className={styles.calendarHeader}>
           <span className={styles.title}>日历</span>
@@ -122,16 +143,21 @@ const Planner: React.FC = () => {
             <button className={calendarView === 'listWeek' ? styles.active : ''} onClick={() => setCalendarView('listWeek')}>列表</button>
           </div>
         </div>
-        <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
-          initialView={calendarView}
-          headerToolbar={false}
-          height="auto"
-          events={calendarEvents}
-          eventClick={handleEventClick}
-          eventClassNames={arg => [styles.calendarEvent, isTaskSelected(arg.event.id) ? styles.selectedEvent : '']}
-          datesSet={arg => setCalendarView(arg.view.type)}
-        />
+        <div className={styles.mslCalendarToolbarWrap}>
+          <FullCalendar
+            ref={ref => setCalendarRef(ref)}
+            plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
+            initialView={calendarView}
+            headerToolbar={headerToolbar}
+            customButtons={customButtons}
+            height="auto"
+            events={calendarEvents}
+            eventClick={handleEventClick}
+            eventClassNames={arg => [styles.calendarEvent, isTaskSelected(arg.event.id) ? styles.selectedEvent : '']}
+            datesSet={arg => setCalendarView(arg.view.type)}
+            buttonText={{ today: 'Today' }}
+          />
+        </div>
       </div>
       <div className={styles.rightPanel}>
         <div className={styles.tasksHeader}>
