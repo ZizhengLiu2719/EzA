@@ -1,89 +1,338 @@
+/* Gen Z Feature Steps - "Gaming-Inspired Cards" */
 .features {
-  padding: 40px 0;
-  background: #f8fafc;
+  position: relative;
+  padding: var(--space-20) 0;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
   min-height: 100vh;
+  overflow: hidden;
+}
+
+/* Background Pattern */
+.features::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(79, 70, 229, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 .header {
+  position: relative;
+  z-index: 10;
   text-align: center;
-  margin-bottom: 60px;
+  margin-bottom: var(--space-16);
 }
 
 .title {
-  font-size: 36px;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 16px;
+  font-size: clamp(2.25rem, 4vw, 3rem);
+  font-weight: var(--font-black);
+  color: var(--white);
+  margin-bottom: var(--space-4);
+  position: relative;
+}
+
+.title::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 4px;
+  background: var(--gradient-neon);
+  border-radius: var(--radius-full);
 }
 
 .subtitle {
-  font-size: 18px;
-  color: #6b7280;
-  max-width: 600px;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 700px;
   margin: 0 auto;
+  font-weight: var(--font-medium);
+  line-height: 1.6;
 }
 
+/* Gaming-Style Grid */
 .stepsGrid {
+  position: relative;
+  z-index: 10;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  gap: var(--space-8);
+  margin-top: var(--space-12);
 }
 
+/* Feature Card - Glass Morphism with Neon Accents */
 .step {
-  background: white;
-  padding: 24px;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border: 1px solid #e5e7eb;
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  padding: var(--space-8);
+  border-radius: var(--radius-2xl);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  cursor: pointer;
+  animation: float 6s ease-in-out infinite;
+}
+
+.step:nth-child(2) { animation-delay: 2s; }
+.step:nth-child(3) { animation-delay: 4s; }
+.step:nth-child(4) { animation-delay: 1s; }
+.step:nth-child(5) { animation-delay: 3s; }
+.step:nth-child(6) { animation-delay: 5s; }
+
+/* Neon Border Animation */
+.step::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--gradient-neon);
+  opacity: 0;
+  border-radius: var(--radius-2xl);
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.step::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-radius: calc(var(--radius-2xl) - 2px);
+  z-index: -1;
 }
 
 .step:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.3),
+    0 0 60px rgba(79, 70, 229, 0.3);
 }
 
+.step:hover::before {
+  opacity: 1;
+}
+
+/* Gaming-Style Icon */
 .stepIcon {
-  font-size: 48px;
-  margin-bottom: 20px;
-  display: block;
+  font-size: 3.5rem;
+  margin-bottom: var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-xl);
+  margin: 0 auto var(--space-6);
+  position: relative;
+  box-shadow: 0 10px 30px rgba(79, 70, 229, 0.4);
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.stepIcon::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: var(--gradient-neon);
+  border-radius: var(--radius-xl);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.step:hover .stepIcon::before {
+  opacity: 1;
 }
 
 .stepTitle {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 12px;
+  font-size: clamp(1.125rem, 2vw, 1.375rem);
+  font-weight: var(--font-bold);
+  color: var(--white);
+  margin-bottom: var(--space-3);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .stepDescription {
-  font-size: 16px;
+  font-size: var(--text-base);
   line-height: 1.6;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  font-weight: var(--font-medium);
 }
 
-@media (max-width: 1100px) {
+/* XP/Level Indicator */
+.levelIndicator {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  background: var(--gradient-cyber);
+  color: var(--white);
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+}
+
+/* Progress Bar */
+.progressBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--gradient-neon);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.step:hover .progressFill {
+  transform: translateX(0);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
   .stepsGrid {
     grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
   }
 }
 
 @media (max-width: 768px) {
   .features {
-    padding: 24px 0;
+    padding: var(--space-16) 0;
     min-height: auto;
   }
+  
+  .header {
+    margin-bottom: var(--space-12);
+  }
+  
   .title {
-    font-size: 28px;
+    font-size: clamp(1.75rem, 6vw, 2.5rem);
   }
+  
   .subtitle {
-    font-size: 16px;
+    font-size: var(--text-base);
+    padding: 0 var(--space-4);
   }
+  
   .stepsGrid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: var(--space-5);
+    margin-top: var(--space-8);
   }
+  
   .step {
-    padding: 16px;
+    padding: var(--space-6);
+    margin: 0 var(--space-2);
+  }
+  
+  .stepIcon {
+    width: 60px;
+    height: 60px;
+    font-size: 2.5rem;
+    margin-bottom: var(--space-4);
+  }
+  
+  .stepTitle {
+    font-size: var(--text-lg);
+    margin-bottom: var(--space-2);
+  }
+  
+  .stepDescription {
+    font-size: var(--text-sm);
+  }
+  
+  .levelIndicator {
+    font-size: 0.625rem;
+    padding: 2px var(--space-1);
+  }
+}
+
+@media (max-width: 480px) {
+  .features {
+    padding: var(--space-12) 0;
+  }
+  
+  .step {
+    padding: var(--space-5);
+    margin: 0;
+  }
+  
+  .stepIcon {
+    width: 50px;
+    height: 50px;
+    font-size: 2rem;
+    margin-bottom: var(--space-3);
+  }
+  
+  .stepTitle {
+    font-size: var(--text-base);
+    letter-spacing: 0.25px;
+  }
+  
+  .stepDescription {
+    font-size: var(--text-xs);
+    line-height: 1.5;
+  }
+}
+
+@media (min-width: 1440px) {
+  .features {
+    padding: var(--space-24) 0;
+  }
+  
+  .stepsGrid {
+    gap: var(--space-10);
+    max-width: 1200px;
+    margin: var(--space-16) auto 0;
+  }
+  
+  .step {
+    padding: var(--space-10);
+  }
+  
+  .stepIcon {
+    width: 100px;
+    height: 100px;
+    font-size: 4rem;
+    margin-bottom: var(--space-8);
+  }
+  
+  .stepTitle {
+    font-size: var(--text-2xl);
+    margin-bottom: var(--space-4);
+  }
+  
+  .stepDescription {
+    font-size: var(--text-lg);
   }
 } 
