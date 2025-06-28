@@ -15,25 +15,25 @@ const QUICK_PROMPTS: QuickPrompt[] = [
   // 写作类提示
   {
     id: 'writing-outline',
-    title: '生成写作大纲',
-    description: '为你的论文创建详细大纲',
-    prompt: '请为我的论文生成一个详细的大纲，包括主要论点、支持论据和段落结构。',
+    title: 'Generate Writing Outline',
+    description: 'Create detailed outline for your paper',
+    prompt: 'Please generate a detailed outline for my paper, including main arguments, supporting evidence, and paragraph structure.',
     category: 'writing',
     icon: '📝'
   },
   {
     id: 'writing-revision',
-    title: '文章修改建议',
-    description: '获得专业的修改建议',
-    prompt: '请帮我检查这篇文章，提供关于逻辑结构、语言表达和论证强度的改进建议。',
+    title: 'Essay Revision Suggestions',
+    description: 'Get professional revision advice',
+    prompt: 'Please help me review this essay and provide improvement suggestions on logical structure, language expression, and argument strength.',
     category: 'writing',
     icon: '✏️'
   },
   {
     id: 'writing-citation',
-    title: '引用格式帮助',
-    description: '正确格式化引用',
-    prompt: '请帮我按照正确的引用格式整理这些参考文献。',
+    title: 'Citation Format Help',
+    description: 'Format citations correctly',
+    prompt: 'Please help me format these references according to the correct citation style.',
     category: 'writing',
     icon: '📚'
   },
@@ -41,25 +41,25 @@ const QUICK_PROMPTS: QuickPrompt[] = [
   // STEM类提示
   {
     id: 'stem-problem-analysis',
-    title: '问题分析',
-    description: '分析数学或科学问题',
-    prompt: '请帮我分析这个问题，识别问题类型、已知条件和解题思路。',
+    title: 'Problem Analysis',
+    description: 'Analyze math or science problems',
+    prompt: 'Please help me analyze this problem, identify the problem type, known conditions, and solution approach.',
     category: 'stem',
     icon: '🔍'
   },
   {
     id: 'stem-step-by-step',
-    title: '分步解题指导',
-    description: '获得解题步骤提示',
-    prompt: '请为我提供分步解题指导，但不要直接给出答案，让我自己思考。',
+    title: 'Step-by-Step Guidance',
+    description: 'Get step-by-step solution hints',
+    prompt: 'Please provide step-by-step solution guidance, but don\'t give the answer directly, let me think for myself.',
     category: 'stem',
     icon: '📊'
   },
   {
     id: 'stem-concept-explanation',
-    title: '概念解释',
-    description: '理解复杂概念',
-    prompt: '请用简单易懂的方式解释这个概念，并提供实际应用的例子。',
+    title: 'Concept Explanation',
+    description: 'Understand complex concepts',
+    prompt: 'Please explain this concept in simple terms and provide practical application examples.',
     category: 'stem',
     icon: '💡'
   },
@@ -67,25 +67,25 @@ const QUICK_PROMPTS: QuickPrompt[] = [
   // 阅读类提示
   {
     id: 'reading-summary',
-    title: '生成摘要',
-    description: '总结阅读材料要点',
-    prompt: '请为这篇阅读材料生成一个简洁的摘要，突出主要论点和关键概念。',
+    title: 'Generate Summary',
+    description: 'Summarize reading material key points',
+    prompt: 'Please generate a concise summary for this reading material, highlighting main arguments and key concepts.',
     category: 'reading',
     icon: '📖'
   },
   {
     id: 'reading-analysis',
-    title: '深度分析',
-    description: '分析文章结构和论证',
-    prompt: '请分析这篇文章的论证方法、证据支持和逻辑结构。',
+    title: 'Deep Analysis',
+    description: 'Analyze article structure and arguments',
+    prompt: 'Please analyze this article\'s argumentation methods, evidence support, and logical structure.',
     category: 'reading',
     icon: '🔬'
   },
   {
     id: 'reading-vocabulary',
-    title: '词汇解释',
-    description: '理解专业术语',
-    prompt: '请解释这些专业术语的含义，并提供记忆技巧。',
+    title: 'Vocabulary Explanation',
+    description: 'Understand technical terms',
+    prompt: 'Please explain the meaning of these technical terms and provide memory techniques.',
     category: 'reading',
     icon: '📝'
   },
@@ -93,25 +93,25 @@ const QUICK_PROMPTS: QuickPrompt[] = [
   // 编程类提示
   {
     id: 'programming-algorithm',
-    title: '算法设计',
-    description: '设计算法解决方案',
-    prompt: '请帮我设计一个算法来解决这个问题，考虑时间复杂度和空间复杂度。',
+    title: 'Algorithm Design',
+    description: 'Design algorithm solutions',
+    prompt: 'Please help me design an algorithm to solve this problem, considering time complexity and space complexity.',
     category: 'programming',
     icon: '⚙️'
   },
   {
     id: 'programming-debug',
-    title: '代码调试',
-    description: '找出代码中的问题',
-    prompt: '请帮我检查这段代码，找出可能的错误和改进建议。',
+    title: 'Code Debugging',
+    description: 'Find issues in code',
+    prompt: 'Please help me check this code and identify possible errors and improvement suggestions.',
     category: 'programming',
     icon: '🐛'
   },
   {
     id: 'programming-optimization',
-    title: '代码优化',
-    description: '优化代码性能',
-    prompt: '请帮我优化这段代码，提高执行效率和可读性。',
+    title: 'Code Optimization',
+    description: 'Optimize code performance',
+    prompt: 'Please help me optimize this code to improve execution efficiency and readability.',
     category: 'programming',
     icon: '🚀'
   },
@@ -119,25 +119,25 @@ const QUICK_PROMPTS: QuickPrompt[] = [
   // 通用提示
   {
     id: 'general-study-plan',
-    title: '学习计划',
-    description: '制定个性化学习计划',
-    prompt: '请帮我制定一个针对这个主题的个性化学习计划，包括时间安排和学习方法。',
+    title: 'Study Plan',
+    description: 'Create personalized study plan',
+    prompt: 'Please help me create a personalized study plan for this topic, including time arrangement and study methods.',
     category: 'general',
     icon: '📅'
   },
   {
     id: 'general-memory-techniques',
-    title: '记忆技巧',
-    description: '学习记忆方法',
-    prompt: '请推荐一些有效的记忆技巧，帮助我更好地记住这些知识点。',
+    title: 'Memory Techniques',
+    description: 'Learn memory methods',
+    prompt: 'Please recommend some effective memory techniques to help me better remember these knowledge points.',
     category: 'general',
     icon: '🧠'
   },
   {
     id: 'general-exam-prep',
-    title: '考试准备',
-    description: '制定考试复习策略',
-    prompt: '请帮我制定一个考试复习策略，包括重点内容、复习方法和时间安排。',
+    title: 'Exam Preparation',
+    description: 'Create exam review strategy',
+    prompt: 'Please help me create an exam review strategy, including key content, review methods, and time arrangement.',
     category: 'general',
     icon: '📋'
   }
@@ -158,12 +158,12 @@ const AIQuickPrompts: React.FC<AIQuickPromptsProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const categories = [
-    { id: 'all', name: '全部', icon: '🌟' },
-    { id: 'writing', name: '写作', icon: '✍️' },
+    { id: 'all', name: 'All', icon: '🌟' },
+    { id: 'writing', name: 'Writing', icon: '✍️' },
     { id: 'stem', name: 'STEM', icon: '🧮' },
-    { id: 'reading', name: '阅读', icon: '📚' },
-    { id: 'programming', name: '编程', icon: '💻' },
-    { id: 'general', name: '通用', icon: '🎯' }
+    { id: 'reading', name: 'Reading', icon: '📚' },
+    { id: 'programming', name: 'Programming', icon: '💻' },
+    { id: 'general', name: 'General', icon: '🎯' }
   ]
 
   const filteredPrompts = selectedCategory === 'all' 
@@ -192,8 +192,8 @@ const AIQuickPrompts: React.FC<AIQuickPromptsProps> = ({
           <LucideLightbulb size={20} />
         </div>
         <div className={styles.headerContent}>
-          <h3>快速提示</h3>
-          <p>选择常用提示模板，快速开始对话</p>
+          <h3>Quick Prompts</h3>
+          <p>Select common prompt templates to start conversations quickly</p>
         </div>
       </div>
 
@@ -250,7 +250,7 @@ const AIQuickPrompts: React.FC<AIQuickPromptsProps> = ({
 
       {filteredPrompts.length === 0 && (
         <div className={styles.emptyState}>
-          <p>该分类下暂无提示模板</p>
+          <p>No prompt templates in this category</p>
         </div>
       )}
     </div>

@@ -83,80 +83,80 @@ const CourseParseResultEditor: React.FC<Props> = ({ initialData, onSave, onCance
 
   return (
     <div className={styles.editorRoot}>
-      <h2>课程结构化信息编辑</h2>
+      <h2>Course Structured Information Editor</h2>
       <div className={styles.section}>
-        <label>课程名称：</label>
+        <label>Course Name:</label>
         <input value={data.course_name ?? ''} onChange={e => handleFieldChange('course_name', e.target.value)} />
       </div>
       <div className={styles.section}>
-        <label>学期：</label>
+        <label>Semester:</label>
         <input value={data.semester ?? ''} onChange={e => handleFieldChange('semester', e.target.value)} style={{ width: 100 }} />
-        <label>年份：</label>
+        <label>Year:</label>
         <input type="number" value={data.year ?? ''} onChange={e => handleFieldChange('year', Number(e.target.value))} style={{ width: 80 }} />
       </div>
       <div className={styles.section}>
-        <label>课程描述：</label>
+        <label>Course Description:</label>
         <textarea value={data.course_description ?? ''} onChange={e => handleFieldChange('course_description', e.target.value)} />
       </div>
       <div className={styles.section}>
-        <label>评分政策：</label>
+        <label>Grading Policy:</label>
         <input value={data.grading_policy ?? ''} onChange={e => handleFieldChange('grading_policy', e.target.value)} />
       </div>
       <div className={styles.section}>
-        <h3>任务列表</h3>
-        {data.tasks.length === 0 && <div>暂无任务</div>}
+        <h3>Task List</h3>
+        {data.tasks.length === 0 && <div>No tasks</div>}
         {data.tasks.length > 0 && (
           <div className={styles.taskHeader}>
-            <span>任务标题</span>
-            <span>类型</span>
-            <span>截止日期</span>
-            <span>优先级</span>
-            <span>预计耗时(小时)</span>
-            <span>任务描述</span>
-            <span>操作</span>
+            <span>Task Title</span>
+            <span>Type</span>
+            <span>Due Date</span>
+            <span>Priority</span>
+            <span>Estimated Hours</span>
+            <span>Task Description</span>
+            <span>Actions</span>
           </div>
         )}
         {data.tasks.map((task, idx) => (
           <div key={idx} className={styles.taskItem}>
-            <input value={task.title ?? ''} onChange={e => handleTaskChange(idx, 'title', e.target.value)} placeholder="任务标题" />
+            <input value={task.title ?? ''} onChange={e => handleTaskChange(idx, 'title', e.target.value)} placeholder="Task title" />
             <select value={task.type ?? ''} onChange={e => handleTaskChange(idx, 'type', e.target.value as any)}>
-              <option value="reading">阅读</option>
-              <option value="writing">写作</option>
-              <option value="assignment">作业</option>
-              <option value="exam">考试</option>
-              <option value="quiz">小测</option>
-              <option value="project">项目</option>
-              <option value="presentation">展示</option>
+              <option value="reading">Reading</option>
+              <option value="writing">Writing</option>
+              <option value="assignment">Assignment</option>
+              <option value="exam">Exam</option>
+              <option value="quiz">Quiz</option>
+              <option value="project">Project</option>
+              <option value="presentation">Presentation</option>
             </select>
             <input type="date" value={formatDateInputValue(task.due_date)} onChange={e => handleTaskChange(idx, 'due_date', e.target.value || '')} />
             <select value={task.priority ?? ''} onChange={e => handleTaskChange(idx, 'priority', e.target.value as any)}>
-              <option value="low">低</option>
-              <option value="medium">中</option>
-              <option value="high">高</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
             </select>
             <input type="number" value={task.estimated_hours ?? ''} min={0.5} step={0.5} onChange={e => handleTaskChange(idx, 'estimated_hours', Number(e.target.value))} style={{ width: '100%' }} />
-            <input value={task.description ?? ''} onChange={e => handleTaskChange(idx, 'description', e.target.value)} placeholder="描述" />
-            <button type="button" onClick={() => handleDeleteTask(idx)}>删除</button>
+            <input value={task.description ?? ''} onChange={e => handleTaskChange(idx, 'description', e.target.value)} placeholder="Description" />
+            <button type="button" onClick={() => handleDeleteTask(idx)}>Delete</button>
           </div>
         ))}
         <div className={styles.addTaskRow}>
-          <input value={newTask.title ?? ''} onChange={e => setNewTask({ ...newTask, title: e.target.value })} placeholder="新任务标题" />
+          <input value={newTask.title ?? ''} onChange={e => setNewTask({ ...newTask, title: e.target.value })} placeholder="New task title" />
           <select value={newTask.type ?? ''} onChange={e => setNewTask({ ...newTask, type: e.target.value as any })}>
-            <option value="reading">阅读</option>
-            <option value="writing">写作</option>
-            <option value="assignment">作业</option>
-            <option value="exam">考试</option>
-            <option value="quiz">小测</option>
-            <option value="project">项目</option>
-            <option value="presentation">展示</option>
+            <option value="reading">Reading</option>
+            <option value="writing">Writing</option>
+            <option value="assignment">Assignment</option>
+            <option value="exam">Exam</option>
+            <option value="quiz">Quiz</option>
+            <option value="project">Project</option>
+            <option value="presentation">Presentation</option>
           </select>
           <input type="date" value={formatDateInputValue(newTask.due_date)} onChange={e => setNewTask({ ...newTask, due_date: e.target.value || '' })} />
-          <button type="button" onClick={handleAddTask}>添加任务</button>
+          <button type="button" onClick={handleAddTask}>Add Task</button>
         </div>
       </div>
       <div className={styles.section} style={{ marginTop: 24 }}>
-        <button className={styles.saveBtn} onClick={handleSave}>保存/完成</button>
-        {onCancel && <button className={styles.cancelBtn} onClick={onCancel}>取消</button>}
+        <button className={styles.saveBtn} onClick={handleSave}>Save/Complete</button>
+        {onCancel && <button className={styles.cancelBtn} onClick={onCancel}>Cancel</button>}
       </div>
     </div>
   );

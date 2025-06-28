@@ -7,29 +7,29 @@ const Review = () => {
   const [reviewType, setReviewType] = useState('flashcards')
 
   const courses = [
-    { id: '1', name: '历史学概论', progress: 75 },
-    { id: '2', name: '高等数学', progress: 60 },
-    { id: '3', name: '心理学基础', progress: 90 }
+    { id: '1', name: 'Introduction to History', progress: 75 },
+    { id: '2', name: 'Advanced Mathematics', progress: 60 },
+    { id: '3', name: 'Psychology Fundamentals', progress: 90 }
   ]
 
   const reviewTypes = [
-    { id: 'flashcards', name: '复习卡片', icon: '🧠' },
-    { id: 'quiz', name: '模拟测验', icon: '📝' },
-    { id: 'summary', name: '知识总结', icon: '📋' }
+    { id: 'flashcards', name: 'Review Cards', icon: '🧠' },
+    { id: 'quiz', name: 'Practice Quiz', icon: '📝' },
+    { id: 'summary', name: 'Knowledge Summary', icon: '📋' }
   ]
 
   const flashcards = [
     {
       id: '1',
-      question: '什么是文艺复兴？',
-      answer: '文艺复兴是14-17世纪欧洲的一场文化运动，强调人文主义、古典文化的复兴和艺术创新。',
-      category: '历史学概论'
+      question: 'What is the Renaissance?',
+      answer: 'The Renaissance was a cultural movement in Europe from the 14th to 17th centuries, emphasizing humanism, revival of classical culture, and artistic innovation.',
+      category: 'Introduction to History'
     },
     {
       id: '2',
-      question: '微积分的基本定理是什么？',
-      answer: '微积分基本定理建立了微分和积分之间的联系，表明积分是微分的逆运算。',
-      category: '高等数学'
+      question: 'What is the fundamental theorem of calculus?',
+      answer: 'The fundamental theorem of calculus establishes the connection between differentiation and integration, showing that integration is the inverse operation of differentiation.',
+      category: 'Advanced Mathematics'
     }
   ]
 
@@ -38,14 +38,14 @@ const Review = () => {
       <BackToDashboardButton />
       <div className="container">
         <div className={styles.header}>
-          <h1>复习与考试准备</h1>
-          <p>智能生成复习材料，助你高效备考</p>
+          <h1>Review & Exam Preparation</h1>
+          <p>Intelligently generate review materials to help you prepare efficiently</p>
         </div>
         
         <div className={styles.reviewContent}>
           <div className={styles.sidebar}>
             <div className={styles.courseSection}>
-              <h3>选择课程</h3>
+              <h3>Select Course</h3>
               <div className={styles.courseList}>
                 {courses.map((course) => (
                   <div 
@@ -61,7 +61,7 @@ const Review = () => {
                           style={{ width: `${course.progress}%` }}
                         ></div>
                       </div>
-                      <span className={styles.progressText}>{course.progress}% 完成</span>
+                      <span className={styles.progressText}>{course.progress}% Complete</span>
                     </div>
                   </div>
                 ))}
@@ -69,7 +69,7 @@ const Review = () => {
             </div>
             
             <div className={styles.typeSection}>
-              <h3>复习类型</h3>
+              <h3>Review Type</h3>
               <div className={styles.typeList}>
                 {reviewTypes.map((type) => (
                   <div 
@@ -89,8 +89,8 @@ const Review = () => {
             {reviewType === 'flashcards' && (
               <div className={styles.flashcardsView}>
                 <div className={styles.flashcardsHeader}>
-                  <h2>复习卡片</h2>
-                  <button className="btn btn-primary">生成新卡片</button>
+                  <h2>Review Cards</h2>
+                  <button className="btn btn-primary">Generate New Cards</button>
                 </div>
                 
                 <div className={styles.flashcardsGrid}>
@@ -104,8 +104,8 @@ const Review = () => {
                         <p className={styles.cardAnswer}>{card.answer}</p>
                       </div>
                       <div className={styles.cardActions}>
-                        <button className="btn btn-secondary">标记已掌握</button>
-                        <button className="btn btn-secondary">需要复习</button>
+                        <button className="btn btn-secondary">Mark as Mastered</button>
+                        <button className="btn btn-secondary">Need Review</button>
                       </div>
                     </div>
                   ))}
@@ -115,17 +115,17 @@ const Review = () => {
             
             {reviewType === 'quiz' && (
               <div className={styles.quizView}>
-                <h2>模拟测验</h2>
-                <p>AI生成的个性化测验题目</p>
-                <button className="btn btn-primary">开始测验</button>
+                <h2>Practice Quiz</h2>
+                <p>AI-generated personalized quiz questions</p>
+                <button className="btn btn-primary">Start Quiz</button>
               </div>
             )}
             
             {reviewType === 'summary' && (
               <div className={styles.summaryView}>
-                <h2>知识总结</h2>
-                <p>课程重点内容汇总</p>
-                <button className="btn btn-primary">生成总结</button>
+                <h2>Knowledge Summary</h2>
+                <p>Course key content summary</p>
+                <button className="btn btn-primary">Generate Summary</button>
               </div>
             )}
           </div>

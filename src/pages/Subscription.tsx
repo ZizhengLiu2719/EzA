@@ -38,19 +38,19 @@ const Subscription: React.FC = () => {
 
   const handleUpgrade = (plan: SubscriptionPlan) => {
     // 这里应该跳转到支付页面或处理升级逻辑
-    console.log(`升级到 ${plan} 计划`)
-    alert(`即将升级到 ${SUBSCRIPTION_PLANS[plan].name}`)
+    console.log(`Upgrade to ${plan} plan`)
+    alert(`About to upgrade to ${SUBSCRIPTION_PLANS[plan].name}`)
   }
 
   const handleManageSubscription = () => {
     // 这里应该跳转到订阅管理页面
-    alert('跳转到订阅管理页面')
+    alert('Redirect to subscription management page')
   }
 
   if (loading) {
     return (
       <div className={styles.container}>
-        <div className={styles.loading}>加载中...</div>
+        <div className={styles.loading}>Loading...</div>
       </div>
     )
   }
@@ -65,16 +65,16 @@ const Subscription: React.FC = () => {
           className={styles.backButton}
           onClick={() => navigate('/')}
         >
-          ← 返回主界面
+          ← Return to Main Interface
         </button>
-        <h1 className={styles.title}>订阅计划</h1>
+        <h1 className={styles.title}>Subscription Plans</h1>
       </div>
 
       {/* 当前订阅状态 */}
       {currentPlan && (
         <div className={styles.currentPlan}>
           <div className={styles.currentPlanHeader}>
-            <h2>当前订阅</h2>
+            <h2>Current Subscription</h2>
             <span className={`${styles.planBadge} ${styles[currentSubscription!.plan]}`}>
               {currentPlan.name}
             </span>
@@ -84,17 +84,17 @@ const Subscription: React.FC = () => {
             <div className={styles.planInfo}>
               <p className={styles.planDescription}>{currentPlan.description}</p>
               <p className={styles.planPrice}>
-                {currentPlan.price === 0 ? '免费' : `$${currentPlan.price}/月`}
+                {currentPlan.price === 0 ? 'Free' : `$${currentPlan.price}/month`}
               </p>
             </div>
 
             {/* 使用统计 */}
             {usageStats && (
               <div className={styles.usageStats}>
-                <h3>本月使用情况</h3>
+                <h3>This Month's Usage</h3>
                 <div className={styles.usageItems}>
                   <div className={styles.usageItem}>
-                    <span>AI对话</span>
+                    <span>AI Conversations</span>
                     <span>
                       {usageStats.monthly_conversations_used} / 
                       {usageStats.monthly_conversations_limit === -1 ? '∞' : usageStats.monthly_conversations_limit}
@@ -110,7 +110,7 @@ const Subscription: React.FC = () => {
                     </div>
                   </div>
                   <div className={styles.usageItem}>
-                    <span>课程上传</span>
+                    <span>Course Uploads</span>
                     <span>
                       {usageStats.monthly_courses_used} / 
                       {usageStats.monthly_courses_limit === -1 ? '∞' : usageStats.monthly_courses_limit}
@@ -131,7 +131,7 @@ const Subscription: React.FC = () => {
 
             {/* 功能列表 */}
             <div className={styles.features}>
-              <h3>包含功能</h3>
+              <h3>Included Features</h3>
               <ul className={styles.featureList}>
                 {currentPlan.features.map((feature, index) => (
                   <li key={index} className={styles.featureItem}>
@@ -147,7 +147,7 @@ const Subscription: React.FC = () => {
                 className={styles.manageButton}
                 onClick={handleManageSubscription}
               >
-                管理订阅
+                Manage Subscription
               </button>
             )}
           </div>
@@ -156,7 +156,7 @@ const Subscription: React.FC = () => {
 
       {/* 可用计划 */}
       <div className={styles.availablePlans}>
-        <h2>可用计划</h2>
+        <h2>Available Plans</h2>
         <div className={styles.plansGrid}>
           {Object.entries(SUBSCRIPTION_PLANS).map(([planKey, plan]) => (
             <div 
@@ -166,7 +166,7 @@ const Subscription: React.FC = () => {
               <div className={styles.planHeader}>
                 <h3>{plan.name}</h3>
                 <div className={styles.planPrice}>
-                  {plan.price === 0 ? '免费' : `$${plan.price}/月`}
+                  {plan.price === 0 ? 'Free' : `$${plan.price}/month`}
                 </div>
               </div>
 
@@ -175,7 +175,7 @@ const Subscription: React.FC = () => {
               </div>
 
               <div className={styles.planFeatures}>
-                <h4>包含功能</h4>
+                <h4>Included Features</h4>
                 <ul>
                   {plan.features.map((feature, index) => (
                     <li key={index}>
@@ -188,27 +188,27 @@ const Subscription: React.FC = () => {
 
               <div className={styles.planLimits}>
                 <div className={styles.limitItem}>
-                  <span>AI对话:</span>
-                  <span>{plan.monthlyConversations === -1 ? '无限' : `${plan.monthlyConversations}次/月`}</span>
+                  <span>AI Conversations:</span>
+                  <span>{plan.monthlyConversations === -1 ? 'Unlimited' : `${plan.monthlyConversations}/month`}</span>
                 </div>
                 <div className={styles.limitItem}>
-                  <span>课程上传:</span>
-                  <span>{plan.monthlyCourses === -1 ? '无限' : `${plan.monthlyCourses}个/月`}</span>
+                  <span>Course Uploads:</span>
+                  <span>{plan.monthlyCourses === -1 ? 'Unlimited' : `${plan.monthlyCourses}/month`}</span>
                 </div>
                 <div className={styles.limitItem}>
-                  <span>AI模型:</span>
+                  <span>AI Model:</span>
                   <span>{plan.aiModel === 'gpt-4o' ? 'GPT-4o' : 'GPT-3.5 Turbo'}</span>
                 </div>
               </div>
 
-              <button 
-                className={`${styles.upgradeButton} ${currentSubscription?.plan === planKey ? styles.currentPlanButton : ''}`}
-                onClick={() => handleUpgrade(planKey as SubscriptionPlan)}
-                disabled={currentSubscription?.plan === planKey}
-              >
-                {currentSubscription?.plan === planKey ? '当前计划' : 
-                 currentSubscription?.plan === 'free' ? '升级' : '切换计划'}
-              </button>
+              {currentSubscription?.plan !== planKey && (
+                <button 
+                  className={styles.upgradeButton}
+                  onClick={() => handleUpgrade(planKey as SubscriptionPlan)}
+                >
+                  {currentSubscription?.plan === 'free' ? 'Upgrade' : 'Switch Plan'}
+                </button>
+              )}
             </div>
           ))}
         </div>

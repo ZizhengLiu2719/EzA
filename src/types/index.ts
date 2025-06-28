@@ -66,7 +66,6 @@ export interface AIConversation {
   user_id: string
   task_id?: string
   assistant_type: 'writing' | 'stem' | 'reading' | 'programming'
-  messages: AIMessage[]
   created_at: string
   updated_at: string
 }

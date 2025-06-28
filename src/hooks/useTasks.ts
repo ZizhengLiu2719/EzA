@@ -182,7 +182,7 @@ export const useTasks = (courseId?: string) => {
       const hasError = results.some(result => result.error)
       
       if (hasError) {
-        setError('部分任务更新失败')
+        setError('Some tasks failed to update')
       } else {
         // 重新获取任务列表
         await fetchTasks()

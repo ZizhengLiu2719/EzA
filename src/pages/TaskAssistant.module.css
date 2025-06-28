@@ -29,6 +29,205 @@
   gap: 12px;
 }
 
+/* 下拉框容器 */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* 下拉框按钮 */
+.dropdownBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.dropdownBtn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.dropdownBtn.active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #2563eb;
+}
+
+/* 特殊按钮样式 */
+.dropdownBtn.quickPromptsBtn {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fbbf24;
+}
+
+.dropdownBtn.quickPromptsBtn:hover {
+  background: #fde68a;
+  border-color: #f59e0b;
+}
+
+.dropdownBtn.quickPromptsBtn.active {
+  background: #fcd34d;
+  border-color: #f59e0b;
+  color: #78350f;
+}
+
+.dropdownBtn.progressBtn {
+  background: #f0f9ff;
+  color: #0369a1;
+  border-color: #7dd3fc;
+}
+
+.dropdownBtn.progressBtn:hover {
+  background: #e0f2fe;
+  border-color: #38bdf8;
+}
+
+.dropdownBtn.progressBtn.active {
+  background: #bae6fd;
+  border-color: #38bdf8;
+  color: #075985;
+}
+
+/* 箭头图标 */
+.chevron {
+  transition: transform 0.2s ease;
+  margin-left: auto;
+}
+
+.chevronUp {
+  transform: rotate(180deg);
+}
+
+/* 下拉框内容 */
+.dropdownContent {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  margin-top: 4px;
+  min-width: 300px;
+  max-height: 500px;
+  overflow-y: auto;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+/* 下拉框中的组件样式覆盖 */
+.dropdownContent :global(.quickPrompts) {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+  max-width: none;
+}
+
+.dropdownContent :global(.quickPrompts) :global(.header) {
+  padding: 16px 20px 12px;
+  background: #f9fafb;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.dropdownContent :global(.quickPrompts) :global(.categoryFilter) {
+  padding: 12px 20px;
+}
+
+.dropdownContent :global(.quickPrompts) :global(.promptsList) {
+  padding: 16px 20px;
+  max-height: 300px;
+}
+
+/* Learning Progress 组件在下拉框中的样式 */
+.dropdownContent .learningProgress {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 下拉框头部 */
+.dropdownHeader {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #f3f4f6;
+  background: #f9fafb;
+  border-radius: 8px 8px 0 0;
+}
+
+.dropdownHeader h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* 下拉框主体 */
+.dropdownBody {
+  padding: 16px 20px;
+}
+
+/* 配置项样式 */
+.configSection {
+  margin-bottom: 16px;
+}
+
+.configSection:last-child {
+  margin-bottom: 0;
+}
+
+.configSection label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.configSelect {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  color: #374151;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.configSelect:hover {
+  border-color: #9ca3af;
+}
+
+.configSelect:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
 .configBtn, .newChatBtn, .quickPromptsBtn {
   display: flex;
   align-items: center;
@@ -584,152 +783,21 @@
   text-align: center;
 }
 
-.configPanel {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 320px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e5e7eb;
-  z-index: 10;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.configHeader {
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.configHeader h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #374151;
-  margin: 0;
-}
-
-.closeBtn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: #6b7280;
-  cursor: pointer;
-  padding: 0;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-}
-
-.closeBtn:hover {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.configContent {
-  padding: 24px;
-}
-
-.configSection {
-  margin-bottom: 24px;
-}
-
-.configSection:last-child {
-  margin-bottom: 0;
-}
-
-.configSection h4 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 12px;
-}
-
-.configOptions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.configOption {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  transition: background-color 0.2s ease;
-}
-
-.configOption:hover {
-  background: #f9fafb;
-}
-
-.configOption input[type="radio"] {
-  margin: 0;
-  margin-top: 2px;
-}
-
-.configOption span {
-  font-size: 14px;
-  color: #374151;
-}
-
-.configOptionInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.configOptionLabel {
-  font-size: 14px;
-  color: #374151;
-  font-weight: 500;
-}
-
-.configOptionDesc {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.quickPromptsPanel {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 400px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e5e7eb;
-  z-index: 10;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
 @media (max-width: 1024px) {
   .assistantContent {
     grid-template-columns: 1fr;
     gap: 24px;
   }
   
-  .configPanel, .quickPromptsPanel {
+  .dropdownContent {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     width: 90%;
     max-width: 400px;
-  }
-  
-  .quickPromptsPanel {
-    max-width: 500px;
+    left: auto;
+    right: auto;
   }
 }
 
@@ -745,6 +813,17 @@
   }
   
   .headerActions {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .dropdown {
+    flex: 1;
+    min-width: 200px;
+  }
+  
+  .dropdownBtn {
+    width: 100%;
     justify-content: center;
   }
   

@@ -474,8 +474,7 @@ export const aiConversationApi = {
         .insert([{
           user_id: user.id,
           task_id: taskId,
-          assistant_type: assistantType,
-          messages: []
+          assistant_type: assistantType
         }])
         .select()
         .single()

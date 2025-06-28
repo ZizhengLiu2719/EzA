@@ -11,10 +11,10 @@ import { useNavigate } from 'react-router-dom';
 import styles from './Planner.module.css';
 
 const FILTERS = [
-  { key: 'all', label: '未完成任务' },
-  { key: 'week', label: '本周内逾期任务' },
-  { key: 'overdue', label: '逾期任务' },
-  { key: 'completed', label: '已完成' },
+  { key: 'all', label: 'Incomplete Tasks' },
+  { key: 'week', label: 'Overdue This Week' },
+  { key: 'overdue', label: 'Overdue Tasks' },
+  { key: 'completed', label: 'Completed' },
 ];
 
 const getWeekRange = () => {
@@ -165,7 +165,7 @@ const Planner: React.FC = () => {
     try {
       await tasksApi.updateTask(event.id, { due_date: newDate.toISOString() });
     } catch (e) {
-      alert('保存任务时间失败，请重试');
+      alert('Failed to save task time, please try again');
     }
   };
 
@@ -177,7 +177,7 @@ const Planner: React.FC = () => {
     try {
       await tasksApi.updateTask(event.id, { due_date: newDate.toISOString() });
     } catch (e) {
-      alert('保存任务时间失败，请重试');
+      alert('Failed to save task time, please try again');
     }
   };
 
@@ -188,22 +188,22 @@ const Planner: React.FC = () => {
     try {
       await tasksApi.updateTask(task.id, { status: newStatus });
     } catch (e) {
-      alert('保存任务状态失败，请重试');
+      alert('Failed to save task status, please try again');
     }
     setShowStatusModal(false);
   };
 
   return (
     <div className={styles.smartPlannerRoot}>
-      <button className={styles.backToMenuBtn} onClick={() => navigate('/dashboard')}>返回主界面</button>
+      <button className={styles.backToMenuBtn} onClick={() => navigate('/dashboard')}>Return to Main Interface</button>
       <div className={styles.leftPanel}>
         <div className={styles.calendarHeader}>
-          <span className={styles.title}>日历</span>
+          <span className={styles.title}>Calendar</span>
           <div className={styles.viewSwitch}>
-            <button className={calendarView === 'dayGridMonth' ? styles.active : ''} onClick={() => setCalendarView('dayGridMonth')}>月</button>
-            <button className={calendarView === 'timeGridWeek' ? styles.active : ''} onClick={() => setCalendarView('timeGridWeek')}>周</button>
-            <button className={calendarView === 'timeGridDay' ? styles.active : ''} onClick={() => setCalendarView('timeGridDay')}>天</button>
-            <button className={calendarView === 'listWeek' ? styles.active : ''} onClick={() => setCalendarView('listWeek')}>列表</button>
+            <button className={calendarView === 'dayGridMonth' ? styles.active : ''} onClick={() => setCalendarView('dayGridMonth')}>Month</button>
+            <button className={calendarView === 'timeGridWeek' ? styles.active : ''} onClick={() => setCalendarView('timeGridWeek')}>Week</button>
+            <button className={calendarView === 'timeGridDay' ? styles.active : ''} onClick={() => setCalendarView('timeGridDay')}>Day</button>
+            <button className={calendarView === 'listWeek' ? styles.active : ''} onClick={() => setCalendarView('listWeek')}>List</button>
           </div>
         </div>
         <div className={styles.mslCalendarToolbarWrap}>
@@ -224,35 +224,35 @@ const Planner: React.FC = () => {
             eventReceive={handleEventReceive}
             eventDrop={handleEventDrop}
           />
-              </div>
+        </div>
         {showStatusModal && modalTask && (
           <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.18)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}}>
             <div style={{background:'#fff',borderRadius:16,padding:32,minWidth:320,boxShadow:'0 4px 24px 0 rgba(59,130,246,0.12)'}}>
-              <h3 style={{marginBottom:18,fontSize:'1.2rem',color:'#2563eb'}}>任务状态</h3>
+              <h3 style={{marginBottom:18,fontSize:'1.2rem',color:'#2563eb'}}>Task Status</h3>
               <div style={{marginBottom:18}}>
                 <div style={{fontWeight:600,fontSize:'1.1rem',marginBottom:6}}>{modalTask.title}</div>
-                <div style={{color:'#64748b',fontSize:'0.98rem'}}>{modalTask.status === 'completed' ? '已完成' : '未完成'}</div>
+                <div style={{color:'#64748b',fontSize:'0.98rem'}}>{modalTask.status === 'completed' ? 'Completed' : 'Incomplete'}</div>
               </div>
               <button style={{background:'#3b82f6',color:'#fff',border:'none',borderRadius:8,padding:'8px 24px',fontWeight:600,fontSize:'1rem',marginRight:12,cursor:'pointer'}} onClick={()=>toggleTaskStatus(modalTask)}>
-                {modalTask.status === 'completed' ? '标记为未完成' : '标记为已完成'}
+                {modalTask.status === 'completed' ? 'Mark as Incomplete' : 'Mark as Completed'}
               </button>
-              <button style={{background:'#f3f4f6',color:'#374151',border:'none',borderRadius:8,padding:'8px 18px',fontWeight:500,fontSize:'1rem',cursor:'pointer'}} onClick={()=>setShowStatusModal(false)}>取消</button>
+              <button style={{background:'#f3f4f6',color:'#374151',border:'none',borderRadius:8,padding:'8px 18px',fontWeight:500,fontSize:'1rem',cursor:'pointer'}} onClick={()=>setShowStatusModal(false)}>Cancel</button>
             </div>
           </div>
         )}
-                        </div>
+      </div>
       <div className={styles.rightPanel}>
         <div className={styles.tasksHeader}>
-          <span className={styles.title}>任务活动</span>
+          <span className={styles.title}>Task Activities</span>
           <div className={styles.filterBar}>
             {FILTERS.map(f => (
               <button key={f.key} className={filter === f.key ? styles.active : ''} onClick={() => setFilter(f.key)}>{f.label}</button>
-                      ))}
-                    </div>
+            ))}
+          </div>
         </div>
         <div className={styles.taskList} ref={taskListRef}>
-          {loading ? <div className={styles.loading}>加载中...</div> :
-            filteredTasks.length === 0 ? <div className={styles.empty}>暂无任务</div> :
+          {loading ? <div className={styles.loading}>Loading...</div> :
+            filteredTasks.length === 0 ? <div className={styles.empty}>No tasks</div> :
               filteredTasks.map(task => (
                 <div
                   key={task.id}
@@ -275,10 +275,10 @@ const Planner: React.FC = () => {
                   <div className={styles.taskMeta}>
                     <span className={styles.courseName}>{getCourseName(task.course_id)}</span>
                     <span className={styles.dueDate}>{formatDateTime(task.due_date)}</span>
-                    <span className={styles.status}>{task.status === 'completed' ? '✅ 已完成' : isOverdue(task.due_date) ? '⚠️ 逾期' : ''}</span>
-              </div>
+                    <span className={styles.status}>{task.status === 'completed' ? '✅ Completed' : isOverdue(task.due_date) ? '⚠️ Overdue' : ''}</span>
+                  </div>
                   {task.description && <div className={styles.taskDesc}>{task.description}</div>}
-            </div>
+                </div>
               ))
           }
         </div>

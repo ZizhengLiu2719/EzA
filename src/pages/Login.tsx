@@ -19,7 +19,7 @@ const Login = () => {
       await signIn(email, password)
       navigate('/dashboard')
     } catch (err: any) {
-      setError(err.message || '登录失败')
+      setError(err.message || 'Login failed')
     } finally {
       setIsLoading(false)
     }
@@ -30,13 +30,13 @@ const Login = () => {
       <div className={styles.loginContainer}>
         <div className={styles.loginHeader}>
           <Link to="/" className={styles.logo}>EzA</Link>
-          <h1>欢迎回来</h1>
-          <p>登录你的EzA账户，继续你的学习之旅</p>
+          <h1>Welcome Back</h1>
+          <p>Sign in to your EzA account to continue your learning journey</p>
         </div>
         {error && <div className={styles.error}>{error}</div>}
         <form className={styles.loginForm} onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
-            <label htmlFor="email">邮箱地址</label>
+            <label htmlFor="email">Email Address</label>
             <input
               type="email"
               id="email"
@@ -47,13 +47,13 @@ const Login = () => {
             />
           </div>
           <div className={styles.formGroup}>
-            <label htmlFor="password">密码</label>
+            <label htmlFor="password">Password</label>
             <input
               type="password"
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="输入你的密码"
+              placeholder="Enter your password"
               required
             />
           </div>
@@ -62,14 +62,14 @@ const Login = () => {
             className={`btn btn-primary ${styles.submitBtn}`}
             disabled={isLoading}
           >
-            {isLoading ? '登录中...' : '登录'}
+            {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
         <div className={styles.loginFooter}>
           <p>
-            还没有账户？{' '}
+            Don't have an account?{' '}
             <Link to="/register" className={styles.link}>
-              立即注册
+              Sign up now
             </Link>
           </p>
         </div>

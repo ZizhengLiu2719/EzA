@@ -69,7 +69,7 @@ export const useAI = () => {
     try {
       const conversation = conversations.find(c => c.id === conversationId)
       if (!conversation) {
-        setError('对话不存在')
+        setError('Conversation does not exist')
         return
       }
 
@@ -92,7 +92,7 @@ export const useAI = () => {
   // 发送消息
   const sendMessage = useCallback(async (message: string) => {
     if (!currentConversation) {
-      setError('请先选择或创建一个对话')
+      setError('Please select or create a conversation first')
       return
     }
 
@@ -136,7 +136,7 @@ export const useAI = () => {
     if (validateAIConfig(newConfig)) {
       setAIConfig(newConfig)
     } else {
-      setError('AI 配置无效')
+      setError('Invalid AI configuration')
     }
   }, [aiConfig])
 
@@ -198,28 +198,13 @@ export const useAIStats = () => {
   })
   const [loading, setLoading] = useState(false)
 
+  // 获取 AI 使用统计
   const fetchStats = useCallback(async () => {
     setLoading(true)
-    
     try {
-      const response = await aiConversationApi.getUserConversations()
-      if (!response.error && response.data) {
-        // 这里可以添加更复杂的统计计算
-        const totalConversations = response.data.length
-        const totalMessages = response.data.reduce((sum, conv) => 
-          sum + (conv.messages?.length || 0), 0
-        )
-        
-        setStats({
-          totalConversations,
-          totalMessages,
-          averageMessagesPerConversation: totalConversations > 0 
-            ? Math.round(totalMessages / totalConversations) 
-            : 0,
-          mostUsedMode: 'bullet_tutor', // 简化版本
-          mostUsedType: 'writing' // 简化版本
-        })
-      }
+      // 这里应该调用实际的 API
+      // const response = await aiStatsApi.getUserStats()
+      // setStats(response.data)
     } catch (error) {
       console.error('Failed to fetch AI stats:', error)
     } finally {

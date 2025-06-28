@@ -40,20 +40,20 @@ const AILearningProgress = () => {
 
   const getModeDisplayName = (mode: string) => {
     switch (mode) {
-      case 'bullet_tutor': return '引导式导师'
-      case 'socratic_bot': return '苏格拉底式'
-      case 'quick_fix': return '快速修复'
-      case 'diagram_ai': return '视觉化助手'
+      case 'bullet_tutor': return 'Guided Tutor'
+      case 'socratic_bot': return 'Socratic Method'
+      case 'quick_fix': return 'Quick Fix'
+      case 'diagram_ai': return 'Visual Assistant'
       default: return mode
     }
   }
 
   const getTypeDisplayName = (type: string) => {
     switch (type) {
-      case 'writing': return '写作'
+      case 'writing': return 'Writing'
       case 'stem': return 'STEM'
-      case 'reading': return '阅读'
-      case 'programming': return '编程'
+      case 'reading': return 'Reading'
+      case 'programming': return 'Programming'
       default: return type
     }
   }
@@ -61,7 +61,7 @@ const AILearningProgress = () => {
   const formatTime = (minutes: number) => {
     const hours = Math.floor(minutes / 60)
     const mins = minutes % 60
-    return hours > 0 ? `${hours}小时${mins}分钟` : `${mins}分钟`
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
   }
 
   if (loading) {
@@ -69,7 +69,7 @@ const AILearningProgress = () => {
       <div className={styles.progressContainer}>
         <div className={styles.loadingState}>
           <div className={styles.spinner}></div>
-          <p>加载学习数据中...</p>
+          <p>Loading learning stats...</p>
         </div>
       </div>
     )
@@ -82,77 +82,77 @@ const AILearningProgress = () => {
           <LucideBarChart3 size={20} />
         </div>
         <div className={styles.headerContent}>
-          <h3>学习进度</h3>
-          <p>你的AI学习统计和成就</p>
+          <h3>Learning Progress</h3>
+          <p>Your AI learning statistics and achievements</p>
         </div>
       </div>
 
       <div className={styles.statsGrid}>
-        {/* 总对话数 */}
+        {/* Total Conversations */}
         <div className={styles.statCard}>
           <div className={styles.statIcon}>
             <LucideMessageCircle size={20} />
           </div>
           <div className={styles.statContent}>
             <div className={styles.statValue}>{learningStats.totalConversations}</div>
-            <div className={styles.statLabel}>总对话数</div>
+            <div className={styles.statLabel}>Total Conversations</div>
           </div>
         </div>
 
-        {/* 总消息数 */}
+        {/* Total Messages */}
         <div className={styles.statCard}>
           <div className={styles.statIcon}>
             <LucideTrendingUp size={20} />
           </div>
           <div className={styles.statContent}>
             <div className={styles.statValue}>{learningStats.totalMessages}</div>
-            <div className={styles.statLabel}>总消息数</div>
+            <div className={styles.statLabel}>Total Messages</div>
           </div>
         </div>
 
-        {/* 学习时长 */}
+        {/* Study Time */}
         <div className={styles.statCard}>
           <div className={styles.statIcon}>
             <LucideClock size={20} />
           </div>
           <div className={styles.statContent}>
             <div className={styles.statValue}>{formatTime(learningStats.totalStudyTime)}</div>
-            <div className={styles.statLabel}>学习时长</div>
+            <div className={styles.statLabel}>Study Time</div>
           </div>
         </div>
 
-        {/* 学习连续天数 */}
+        {/* Learning Streak */}
         <div className={styles.statCard}>
           <div className={styles.statIcon}>
             <LucideTarget size={20} />
           </div>
           <div className={styles.statContent}>
             <div className={styles.statValue}>{learningStats.learningStreak}</div>
-            <div className={styles.statLabel}>连续学习天数</div>
+            <div className={styles.statLabel}>Learning Streak (days)</div>
           </div>
         </div>
       </div>
 
       <div className={styles.detailsSection}>
-        <h4>详细统计</h4>
+        <h4>Detailed Statistics</h4>
         
         <div className={styles.detailItem}>
-          <span className={styles.detailLabel}>平均每对话消息数</span>
+          <span className={styles.detailLabel}>Avg. Messages per Conversation</span>
           <span className={styles.detailValue}>{learningStats.averageMessagesPerConversation}</span>
         </div>
 
         <div className={styles.detailItem}>
-          <span className={styles.detailLabel}>最常用AI模式</span>
+          <span className={styles.detailLabel}>Most Used AI Mode</span>
           <span className={styles.detailValue}>{getModeDisplayName(learningStats.mostUsedMode)}</span>
         </div>
 
         <div className={styles.detailItem}>
-          <span className={styles.detailLabel}>最常用学习类型</span>
+          <span className={styles.detailLabel}>Most Used Study Type</span>
           <span className={styles.detailValue}>{getTypeDisplayName(learningStats.mostUsedType)}</span>
         </div>
 
         <div className={styles.detailItem}>
-          <span className={styles.detailLabel}>本周增长</span>
+          <span className={styles.detailLabel}>Weekly Growth</span>
           <span className={`${styles.detailValue} ${styles.growth}`}>
             +{learningStats.weeklyGrowth}%
           </span>
@@ -160,30 +160,30 @@ const AILearningProgress = () => {
       </div>
 
       <div className={styles.achievementsSection}>
-        <h4>学习成就</h4>
+        <h4>Learning Achievements</h4>
         <div className={styles.achievementsList}>
           {learningStats.totalConversations >= 5 && (
             <div className={styles.achievement}>
               <span className={styles.achievementIcon}>🎯</span>
-              <span className={styles.achievementText}>对话达人 - 完成5次AI对话</span>
+              <span className={styles.achievementText}>Conversationalist - Completed 5 AI conversations</span>
             </div>
           )}
           {learningStats.totalMessages >= 50 && (
             <div className={styles.achievement}>
               <span className={styles.achievementIcon}>💬</span>
-              <span className={styles.achievementText}>交流专家 - 发送50条消息</span>
+              <span className={styles.achievementText}>Communication Expert - Sent 50 messages</span>
             </div>
           )}
           {learningStats.learningStreak >= 3 && (
             <div className={styles.achievement}>
               <span className={styles.achievementIcon}>🔥</span>
-              <span className={styles.achievementText}>学习热情 - 连续学习3天</span>
+              <span className={styles.achievementText}>Learning Enthusiast - 3 days learning streak</span>
             </div>
           )}
           {learningStats.totalStudyTime >= 120 && (
             <div className={styles.achievement}>
               <span className={styles.achievementIcon}>⏰</span>
-              <span className={styles.achievementText}>时间管理 - 累计学习2小时</span>
+              <span className={styles.achievementText}>Time Manager - 2 hours total study time</span>
             </div>
           )}
         </div>

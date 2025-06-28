@@ -24,7 +24,7 @@ const BackToDashboardButton: React.FC = () => {
   const navigate = useNavigate();
   return (
     <button style={btnStyle} onClick={() => navigate('/dashboard')}>
-      <span role="img" aria-label="home">🏠</span> 返回主界面
+      <span role="img" aria-label="home">🏠</span> Return to Main Interface
     </button>
   );
 };

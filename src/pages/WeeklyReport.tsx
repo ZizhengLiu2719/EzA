@@ -12,16 +12,16 @@ const WeeklyReport = () => {
   }
 
   const weeklyTasks = [
-    { name: '历史论文大纲', status: 'completed', time: '2小时' },
-    { name: '数学作业第三章', status: 'completed', time: '3小时' },
-    { name: '心理学阅读', status: 'in-progress', time: '1.5小时' },
-    { name: '编程项目', status: 'pending', time: '4小时' }
+    { name: 'History Paper Outline', status: 'completed', time: '2 hours' },
+    { name: 'Math Homework Chapter 3', status: 'completed', time: '3 hours' },
+    { name: 'Psychology Reading', status: 'in-progress', time: '1.5 hours' },
+    { name: 'Programming Project', status: 'pending', time: '4 hours' }
   ]
 
   const recommendations = [
-    '建议本周优先处理心理学阅读，避免堆积',
-    '编程项目需要更多时间，建议分两天完成',
-    '你的学习效率很高，继续保持！'
+    'Recommend prioritizing psychology reading this week to avoid backlog',
+    'Programming project needs more time, suggest completing over two days',
+    'Your learning efficiency is excellent, keep it up!'
   ]
 
   return (
@@ -29,18 +29,18 @@ const WeeklyReport = () => {
       <BackToDashboardButton />
       <div className="container">
         <div className={styles.header}>
-          <h1>本周学习报告</h1>
-          <p>2024年1月15日 - 1月21日</p>
+          <h1>This Week\'s Learning Report</h1>
+          <p>January 15, 2024 - January 21, 2024</p>
         </div>
         
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
             <div className={styles.statIcon}>✅</div>
             <div className={styles.statInfo}>
-              <h3>任务完成率</h3>
+              <h3>Task Completion Rate</h3>
               <p className={styles.statNumber}>{weeklyStats.completionRate}%</p>
               <span className={styles.statDetail}>
-                {weeklyStats.tasksCompleted}/{weeklyStats.totalTasks} 任务完成
+                {weeklyStats.tasksCompleted}/{weeklyStats.totalTasks} tasks completed
               </span>
             </div>
           </div>
@@ -48,34 +48,34 @@ const WeeklyReport = () => {
           <div className={styles.statCard}>
             <div className={styles.statIcon}>⏰</div>
             <div className={styles.statInfo}>
-              <h3>学习时长</h3>
+              <h3>Study Hours</h3>
               <p className={styles.statNumber}>{weeklyStats.studyHours}h</p>
-              <span className={styles.statDetail}>本周总学习时间</span>
+              <span className={styles.statDetail}>Total study time this week</span>
             </div>
           </div>
           
           <div className={styles.statCard}>
             <div className={styles.statIcon}>🎯</div>
             <div className={styles.statInfo}>
-              <h3>专注度评分</h3>
+              <h3>Focus Score</h3>
               <p className={styles.statNumber}>{weeklyStats.focusScore}/100</p>
-              <span className={styles.statDetail}>基于学习效率计算</span>
+              <span className={styles.statDetail}>Based on learning efficiency</span>
             </div>
           </div>
           
           <div className={styles.statCard}>
             <div className={styles.statIcon}>📊</div>
             <div className={styles.statInfo}>
-              <h3>拖延指数</h3>
+              <h3>Procrastination Index</h3>
               <p className={styles.statNumber}>{weeklyStats.procrastinationIndex}/10</p>
-              <span className={styles.statDetail}>越低越好</span>
+              <span className={styles.statDetail}>Lower is better</span>
             </div>
           </div>
         </div>
         
         <div className={styles.contentGrid}>
           <div className={styles.taskSection}>
-            <h2>本周任务详情</h2>
+            <h2>This Week\'s Task Details</h2>
             <div className={styles.taskList}>
               {weeklyTasks.map((task, index) => (
                 <div key={index} className={styles.taskItem}>
@@ -84,9 +84,9 @@ const WeeklyReport = () => {
                     <span className={styles.taskTime}>{task.time}</span>
                   </div>
                   <span className={`${styles.taskStatus} ${styles[task.status]}`}>
-                    {task.status === 'completed' && '已完成'}
-                    {task.status === 'in-progress' && '进行中'}
-                    {task.status === 'pending' && '待开始'}
+                    {task.status === 'completed' && 'Completed'}
+                    {task.status === 'in-progress' && 'In Progress'}
+                    {task.status === 'pending' && 'Pending'}
                   </span>
                 </div>
               ))}
@@ -94,7 +94,7 @@ const WeeklyReport = () => {
           </div>
           
           <div className={styles.recommendationsSection}>
-            <h2>AI 建议</h2>
+            <h2>AI Recommendations</h2>
             <div className={styles.recommendationsList}>
               {recommendations.map((rec, index) => (
                 <div key={index} className={styles.recommendation}>
@@ -105,9 +105,9 @@ const WeeklyReport = () => {
             </div>
             
             <div className={styles.nextWeekPreview}>
-              <h3>下周预览</h3>
-              <p>预计有 10 个新任务，建议提前规划时间</p>
-              <button className="btn btn-primary">查看详细计划</button>
+              <h3>Next Week Preview</h3>
+              <p>Expected 10 new tasks, recommend planning time in advance</p>
+              <button className="btn btn-primary">View Detailed Plan</button>
             </div>
           </div>
         </div>

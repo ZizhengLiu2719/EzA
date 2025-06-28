@@ -1,219 +1,278 @@
-# EzA - AI 驱动的学习成功系统
+# EzA - AI-Powered Learning Success System
 
 > Upload your syllabus. I'll handle the rest.
 
-EzA 是一个专为美国大学生设计的 AI 驱动学习成功系统，旨在帮助学生从课程开始，一路顺利走向成功。
+---
 
-## 💰 订阅计划
+## 🚦 Project Current Status & Known Issues (2024-06)
 
-EzA 提供三个订阅等级，满足不同用户的需求：
+### ✅ Implemented
 
-### 🆓 免费版
+- Subscription system (Free/Pro/Elite, AI model permissions, quota limits, pricing, etc.)
+- AI Learning Assistant (GPT-3.5/GPT-4o, multi-modal support, task context, conversation history)
+- Course import, task management, course overview, review cards, weekly reports and other core features
+- Supabase backend (Auth, PostgreSQL, Storage) integration with frontend
+- Modern UI, responsive design, navigation and subscription access
 
-- **价格**: 免费
-- **AI 模型**: GPT-3.5 Turbo
-- **使用限制**:
-  - 每月 50 次 AI 对话
-  - 每月 5 个课程上传
-  - 基础功能访问
-- **适合**: 想要体验 EzA 功能的新用户
+### ⚠️ Typical Known Issues
 
-### ⭐ Pro 版
+- **AI Conversation Creation Errors**:
+  - `Could not find the 'messages' column of 'ai_conversations' in the schema cache` (fixed, due to type and API inserting extra fields)
+  - `violates foreign key constraint "ai_conversations_user_id_fkey"` (common cause: not logged in/logged in user not synced to users table, or invalid user_id)
+- **User Login/Registration and Database Sync**:
+  - Users registered through Supabase Auth don't automatically sync to public.users table, need to ensure user_id exists in users table, otherwise AI-related foreign key constraints will fail.
+- **Local Development Environment**:
+  - If directly manipulating database or manually inserting into users table, may cause inconsistency between auth and users table.
+- **Style Resource Loading Warnings**:
+  - Some environments have warnings about stylesheet loading failures, doesn't affect main functionality.
 
-- **价格**: $4.99/月
-- **AI 模型**: GPT-3.5 Turbo
-- **使用限制**:
-  - 无限 AI 对话
-  - 无限课程上传
-  - 所有基础功能
-  - 优先客服支持
-- **适合**: 认真学习的学生
+### 🛠️ Troubleshooting Suggestions
 
-### 🚀 Elite 版
+- When encountering AI assistant-related foreign key errors, first check if logged in, whether user_id exists in users table.
+- If no users table record after registration/login, can manually insert a record with id consistent with auth.users.
+- If other bugs or exceptions, suggest console.log related user information and provide feedback.
 
-- **价格**: $9.99/月
-- **AI 模型**: GPT-4o (最新最强大的 AI 模型)
-- **使用限制**:
-  - 无限 AI 对话
-  - 无限课程上传
-  - 所有功能 + 高级功能
-  - 优先客服支持
-  - 专属学习建议
-- **适合**: 追求最佳学习体验的精英学生
+---
 
-## 🎯 核心功能
+## 🌍 Language Policy
 
-- **课程导入中心** - 上传 syllabus、教材、讲义，1 分钟内掌握整个学期结构
-- **智能任务引擎** - 自动生成学习路径图，子任务拆解，与日历同步，支持任务拖拽、状态切换、持久化保存
-- **AI 学习助理** - 写作引导、STEM 解题、阅读摘要，全方位 AI 辅导
-- **每周反馈教练** - 任务完成率分析、拖延指数、个性化建议
-- **复习与考试准备** - 自动生成复习卡、模拟题、错题追踪
-- **本学期课程总览** - 查看所有已上传课程，快速访问 syllabus 编辑、详情展示、删除
-- **课程详情展示** - 一键查看课程全部信息与任务列表
+**IMPORTANT**: As of the latest update, all user-facing text in this project has been converted to English. This includes:
 
-## 🤖 AI 模型说明
+- All UI text and labels
+- Error messages and notifications
+- Form placeholders and descriptions
+- Button text and navigation labels
+- Modal content and tooltips
+- AI assistant responses and prompts
+- Documentation and help text
 
-### GPT-3.5 Turbo (免费版 & Pro 版)
+**Note**: Code comments remain in Chinese for developer convenience.
 
-- **响应速度**: 快速
-- **成本**: 较低
-- **适用场景**: 日常学习问答、基础写作指导、简单问题解答
-- **特点**: 性价比高，适合大多数学习需求
+---
 
-### GPT-4o (Elite 版)
+EzA is an AI-powered learning success system designed specifically for American college students, aimed at helping students succeed from the start of their courses all the way to completion.
 
-- **响应速度**: 较快
-- **成本**: 较高
-- **适用场景**: 复杂学术问题、深度分析、创意写作、高级编程
-- **特点**: 理解力更强，回答更准确，适合高要求的学习任务
+## 💰 Subscription Plans
 
-## 🆕 智能任务引擎体验
+EzA offers three subscription tiers to meet different user needs:
 
-- 日历与任务活动双视图，UI 高度仿 MyStudyLife，支持天/周/月/列表切换
-- 任务可直接拖拽到日历任意时间，支持日历内拖动调整
-- 点击日历任务可切换完成/未完成状态，任务状态实时同步
-- 任务筛选支持"未完成任务""本周内逾期任务""逾期任务""已完成"
-- 所有操作（拖拽、状态切换）均持久化保存，刷新/重进页面不会丢失
-- 支持滚动条，界面紧凑美观，返回主界面按钮便捷
+### 🆓 Free Plan
 
-## 🛠️ 技术栈
+- **Price**: Free
+- **AI Model**: GPT-3.5 Turbo
+- **Usage Limits**:
+  - 50 AI conversations per month
+  - 5 course uploads per month
+  - Basic feature access
+- **Suitable for**: New users wanting to experience EzA features
 
-- **前端**: React + TypeScript + Vite
-- **样式**: CSS Modules (无 Tailwind)
-- **状态管理**: Zustand
-- **路由**: React Router DOM
-- **动画**: Framer Motion
-- **后端**: Supabase (Auth + PostgreSQL + Storage)
+### ⭐ Pro Plan
+
+- **Price**: $4.99/month
+- **AI Model**: GPT-3.5 Turbo
+- **Usage Limits**:
+  - Unlimited AI conversations
+  - Unlimited course uploads
+  - All basic features
+  - Priority customer support
+- **Suitable for**: Serious students
+
+### 🚀 Elite Plan
+
+- **Price**: $9.99/month
+- **AI Model**: GPT-4o (latest and most powerful AI model)
+- **Usage Limits**:
+  - Unlimited AI conversations
+  - Unlimited course uploads
+  - All features + advanced features
+  - Priority customer support
+  - Personalized learning recommendations
+- **Suitable for**: Elite students pursuing the best learning experience
+
+## 🎯 Core Features
+
+- **Course Import Center** - Upload syllabus, textbooks, lecture notes, master entire semester structure in 1 minute
+- **Smart Task Engine** - Automatically generate learning path maps, subtask breakdown, calendar sync, support task drag & drop, status switching, persistent saving
+- **AI Learning Assistant** - Writing guidance, STEM problem solving, reading summaries, comprehensive AI tutoring
+- **Weekly Feedback Coach** - Task completion rate analysis, procrastination index, personalized recommendations
+- **Review & Exam Preparation** - Automatically generate review cards, practice questions, error tracking
+- **Current Semester Course Overview** - View all uploaded courses, quick access to syllabus editing, detail display, deletion
+- **Course Detail Display** - One-click view of all course information and task lists
+
+## 🤖 AI Model Description
+
+### GPT-3.5 Turbo (Free & Pro Plans)
+
+- **Response Speed**: Fast
+- **Cost**: Lower
+- **Use Cases**: Daily learning Q&A, basic writing guidance, simple problem solving
+- **Features**: High cost-effectiveness, suitable for most learning needs
+
+### GPT-4o (Elite Plan)
+
+- **Response Speed**: Faster
+- **Cost**: Higher
+- **Use Cases**: Complex academic problems, deep analysis, creative writing, advanced programming
+- **Features**: Stronger comprehension, more accurate answers, suitable for high-demand learning tasks
+
+## 🆕 Smart Task Engine Experience
+
+- Calendar and task activity dual view, UI highly similar to MyStudyLife, supports day/week/month/list switching
+- Tasks can be directly dragged to any time on calendar, supports dragging adjustment within calendar
+- Click calendar tasks to toggle complete/incomplete status, task status syncs in real-time
+- Task filtering supports "Incomplete tasks", "Overdue tasks this week", "Overdue tasks", "Completed"
+- All operations (drag & drop, status switching) are persistently saved, won't be lost on refresh/re-enter page
+- Supports scrollbars, compact and beautiful interface, convenient return to main interface button
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React + TypeScript + Vite
+- **Styling**: CSS Modules (no Tailwind)
+- **State Management**: Zustand
+- **Routing**: React Router DOM
+- **Animation**: Framer Motion
+- **Backend**: Supabase (Auth + PostgreSQL + Storage)
 - **AI**: OpenAI GPT-3.5 Turbo / GPT-4o
-- **部署**: Vercel
+- **Deployment**: Vercel
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 环境要求
+### Requirements
 
 - Node.js 18+
-- npm 或 yarn
+- npm or yarn
 
-### 安装依赖
+### Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 开发环境
+### Development Environment
 
 ```bash
 npm run dev
 ```
 
-应用将在 http://localhost:3000 启动
+App will start at http://localhost:3000
 
-### 构建生产版本
+### Build Production Version
 
 ```bash
 npm run build
 ```
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 src/
-├── assets/                  # 图片、图标等
-├── components/             # UI组件 + 样式模块 + 通用按钮
-├── pages/                  # 页面组件（含课程详情、AI助理、复习、周报等）
-├── layouts/                # 页面结构
-├── styles/                 # 全局样式
-├── hooks/                  # 自定义Hook
-├── api/                    # API请求封装
-├── context/                # 状态共享
-├── utils/                  # 工具函数
-├── types/                  # TypeScript类型
+├── assets/                  # Images, icons, etc.
+├── components/             # UI components + style modules + common buttons
+├── pages/                  # Page components (including course details, AI assistant, review, weekly reports, etc.)
+├── layouts/                # Page structure
+├── styles/                 # Global styles
+├── hooks/                  # Custom Hooks
+├── api/                    # API request encapsulation
+├── context/                # State sharing
+├── utils/                  # Utility functions
+├── types/                  # TypeScript types
 └── main.tsx
 ```
 
-## 🎨 设计理念
+## 🎨 Design Philosophy
 
-- **PC 优先，移动兼容** - 响应式设计，优先考虑桌面端体验
-- **模块化 CSS** - 使用 CSS Modules，避免样式冲突
-- **组件化开发** - 高度可复用的组件设计
-- **用户体验优先** - 简洁直观的界面设计
-- **所有模块页面右上角一键返回主界面或上一级**
+- **PC First, Mobile Compatible** - Responsive design, prioritize desktop experience
+- **Modular CSS** - Use CSS Modules, avoid style conflicts
+- **Component-based Development** - Highly reusable component design
+- **User Experience First** - Clean and intuitive interface design
+- **All module pages have one-click return to main interface or previous level in top right corner**
 
-## 📈 开发计划
+## 📈 Development Plan
 
-- [x] 项目基础架构搭建
-- [x] 首页和导航组件
-- [x] 用户认证页面
-- [x] 基础页面框架
-- [x] Supabase 集成
-- [x] 文件上传功能
-- [x] AI 对话功能
-- [x] 任务管理系统
-- [x] 课程 syllabus 解析与编辑
-- [x] 课程总览页面
-- [x] 课程详情展示页面
-- [x] 课程唯一性与去重
-- [x] 任务保存去重（防止重复）
-- [x] 删除课程时自动清理 Storage 文件
-- [x] 所有模块页面右上角返回主界面/上一级
-- [x] UI/交互优化
-- [x] 智能任务引擎日历+任务双视图（仿 MyStudyLife）
-- [x] 任务拖拽到日历、日历内拖动
-- [x] 任务完成/未完成状态切换
-- [x] 任务操作持久化保存
-- [x] 任务筛选逻辑优化
-- [x] 日历/任务 UI 美化
-- [x] 订阅计划与 AI 模型限制
-- [ ] 复习系统
-- [ ] 数据可视化
-- [ ] 每周反馈分析
-- [ ] 考试准备功能
+- [x] Project foundation architecture setup
+- [x] Homepage and navigation components
+- [x] User authentication pages
+- [x] Basic page framework
+- [x] Supabase integration
+- [x] File upload functionality
+- [x] AI conversation functionality
+- [x] Task management system
+- [x] Course syllabus parsing and editing
+- [x] Course overview page
+- [x] Course detail display page
+- [x] Course uniqueness and deduplication
+- [x] Task save deduplication (prevent duplicates)
+- [x] Auto-clean Storage files when deleting courses
+- [x] All module pages have return to main interface/previous level in top right corner
+- [x] UI/interaction optimization
+- [x] Smart task engine calendar + task dual view (similar to MyStudyLife)
+- [x] Task drag to calendar, drag within calendar
+- [x] Task complete/incomplete status switching
+- [x] Task operation persistent saving
+- [x] Task filtering logic optimization
+- [x] Calendar/task UI beautification
+- [x] Subscription plans and AI model restrictions
+- [x] User registration auto-sync to public.users table (trigger + RLS + permission issues completely resolved)
+- [x] AI foreign key constraint issues completely fixed (public.users missing causing 409/foreign key errors completely eradicated)
+- [ ] Review system
+- [ ] Data visualization
+- [ ] Weekly feedback analysis
+- [ ] Exam preparation features
 
-## 🔧 核心功能实现
+### 🛠️ Recent Fixes and Troubleshooting Records
 
-### 课程 Syllabus 解析
+- Completely sorted out and fixed the issue where Supabase Auth registered users couldn't automatically sync to public.users table.
+- Recreated sync trigger (on_auth_user_created) and added security definer to ensure backend service has permissions.
+- Configured RLS policies to allow trigger and service account inserts.
+- Checked and completed all table insert permissions, completely resolved permission denied errors.
+- Completely eradicated AI-related table (like ai_conversations) foreign key constraint failure issues.
+- Now supports multi-user registration, auto-sync, AI functionality barrier-free use.
 
-- 支持 PDF 文件上传
-- AI 自动解析 syllabus 内容
-- 生成结构化任务列表
-- 前端编辑与保存功能
-- 数据库持久化存储
+## 🔧 Core Feature Implementation
 
-### 课程管理
+### Course Syllabus Parsing
 
-- 课程列表总览、详情展示、编辑、删除
-- 新建课程与编辑课程
-- Syllabus 信息持久化
-- 路由参数支持
-- 删除课程时自动清理 Storage 文件夹及所有文件
+- Support PDF file upload
+- AI automatic syllabus content parsing
+- Generate structured task lists
+- Frontend editing and saving functionality
+- Database persistent storage
 
-### 课程详情展示
+### Course Management
 
-- 展示课程全部基本信息（名称、学期、年份、描述、评分政策）
-- 展示所有任务（标题、类型、截止日期、优先级、描述等）
-- 右上角一键返回上一级
+- Course list overview, detail display, editing, deletion
+- New course creation and course editing
+- Syllabus information persistence
+- Route parameter support
+- Auto-clean Storage folder and all files when deleting courses
 
-### 智能任务引擎
+### Course Detail Display
 
-- 日历+任务双视图，UI 高度仿 MyStudyLife
-- 任务拖拽到日历、日历内拖动调整
-- 任务状态切换（完成/未完成）
-- 任务筛选（未完成、本周内逾期、逾期、已完成）
-- 所有操作持久化保存
-- 支持滚动条，界面紧凑美观
+- Display all basic course information (name, semester, year, description, grading policy)
+- Display all tasks (title, type, due date, priority, description, etc.)
+- One-click return to previous level in top right corner
 
-### AI 集成
+### Smart Task Engine
 
-- OpenAI GPT-3.5 Turbo / GPT-4o API 集成
-- 智能 syllabus 解析
-- 结构化数据输出
-- 错误处理与重试机制
-- 基于订阅等级的模型选择
+- Calendar + task dual view, UI highly similar to MyStudyLife
+- Task drag to calendar, drag adjustment within calendar
+- Task status switching (complete/incomplete)
+- Task filtering (incomplete, overdue this week, overdue, completed)
+- All operations persistently saved
+- Supports scrollbars, compact and beautiful interface
 
-## 🤝 贡献
+### AI Integration
 
-欢迎提交 Issue 和 Pull Request！
+- OpenAI GPT-3.5 Turbo / GPT-4o API integration
+- Smart syllabus parsing
+- Structured data output
+- Error handling and retry mechanism
+- Model selection based on subscription level
 
-## 许可证
+## 🤝 Contribution
+
+Welcome to submit Issue and Pull Request!
+
+## License
 
 MIT License

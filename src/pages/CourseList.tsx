@@ -6,36 +6,36 @@ const CourseList = () => {
   const { courses, loading, error, deleteCourse, fetchCourses } = useCourses();
 
   const handleDelete = async (courseId: string) => {
-    const ok = window.confirm('确定要删除该课程 syllabus 吗？此操作不可恢复！');
+    const ok = window.confirm('Are you sure you want to delete this course syllabus? This action cannot be undone!');
     if (!ok) return;
     const success = await deleteCourse(courseId);
     if (success) {
       fetchCourses();
     } else {
-      alert('删除失败，请重试');
+      alert('Delete failed, please try again');
     }
   };
 
   return (
     <div style={{ maxWidth: 900, margin: '40px auto', background: '#fff', borderRadius: 12, padding: 32, boxShadow: '0 1px 3px rgba(0,0,0,0.06)', position: 'relative' }}>
       <BackToDashboardButton />
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 24 }}>我的课程 Syllabus</h1>
+      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 24 }}>My Course Syllabi</h1>
       <div style={{ marginBottom: 24 }}>
         <Link to="/upload">
-          <button style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 20px', fontSize: 16, fontWeight: 600, cursor: 'pointer' }}>上传新syllabus</button>
+          <button style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 20px', fontSize: 16, fontWeight: 600, cursor: 'pointer' }}>Upload New Syllabus</button>
         </Link>
       </div>
-      {loading && <div>加载中...</div>}
+      {loading && <div>Loading...</div>}
       {error && <div style={{ color: 'red' }}>{error}</div>}
-      {!loading && courses.length === 0 && <div>暂无课程，请先上传syllabus。</div>}
+      {!loading && courses.length === 0 && <div>No courses yet, please upload a syllabus first.</div>}
       {!loading && courses.length > 0 && (
         <table style={{ width: '100%', borderCollapse: 'collapse', background: '#f9fafb' }}>
           <thead>
             <tr style={{ background: '#f3f4f6' }}>
-              <th style={{ padding: '10px 8px', textAlign: 'left' }}>课程名称</th>
-              <th style={{ padding: '10px 8px', textAlign: 'left' }}>学期</th>
-              <th style={{ padding: '10px 8px', textAlign: 'left' }}>年份</th>
-              <th style={{ padding: '10px 8px', textAlign: 'left' }}>操作</th>
+              <th style={{ padding: '10px 8px', textAlign: 'left' }}>Course Name</th>
+              <th style={{ padding: '10px 8px', textAlign: 'left' }}>Semester</th>
+              <th style={{ padding: '10px 8px', textAlign: 'left' }}>Year</th>
+              <th style={{ padding: '10px 8px', textAlign: 'left' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -45,9 +45,9 @@ const CourseList = () => {
                 <td style={{ padding: '10px 8px' }}>{course.semester}</td>
                 <td style={{ padding: '10px 8px' }}>{course.year}</td>
                 <td style={{ padding: '10px 8px', display: 'flex', gap: 8 }}>
-                  <Link to={`/courses/${course.id}`}><button style={{ background: '#e0f2fe', color: '#0369a1', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 500, cursor: 'pointer' }}>展示</button></Link>
-                  <Link to={`/upload-course/${course.id}`}><button style={{ background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 500, cursor: 'pointer' }}>编辑syllabus</button></Link>
-                  <button onClick={() => handleDelete(course.id)} style={{ background: '#fee2e2', color: '#b91c1c', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 500, cursor: 'pointer' }}>删除</button>
+                  <Link to={`/courses/${course.id}`}><button style={{ background: '#e0f2fe', color: '#0369a1', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 500, cursor: 'pointer' }}>View</button></Link>
+                  <Link to={`/upload-course/${course.id}`}><button style={{ background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 500, cursor: 'pointer' }}>Edit Syllabus</button></Link>
+                  <button onClick={() => handleDelete(course.id)} style={{ background: '#fee2e2', color: '#b91c1c', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 500, cursor: 'pointer' }}>Delete</button>
                 </td>
               </tr>
             ))}

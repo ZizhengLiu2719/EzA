@@ -4,57 +4,57 @@ import { SubscriptionConfig } from '../types'
 export const SUBSCRIPTION_PLANS: Record<string, SubscriptionConfig> = {
   free: {
     plan: 'free',
-    name: '免费版',
+    name: 'Free Plan',
     price: 0,
     currency: 'USD',
     aiModel: 'gpt-3.5-turbo',
     monthlyConversations: 50,
     monthlyCourses: 5,
     features: [
-      '基础AI学习助理',
-      '智能任务引擎',
-      '课程管理',
-      '基础功能访问'
+      'Basic AI Learning Assistant',
+      'Smart Task Engine',
+      'Course Management',
+      'Basic Feature Access'
     ],
-    description: '适合想要体验EzA功能的新用户'
+    description: 'Suitable for new users wanting to experience EzA features'
   },
   pro: {
     plan: 'pro',
-    name: 'Pro版',
+    name: 'Pro Plan',
     price: 4.99,
     currency: 'USD',
     aiModel: 'gpt-3.5-turbo',
     monthlyConversations: -1, // 无限
     monthlyCourses: -1, // 无限
     features: [
-      '无限AI对话',
-      '无限课程上传',
-      '所有基础功能',
-      '优先客服支持',
-      '高级任务管理',
-      '学习进度追踪'
+      'Unlimited AI Conversations',
+      'Unlimited Course Uploads',
+      'All Basic Features',
+      'Priority Customer Support',
+      'Advanced Task Management',
+      'Learning Progress Tracking'
     ],
-    description: '适合认真学习的学生'
+    description: 'Suitable for serious students'
   },
   elite: {
     plan: 'elite',
-    name: 'Elite版',
+    name: 'Elite Plan',
     price: 9.99,
     currency: 'USD',
     aiModel: 'gpt-4o',
     monthlyConversations: -1, // 无限
     monthlyCourses: -1, // 无限
     features: [
-      'GPT-4o AI模型',
-      '无限AI对话',
-      '无限课程上传',
-      '所有功能 + 高级功能',
-      '优先客服支持',
-      '专属学习建议',
-      '高级分析报告',
-      '个性化学习路径'
+      'GPT-4o AI Model',
+      'Unlimited AI Conversations',
+      'Unlimited Course Uploads',
+      'All Features + Advanced Features',
+      'Priority Customer Support',
+      'Personalized Learning Recommendations',
+      'Advanced Analytics Reports',
+      'Personalized Learning Paths'
     ],
-    description: '追求最佳学习体验的精英学生'
+    description: 'For elite students pursuing the best learning experience'
   }
 }
 

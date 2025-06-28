@@ -3,26 +3,26 @@ import { AIAssistantConfig } from '@/types'
 // AI 模式配置
 export const AI_MODES = {
   bullet_tutor: {
-    name: '引导式导师',
-    description: '通过引导式问题帮助学生思考',
+    name: 'Guided Tutor',
+    description: 'Help students think through guided questions',
     icon: '🎯',
     color: '#3b82f6'
   },
   socratic_bot: {
-    name: '苏格拉底式',
-    description: '通过提问引导学生发现答案',
+    name: 'Socratic Method',
+    description: 'Guide students to discover answers through questions',
     icon: '🤔',
     color: '#8b5cf6'
   },
   quick_fix: {
-    name: '快速修复',
-    description: '直接提供具体的解决方案',
+    name: 'Quick Fix',
+    description: 'Provide direct and specific solutions',
     icon: '⚡',
     color: '#f59e0b'
   },
   diagram_ai: {
-    name: '视觉化助手',
-    description: '通过图表和图示帮助理解',
+    name: 'Visual Assistant',
+    description: 'Help understanding through charts and diagrams',
     icon: '📊',
     color: '#10b981'
   }
@@ -31,19 +31,19 @@ export const AI_MODES = {
 // 写作风格配置
 export const WRITING_STYLES = {
   academic: {
-    name: '学术写作',
-    description: '正式的学术论文风格',
-    features: ['引用格式', '逻辑结构', '学术语言']
+    name: 'Academic Writing',
+    description: 'Formal academic paper style',
+    features: ['Citation Format', 'Logical Structure', 'Academic Language']
   },
   creative: {
-    name: '创意写作',
-    description: '富有创意的表达方式',
-    features: ['生动描述', '情感表达', '创新思维']
+    name: 'Creative Writing',
+    description: 'Creative and expressive approach',
+    features: ['Vivid Description', 'Emotional Expression', 'Innovative Thinking']
   },
   technical: {
-    name: '技术写作',
-    description: '清晰准确的技术文档',
-    features: ['精确描述', '步骤说明', '专业术语']
+    name: 'Technical Writing',
+    description: 'Clear and accurate technical documentation',
+    features: ['Precise Description', 'Step-by-step Instructions', 'Professional Terminology']
   }
 } as const
 
@@ -51,17 +51,17 @@ export const WRITING_STYLES = {
 export const CITATION_FORMATS = {
   mla: {
     name: 'MLA',
-    description: '现代语言协会格式',
+    description: 'Modern Language Association format',
     example: 'Smith, John. "Title." Journal, vol. 1, no. 1, 2024, pp. 1-10.'
   },
   apa: {
     name: 'APA',
-    description: '美国心理学协会格式',
+    description: 'American Psychological Association format',
     example: 'Smith, J. (2024). Title. Journal, 1(1), 1-10.'
   },
   chicago: {
     name: 'Chicago',
-    description: '芝加哥格式',
+    description: 'Chicago format',
     example: 'Smith, John. "Title." Journal 1, no. 1 (2024): 1-10.'
   }
 } as const
@@ -69,18 +69,18 @@ export const CITATION_FORMATS = {
 // 难度级别配置
 export const DIFFICULTY_LEVELS = {
   beginner: {
-    name: '初学者',
-    description: '基础概念和简单应用',
+    name: 'Beginner',
+    description: 'Basic concepts and simple applications',
     color: '#10b981'
   },
   intermediate: {
-    name: '中级',
-    description: '进阶概念和复杂应用',
+    name: 'Intermediate',
+    description: 'Advanced concepts and complex applications',
     color: '#f59e0b'
   },
   advanced: {
-    name: '高级',
-    description: '高级概念和专业应用',
+    name: 'Advanced',
+    description: 'Advanced concepts and professional applications',
     color: '#ef4444'
   }
 } as const
@@ -89,117 +89,115 @@ export const DIFFICULTY_LEVELS = {
 export const PROMPT_TEMPLATES = {
   // 写作任务提示词
   writing: {
-    outline: `请为以下写作任务创建详细大纲：
+    outline: `Please create a detailed outline for the following writing task:
 
-任务标题：{title}
-任务描述：{description}
-写作风格：{style}
-引用格式：{citation}
+Task Title: {title}
+Task Description: {description}
+Writing Style: {style}
+Citation Format: {citation}
 
-请提供：
-1. 主要论点
-2. 支持论据
-3. 段落结构
-4. 引言和结论建议`,
+Please provide:
+1. Main arguments
+2. Supporting evidence
+3. Paragraph structure
+4. Introduction and conclusion suggestions`,
 
-    revision: `请审查以下文章并提供改进建议：
+    revision: `Please review the following article and provide improvement suggestions:
 
-文章内容：{content}
-写作风格：{style}
-目标读者：{audience}
+Article Content: {content}
+Writing Style: {style}
+Target Audience: {audience}
 
-请关注：
-1. 逻辑结构
-2. 语言表达
-3. 论证强度
-4. 格式规范`,
+Please focus on:
+1. Logical structure
+2. Language expression
+3. Argument strength
+4. Format standards`,
 
-    citation: `请为以下内容添加{format}格式的引用：
+    citation: `Please add {format} format citations to the following content:
 
-内容：{content}
-需要引用的信息：{info}
+Content: {content}
+Information to cite: {info}
 
-请提供：
-1. 内文引用
-2. 参考文献列表
-3. 引用格式说明`
+Please provide:
+1. In-text citations
+2. Reference list
+3. Citation format explanation`
   },
 
   // STEM 任务提示词
   stem: {
-    problem_analysis: `请分析以下{subject}问题：
+    problem_analysis: `Please analyze the following {subject} problem:
 
-问题：{problem}
-已知条件：{conditions}
-目标：{goal}
+Problem: {problem}
+Known Conditions: {conditions}
+Goal: {goal}
 
-请提供：
-1. 问题类型识别
-2. 相关概念解释
-3. 解题思路
-4. 关键步骤提示`,
+Please provide:
+1. Problem type identification
+2. Related concept explanation
+3. Solution approach
+4. Key step hints`,
 
-    step_by_step: `请为以下{subject}问题提供分步解答：
+    step_by_step: `Please provide step-by-step guidance for the following {subject} problem:
 
-问题：{problem}
-学生当前理解：{understanding}
+Problem: {problem}
+Student's Current Understanding: {understanding}
 
-请：
-1. 确认学生理解
-2. 提供下一步提示
-3. 引导学生思考
-4. 不要直接给出答案`,
+Please:
+1. Confirm student understanding
+2. Provide next step hints
+3. Guide student thinking
+4. Don't give the answer directly`,
 
-    concept_explanation: `请解释以下{subject}概念：
+    concept_explanation: `Please explain the following {subject} concept:
 
-概念：{concept}
-学生背景：{background}
-应用场景：{context}
+Concept: {concept}
+Student Background: {background}
+Application Context: {context}
 
-请提供：
-1. 概念定义
-2. 相关例子
-3. 实际应用
-4. 常见误区`
+Please provide:
+1. Concept definition
+2. Related examples
+3. Practical applications
+4. Common misconceptions`
   },
 
   // 阅读任务提示词
   reading: {
-    summary: `请为以下阅读材料生成摘要：
+    summary: `Please generate a summary for the following reading material:
 
-材料标题：{title}
-材料内容：{content}
-重点要求：{focus}
+Material Title: {title}
+Material Content: {content}
+Focus Requirements: {focus}
 
-请提供：
-1. 主要论点
-2. 关键概念
-3. 重要细节
-4. 阅读建议`,
+Please provide:
+1. Main arguments
+2. Key concepts
+3. Important details
+4. Reading suggestions`,
 
-    analysis: `请分析以下阅读材料：
+    analysis: `Please analyze the following reading material:
 
-材料：{content}
-分析角度：{perspective}
-深度要求：{depth}
+Material: {content}
+Analysis Perspective: {perspective}
+Depth Requirements: {depth}
 
-请关注：
-1. 作者意图
-2. 论证方法
-3. 证据支持
-4. 逻辑结构`,
+Please focus on:
+1. Author's intent
+2. Argumentation methods
+3. Evidence support
+4. Logical structure`,
 
-    vocabulary: `请解释以下阅读材料中的关键术语：
+    vocabulary: `Please explain the key terms in the following reading material:
 
-材料：{content}
-术语列表：{terms}
-上下文：{context}
+Material: {content}
+Term List: {terms}
+Context: {context}
 
-请提供：
-1. 术语定义
-2. 上下文解释
-3. 相关概念
-4. 记忆技巧`
+Please provide:
+1. Term definitions
+2. Contextual explanations`
   }
 }
 
@@ -226,11 +224,11 @@ export function validateAIConfig(config: AIAssistantConfig): boolean {
 
 // 生成 AI 配置描述
 export function getAIConfigDescription(config: AIAssistantConfig): string {
-  const mode = AI_MODES[config.mode]?.name || '默认模式'
-  const model = config.model ? `，${config.model.toUpperCase()}` : '，GPT-3.5 Turbo'
-  const style = config.writing_style ? `，${WRITING_STYLES[config.writing_style].name}风格` : ''
-  const citation = config.citation_format ? `，${CITATION_FORMATS[config.citation_format].name}引用格式` : ''
-  const difficulty = config.difficulty_level ? `，${DIFFICULTY_LEVELS[config.difficulty_level].name}级别` : ''
+  const mode = AI_MODES[config.mode]?.name || 'Default Mode'
+  const model = config.model ? `, ${config.model.toUpperCase()}` : ', GPT-3.5 Turbo'
+  const style = config.writing_style ? `, ${WRITING_STYLES[config.writing_style].name} Style` : ''
+  const citation = config.citation_format ? `, ${CITATION_FORMATS[config.citation_format].name} Citation Format` : ''
+  const difficulty = config.difficulty_level ? `, ${DIFFICULTY_LEVELS[config.difficulty_level].name} Level` : ''
 
   return `${mode}${model}${style}${citation}${difficulty}`
 }
@@ -261,25 +259,25 @@ export function checkResponseQuality(response: string): {
 
   // 检查回复长度
   if (response.length < 50) {
-    issues.push('回复过短')
+    issues.push('Reply too short')
     score -= 20
   }
 
   // 检查是否包含具体建议
-  if (!response.includes('建议') && !response.includes('可以') && !response.includes('应该')) {
-    issues.push('缺少具体建议')
+  if (!response.includes('Suggestion') && !response.includes('Can') && !response.includes('Should')) {
+    issues.push('Missing specific suggestions')
     score -= 15
   }
 
   // 检查是否包含引导性问题
-  if (!response.includes('？') && !response.includes('?')) {
-    issues.push('缺少引导性问题')
+  if (!response.includes('?') && !response.includes('?')) {
+    issues.push('Missing guiding questions')
     score -= 10
   }
 
   // 检查是否过于简单
-  if (response.split('。').length < 3) {
-    issues.push('内容过于简单')
+  if (response.split('.').length < 3) {
+    issues.push('Content too simple')
     score -= 15
   }
 

@@ -35,7 +35,7 @@ const UploadCourse = () => {
         // 获取课程详情
         const courseRes = await import('@/api/courses').then(m => m.coursesApi.getUserCourses())
         const course = courseRes.data.find((c: any) => c.id === courseId)
-        if (!course) throw new Error('未找到该课程')
+        if (!course) throw new Error('Course not found')
         // 获取任务
         const tasksRes = await import('@/api/courses').then(m => m.courseParseApi.getCourseTasks(courseId))
         const tasks = tasksRes.data || []
@@ -111,12 +111,12 @@ const UploadCourse = () => {
 
     const validFiles = newFiles.filter(file => {
       if (!validateFileType(file, allowedTypes)) {
-        setError(`不支持的文件类型: ${file.name}`)
+        setError(`Unsupported file type: ${file.name}`)
         return false
       }
       
       if (!validateFileSize(file, 10)) { // 10MB 限制
-        setError(`文件过大: ${file.name}`)
+        setError(`File too large: ${file.name}`)
         return false
       }
       
@@ -152,7 +152,7 @@ const UploadCourse = () => {
       if (edited.tasks.length > 0) {
         await courseParseApi.saveParsedTasks(finalCourseId, edited.tasks);
       }
-      setSuccess('课程信息和任务已保存！');
+      setSuccess('Course information and tasks saved successfully!');
       setEditMode(false);
       // 保存成功后跳转到我的课程界面
       navigate('/courses');
@@ -167,12 +167,12 @@ const UploadCourse = () => {
     e.preventDefault()
     
     if (!courseName.trim()) {
-      setError('请输入课程名称')
+      setError('Please enter a course name')
       return
     }
     
     if (files.length === 0) {
-      setError('请选择至少一个文件')
+      setError('Please select at least one file')
       return
     }
 
@@ -187,7 +187,7 @@ const UploadCourse = () => {
         const { text } = await parser.parseFile(file);
         const sizeCheck = (await import('@/utils')).checkFileSizeLimit(text);
         if (sizeCheck.isOverLimit) {
-          setError(`文件"${file.name}"内容过大！当前字符数：${sizeCheck.characterCount}，超过限制：${sizeCheck.limit}。请上传较小的文件或分割内容。`);
+          setError(`File "${file.name}" content too large! Current character count: ${sizeCheck.characterCount}, exceeds limit: ${sizeCheck.limit}. Please upload smaller files or split content.`);
           setUploading(false);
           return;
         }
@@ -204,7 +204,7 @@ const UploadCourse = () => {
 
       const newCourse = await createCourse(courseData)
       if (!newCourse) {
-        throw new Error('创建课程失败')
+        throw new Error('Failed to create course')
       }
 
       // 3. 上传文件
@@ -219,7 +219,7 @@ const UploadCourse = () => {
       if (uploadErrors.length > 0) {
         // 上传失败，删除刚创建的课程
         await deleteCourse(newCourse.id)
-        throw new Error(`部分文件上传失败: ${uploadErrors[0].error}`)
+        throw new Error(`Some files failed to upload: ${uploadErrors[0].error}`)
       }
 
       const uploadedMaterials = uploadResults.map(result => result.data)
@@ -232,13 +232,13 @@ const UploadCourse = () => {
       if (parseResponse.error) {
         // 解析失败，删除刚创建的课程
         await deleteCourse(newCourse.id)
-        throw new Error(`课程解析失败: ${parseResponse.error}`)
+        throw new Error(`Course parsing failed: ${parseResponse.error}`)
       }
 
       setParseResult(parseResponse.data)
       setFinalCourseId(newCourse.id)
       setEditMode(true)
-      setSuccess('课程创建成功！请完善结构化信息后保存。')
+      setSuccess('Course created successfully! Please complete the structured information and save.')
 
       // 5. 更新课程信息（如AI解析出新课程名/描述/评分政策，仅更新，不再新建课程）
       if (parseResponse.data.course_name && (
@@ -263,13 +263,13 @@ const UploadCourse = () => {
 
   const getFileType = (fileName: string): CourseMaterial['type'] => {
     const lowerName = fileName.toLowerCase()
-    if (lowerName.includes('syllabus') || lowerName.includes('大纲')) {
+    if (lowerName.includes('syllabus') || lowerName.includes('outline')) {
       return 'syllabus'
-    } else if (lowerName.includes('textbook') || lowerName.includes('教材')) {
+    } else if (lowerName.includes('textbook') || lowerName.includes('book')) {
       return 'textbook'
-    } else if (lowerName.includes('lecture') || lowerName.includes('讲义')) {
+    } else if (lowerName.includes('lecture') || lowerName.includes('notes')) {
       return 'lecture_notes'
-    } else if (lowerName.includes('assignment') || lowerName.includes('作业')) {
+    } else if (lowerName.includes('assignment') || lowerName.includes('homework')) {
       return 'assignment'
     } else {
       return 'other'
@@ -281,14 +281,14 @@ const UploadCourse = () => {
       <BackToDashboardButton />
       <div className="container">
         <div className={styles.header}>
-          <h1>上传课程资料</h1>
-          <p>上传你的syllabus、教材或讲义，让EzA为你自动规划学习路径</p>
+          <h1>Upload Course Materials</h1>
+          <p>Upload your syllabus, textbooks or lecture notes, let EzA automatically plan your learning path</p>
         </div>
         
         {editMode && parseResult ? (
           <>
             <div className={styles.infoTip} style={{marginBottom: 16, color: '#b45309', background: '#fef3c7', padding: '10px 16px', borderRadius: 6, fontSize: 15}}>
-              AI解析的任务列表只包含和本课程grading有关的任务，如果syllabus给于的信息不够明确，AI可能会提取不到相关信息，请学生们在学期的进行过程中自己根据课程的具体任务自行添加
+              AI-parsed task lists only include tasks related to course grading. If syllabus information is not clear enough, AI may not extract relevant information. Students should add tasks based on actual course requirements during the semester.
             </div>
             <CourseParseResultEditor
               initialData={parseResult}
@@ -300,33 +300,33 @@ const UploadCourse = () => {
           <form onSubmit={handleSubmit} className={styles.uploadForm}>
             {/* 课程基本信息 */}
             <div className={styles.courseInfo}>
-              <h3>课程信息</h3>
+              <h3>Course Information</h3>
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label htmlFor="courseName">课程名称</label>
+                  <label htmlFor="courseName">Course Name</label>
                   <input
                     type="text"
                     id="courseName"
                     value={courseName}
                     onChange={(e) => setCourseName(e.target.value)}
-                    placeholder="例如：高等数学"
+                    placeholder="e.g., Advanced Mathematics"
                     required
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label htmlFor="semester">学期</label>
+                  <label htmlFor="semester">Semester</label>
                   <select
                     id="semester"
                     value={semester}
                     onChange={(e) => setSemester(e.target.value)}
                   >
-                    <option value="Fall">秋季学期</option>
-                    <option value="Spring">春季学期</option>
-                    <option value="Summer">夏季学期</option>
+                    <option value="Fall">Fall Semester</option>
+                    <option value="Spring">Spring Semester</option>
+                    <option value="Summer">Summer Semester</option>
                   </select>
                 </div>
                 <div className={styles.formGroup}>
-                  <label htmlFor="year">年份</label>
+                  <label htmlFor="year">Year</label>
                   <input
                     type="number"
                     id="year"
@@ -341,7 +341,7 @@ const UploadCourse = () => {
 
             {/* 文件上传区域 */}
             <div className={styles.uploadSection}>
-              <h3>上传课程材料</h3>
+              <h3>Upload Course Materials</h3>
               <div 
                 className={`${styles.dropZone} ${dragActive ? styles.dragActive : ''}`}
                 onDragEnter={handleDrag}
@@ -358,8 +358,8 @@ const UploadCourse = () => {
                 />
                 <div className={styles.dropContent}>
                   <div className={styles.dropIcon}>📚</div>
-                  <h3>拖拽文件到这里或点击选择</h3>
-                  <p>支持 PDF、Word、文本文件和图片（最大 10MB，内容不超过 16,000 字符）</p>
+                  <h3>Drag files here or click to select</h3>
+                  <p>Supports PDF, Word, text files and images (max 10MB, content not exceeding 16,000 characters)</p>
                 </div>
               </div>
             </div>
@@ -367,7 +367,7 @@ const UploadCourse = () => {
             {/* 文件列表 */}
             {files.length > 0 && (
               <div className={styles.fileList}>
-                <h3>已选择的文件：</h3>
+                <h3>Selected Files:</h3>
                 {files.map((file, index) => (
                   <div key={index} className={styles.fileItem}>
                     <div className={styles.fileInfo}>
@@ -397,36 +397,26 @@ const UploadCourse = () => {
 
             {/* 解析结果预览 */}
             {parseResult && !editMode && (
-              <>
-                <div className={styles.infoTip} style={{marginBottom: 16, color: '#b45309', background: '#fef3c7', padding: '10px 16px', borderRadius: 6, fontSize: 15}}>
-                  AI解析的任务列表只包含和本课程grading有关的任务，如果syllabus给于的信息不够明确，AI可能会提取不到相关信息，请学生们在学期的进行过程中自己根据课程的具体任务自行添加
+              <div className={styles.previewSection}>
+                <h3>Parsing Results Preview</h3>
+                <div className={styles.previewContent}>
+                  <p><strong>Course Name:</strong> {parseResult.course_name}</p>
+                  <p><strong>Semester:</strong> {parseResult.semester} {parseResult.year}</p>
+                  <p><strong>Tasks Found:</strong> {parseResult.tasks.length}</p>
                 </div>
-                <div className={styles.parseResult}>
-                  <h3>解析结果预览</h3>
-                  <div className={styles.resultContent}>
-                    <p><strong>课程名称：</strong>{parseResult.course_name}</p>
-                    <p><strong>学期：</strong>{parseResult.semester} {parseResult.year}</p>
-                    {parseResult.course_description && (
-                      <p><strong>课程描述：</strong>{parseResult.course_description}</p>
-                    )}
-                    {parseResult.grading_policy && (
-                      <p><strong>评分政策：</strong>{parseResult.grading_policy}</p>
-                    )}
-                    <p><strong>识别到的任务：</strong>{parseResult.tasks.length} 个</p>
-                    <button type="button" onClick={() => setEditMode(true)} className={styles.saveBtn}>进入结构化编辑</button>
-                  </div>
-                </div>
-              </>
+              </div>
             )}
-            
+
             {/* 提交按钮 */}
-            <button 
-              type="submit" 
-              className={`btn btn-primary ${styles.submitBtn}`}
-              disabled={files.length === 0 || uploading || parsing}
-            >
-              {uploading ? '上传中...' : parsing ? '解析中...' : '开始解析课程'}
-            </button>
+            <div className={styles.submitSection}>
+              <button
+                type="submit"
+                disabled={uploading || parsing}
+                className={styles.submitBtn}
+              >
+                {uploading ? 'Creating Course...' : parsing ? 'Parsing Content...' : 'Upload & Parse'}
+              </button>
+            </div>
           </form>
         )}
       </div>

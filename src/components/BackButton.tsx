@@ -24,7 +24,7 @@ const BackButton: React.FC = () => {
   const navigate = useNavigate();
   return (
     <button style={btnStyle} onClick={() => navigate(-1)}>
-      <span role="img" aria-label="back">⬅️</span> 返回
+      <span role="img" aria-label="back">⬅️</span> Back
     </button>
   );
 };

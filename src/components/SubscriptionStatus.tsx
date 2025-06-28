@@ -32,7 +32,7 @@ const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h3>订阅状态</h3>
+        <h3>Subscription Status</h3>
         <span className={`${styles.planBadge} ${styles[currentPlan]}`}>
           {plan.name}
         </span>
@@ -42,7 +42,7 @@ const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
         <div className={styles.planInfo}>
           <p className={styles.planDescription}>{plan.description}</p>
           <p className={styles.planPrice}>
-            {plan.price === 0 ? '免费' : `$${plan.price}/月`}
+            {plan.price === 0 ? 'Free' : `$${plan.price}/month`}
           </p>
         </div>
 
@@ -50,7 +50,7 @@ const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
         {usageStats && isFreePlan && (
           <div className={styles.usageStats}>
             <div className={styles.usageItem}>
-              <span>AI对话</span>
+              <span>AI Conversations</span>
               <span>
                 {usageStats.monthly_conversations_used} / 
                 {usageStats.monthly_conversations_limit === -1 ? '∞' : usageStats.monthly_conversations_limit}
@@ -66,7 +66,7 @@ const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
               </div>
             </div>
             <div className={styles.usageItem}>
-              <span>课程上传</span>
+              <span>Course Uploads</span>
               <span>
                 {usageStats.monthly_courses_used} / 
                 {usageStats.monthly_courses_limit === -1 ? '∞' : usageStats.monthly_courses_limit}
@@ -78,14 +78,14 @@ const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
         {/* 升级按钮 */}
         {showUpgradeButton && currentPlan !== 'elite' && (
           <Link to="/subscription" className={styles.upgradeButton}>
-            {currentPlan === 'free' ? '升级到Pro' : '升级到Elite'}
+            {currentPlan === 'free' ? 'Upgrade to Pro' : 'Upgrade to Elite'}
           </Link>
         )}
 
         {/* 配额不足警告 */}
         {isFreePlan && !hasConversationQuota && (
           <div className={styles.warning}>
-            <span>⚠️ 本月AI对话配额已用完，请升级到Pro版继续使用</span>
+            <span>⚠️ Monthly AI conversation quota exhausted, please upgrade to Pro to continue</span>
           </div>
         )}
       </div>
