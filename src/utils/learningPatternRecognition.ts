@@ -110,7 +110,7 @@ export interface Intervention {
 /**
  * 学习模式识别引擎类
  */
-export class LearningPatternRecognitionEngine {
+class LearningPatternRecognitionEngine {
   private userId: string
   private detectedPatterns: Map<string, LearningPattern> = new Map()
   private patternHistory: LearningPattern[] = []
@@ -1012,7 +1012,7 @@ export class LearningPatternRecognitionEngine {
 
     // 基于预测的推荐
     predictions.filter(p => p.next_occurrence_probability > 0.8).forEach(prediction => {
-      recommendation.push(`预期${prediction.pattern_id}模式即将出现，建议提前准备相应策略`)
+      recommendations.push(`预期${prediction.pattern_id}模式即将出现，建议提前准备相应策略`)
     })
 
     return recommendations.slice(0, 10) // 限制推荐数量
@@ -1066,3 +1066,4 @@ export function getLearningPatternRecognitionEngine(userId: string): LearningPat
 }
 
 export { LearningPatternRecognitionEngine }
+

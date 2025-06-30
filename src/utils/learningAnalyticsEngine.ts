@@ -7,7 +7,6 @@ import {
     AggregatedBehaviorMetrics,
     AnalysisModel,
     BehaviorDataCollector,
-    BehaviorDataPoint,
     LearningAnalyticsEngine,
     LearningInsight,
     LearningPattern,
@@ -80,49 +79,89 @@ class LearningAnalyticsEngineImpl implements LearningAnalyticsEngine {
         model_id: 'engagement_predictor_v1.2',
         model_name: 'Engagement Prediction Model',
         version: '1.2.0',
-        model_type: 'classification',
+        model_type: 'machine_learning',
         description: 'Predicts user engagement levels',
-        input_features: ['response_time', 'message_length', 'question_frequency'],
-        output_predictions: ['engagement_score', 'engagement_trend'],
-        accuracy_metrics: { precision: 0.85, recall: 0.82, f1_score: 0.83 },
-        training_date: new Date().toISOString(),
-        model_size: 1024
+        input_features: [{
+          feature_name: 'response_time',
+          feature_type: 'numerical',
+          importance_score: 0.8,
+          description: 'User response time patterns'
+        }],
+        output_predictions: [{
+          output_name: 'engagement_score',
+          output_type: 'prediction',
+          confidence_measure: 'probability',
+          interpretation: 'User engagement probability'
+        }],
+        performance_metrics: { precision: 0.85, recall: 0.82, f1_score: 0.83, last_evaluated: new Date().toISOString() },
+        training_data: { data_size: 10000, data_quality_score: 85, training_period: '2024-01', feature_coverage: 0.95, label_quality: 0.90, data_freshness: '2024-01-15' },
+        deployment_info: { deployment_date: new Date().toISOString(), environment: 'production', monitoring_enabled: true, auto_retraining: false, performance_threshold: 0.8 }
       },
       {
         model_id: 'learning_efficiency_analyzer_v2.1',
         model_name: 'Learning Efficiency Analyzer',
         version: '2.1.0',
-        model_type: 'regression',
+        model_type: 'statistical',
         description: 'Analyzes learning efficiency patterns',
-        input_features: ['completion_rate', 'error_frequency', 'time_spent'],
-        output_predictions: ['efficiency_score', 'optimization_suggestions'],
-        accuracy_metrics: { precision: 0.88, recall: 0.85, f1_score: 0.87 },
-        training_date: new Date().toISOString(),
-        model_size: 2048
+        input_features: [{
+          feature_name: 'completion_rate',
+          feature_type: 'numerical',
+          importance_score: 0.9,
+          description: 'Task completion rates'
+        }],
+        output_predictions: [{
+          output_name: 'efficiency_score',
+          output_type: 'prediction',
+          confidence_measure: 'statistical_confidence',
+          interpretation: 'Learning efficiency prediction'
+        }],
+        performance_metrics: { precision: 0.88, recall: 0.85, f1_score: 0.87, last_evaluated: new Date().toISOString() },
+        training_data: { data_size: 15000, data_quality_score: 90, training_period: '2024-01', feature_coverage: 0.92, label_quality: 0.88, data_freshness: '2024-01-15' },
+        deployment_info: { deployment_date: new Date().toISOString(), environment: 'production', monitoring_enabled: true, auto_retraining: false, performance_threshold: 0.85 }
       },
       {
         model_id: 'cognitive_load_optimizer_v1.0',
         model_name: 'Cognitive Load Optimizer',
         version: '1.0.0',
-        model_type: 'optimization',
+        model_type: 'hybrid',
         description: 'Optimizes cognitive load distribution',
-        input_features: ['cognitive_metrics', 'task_complexity', 'user_state'],
-        output_predictions: ['optimal_load', 'load_adjustments'],
-        accuracy_metrics: { precision: 0.80, recall: 0.78, f1_score: 0.79 },
-        training_date: new Date().toISOString(),
-        model_size: 512
+        input_features: [{
+          feature_name: 'cognitive_metrics',
+          feature_type: 'numerical',
+          importance_score: 0.85,
+          description: 'Cognitive load measurements'
+        }],
+        output_predictions: [{
+          output_name: 'optimal_load',
+          output_type: 'prediction',
+          confidence_measure: 'optimization_score',
+          interpretation: 'Optimal cognitive load prediction'
+        }],
+        performance_metrics: { precision: 0.80, recall: 0.78, f1_score: 0.79, last_evaluated: new Date().toISOString() },
+        training_data: { data_size: 8000, data_quality_score: 82, training_period: '2024-01', feature_coverage: 0.88, label_quality: 0.85, data_freshness: '2024-01-15' },
+        deployment_info: { deployment_date: new Date().toISOString(), environment: 'production', monitoring_enabled: true, auto_retraining: false, performance_threshold: 0.75 }
       },
       {
         model_id: 'pattern_recognition_ml_v3.0',
         model_name: 'Machine Learning Pattern Recognition',
         version: '3.0.0',
-        model_type: 'pattern_recognition',
+        model_type: 'deep_learning',
         description: 'Identifies learning behavior patterns',
-        input_features: ['behavior_sequences', 'temporal_patterns', 'performance_trends'],
-        output_predictions: ['pattern_type', 'pattern_confidence', 'next_pattern'],
-        accuracy_metrics: { precision: 0.90, recall: 0.87, f1_score: 0.89 },
-        training_date: new Date().toISOString(),
-        model_size: 4096
+        input_features: [{
+          feature_name: 'behavior_sequences',
+          feature_type: 'temporal',
+          importance_score: 0.95,
+          description: 'Sequential behavior patterns'
+        }],
+        output_predictions: [{
+          output_name: 'pattern_type',
+          output_type: 'classification',
+          confidence_measure: 'neural_confidence',
+          interpretation: 'Behavior pattern classification'
+        }],
+        performance_metrics: { precision: 0.90, recall: 0.87, f1_score: 0.89, last_evaluated: new Date().toISOString() },
+        training_data: { data_size: 25000, data_quality_score: 95, training_period: '2024-01', feature_coverage: 0.98, label_quality: 0.92, data_freshness: '2024-01-15' },
+        deployment_info: { deployment_date: new Date().toISOString(), environment: 'production', monitoring_enabled: true, auto_retraining: true, performance_threshold: 0.88 }
       }
     ]
   }

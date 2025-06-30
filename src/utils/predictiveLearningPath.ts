@@ -106,7 +106,7 @@ export interface ResourceRequirement {
 /**
  * 预测性学习路径规划引擎
  */
-export class PredictiveLearningPathPlanner {
+class PredictiveLearningPathPlanner {
   private userId: string
   private generatedPaths: Map<string, LearningPath> = new Map()
   private pathHistory: LearningPath[] = []
@@ -1076,3 +1076,4 @@ export function getPredictiveLearningPathPlanner(userId: string): PredictiveLear
 }
 
 export { PredictiveLearningPathPlanner }
+

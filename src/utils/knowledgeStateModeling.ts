@@ -96,7 +96,7 @@ export interface ReadinessFactor {
 /**
  * 知识状态建模引擎
  */
-export class KnowledgeStateModelingEngine {
+class KnowledgeStateModelingEngine {
   private userId: string
   private concepts: Map<string, Concept> = new Map()
   private currentState: KnowledgeState | null = null
@@ -541,7 +541,7 @@ export class KnowledgeStateModelingEngine {
 
       readiness.push({
         concept_id: concept.concept_id,
-        readiness_score,
+        readiness_score: readinessScore,
         prerequisite_satisfaction: prereqSatisfaction,
         cognitive_load_prediction: cognitiveLoadPrediction,
         optimal_learning_time: this.determineOptimalLearningTime(concept, readinessScore),
@@ -923,3 +923,4 @@ export function getKnowledgeStateModelingEngine(userId: string): KnowledgeStateM
 }
 
 export { KnowledgeStateModelingEngine }
+

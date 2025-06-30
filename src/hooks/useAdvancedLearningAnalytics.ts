@@ -615,7 +615,13 @@ export function useAdvancedLearningAnalytics(
         preferences: { preferred_explanation_style: 'examples', feedback_preference: 'immediate', challenge_level: 'moderate' },
         timestamp: new Date().toISOString()
       },
-      latestData.cognitiveMetrics || enhancedAI.cognitiveLoadMetrics
+      latestData.cognitiveMetrics || enhancedAI.cognitiveLoadMetrics || {
+        user_id: userId,
+        session_id: 'default',
+        current_metrics: { response_delay: 0, error_rate: 0, help_requests: 0, task_switching_frequency: 0 },
+        session_metrics: { total_cognitive_load: 50, peak_load_points: [], recovery_periods: [], overall_efficiency: 75 },
+        timestamp: new Date().toISOString()
+      }
     )
   }, [state.is_analyzing, performComprehensiveAnalysis, enhancedAI])
 
@@ -627,12 +633,29 @@ export function useAdvancedLearningAnalytics(
     behaviorData?: LearningBehaviorData,
     cognitiveMetrics?: CognitiveLoadMetrics
   ) => {
+    const defaultBehaviorData = {
+      user_id: userId,
+      session_id: 'default',
+      interaction_patterns: { average_response_time: 0, message_length_preference: 0, question_asking_frequency: 0, help_seeking_pattern: 'independent' as const },
+      performance_metrics: { task_completion_rate: 0, error_frequency: 0, improvement_velocity: 0, retention_rate: 0 },
+      preferences: { preferred_explanation_style: 'examples' as const, feedback_preference: 'immediate' as const, challenge_level: 'moderate' as const },
+      timestamp: new Date().toISOString()
+    }
+    
+    const defaultCognitiveMetrics = {
+      user_id: userId,
+      session_id: 'default',
+      current_metrics: { response_delay: 0, error_rate: 0, help_requests: 0, task_switching_frequency: 0 },
+      session_metrics: { total_cognitive_load: 50, peak_load_points: [], recovery_periods: [], overall_efficiency: 75 },
+      timestamp: new Date().toISOString()
+    }
+    
     await performComprehensiveAnalysis(
       messages || enhancedAI.messages,
-      behaviorData || enhancedAI.learningBehaviorData,
-      cognitiveMetrics || enhancedAI.cognitiveLoadMetrics
+      behaviorData || defaultBehaviorData,
+      cognitiveMetrics || enhancedAI.cognitiveLoadMetrics || defaultCognitiveMetrics
     )
-  }, [performComprehensiveAnalysis, enhancedAI])
+  }, [performComprehensiveAnalysis, enhancedAI, userId])
 
   /**
    * 导出分析报告
@@ -644,9 +667,9 @@ export function useAdvancedLearningAnalytics(
       analysis_config: finalConfig,
       comprehensive_state: state,
       phase_1_integration: {
-        learning_style: enhancedAI.detectedLearningStyle,
-        cognitive_load: enhancedAI.cognitiveLoadLevel,
-        ai_configuration: enhancedAI.currentConfig
+        learning_style: enhancedAI.aiConfig?.personalization?.learning_style || 'mixed',
+        cognitive_load: enhancedAI.aiConfig?.cognitive_load?.current_level || 'optimal',
+        ai_configuration: enhancedAI.aiConfig || {}
       },
       summary: {
         overall_progress: state.comprehensive_analysis.overall_progress,
@@ -685,7 +708,7 @@ export function useAdvancedLearningAnalytics(
     if (finalConfig.analysis_frequency === 'real_time' && enhancedAI.messages.length > 0) {
       queueAnalysis({
         messages: enhancedAI.messages,
-        behaviorData: enhancedAI.learningBehaviorData,
+        behaviorData: null,
         cognitiveMetrics: enhancedAI.cognitiveLoadMetrics
       })
     }
@@ -742,4 +765,4 @@ export function useAdvancedLearningAnalytics(
   }
 }
 
-export type { AdvancedAnalyticsConfig, AdvancedLearningAnalyticsState }
+// Export types are already declared above
