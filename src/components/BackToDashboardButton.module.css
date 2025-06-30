@@ -2,7 +2,7 @@
   position: absolute;
   top: 24px;
   right: 32px;
-  z-index: 100;
+  z-index: 1100;
   
   /* Layout */
   display: flex;
@@ -26,7 +26,6 @@
   cursor: pointer;
   transition: all 0.3s ease;
   overflow: hidden;
-  position: relative;
   
   /* Enhanced Shadow for visibility */
   box-shadow: 

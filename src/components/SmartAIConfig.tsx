@@ -15,7 +15,7 @@ const SmartAIConfig: React.FC<SmartAIConfigProps> = ({
   onConfigChange,
   currentConfig
 }) => {
-  const { academicVersion } = useVersionMode();
+  const { currentVersion: academicVersion } = useVersionMode();
   const [activeTab, setActiveTab] = useState<'smart' | 'advanced'>('smart');
 
   // 根据当前AI模式和学术等级推荐配置

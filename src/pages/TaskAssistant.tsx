@@ -358,16 +358,14 @@ const TaskAssistant = () => {
   }, [currentConversation, selectConversation])
 
   return (
-    <div className={styles.assistant}>
+    <div className={styles.assistant} style={{ position: 'relative' }}>
+      <BackToDashboardButton />
       <div className={styles.header}>
         {/* 顶层导航 */}
         <div className={styles.topNav}>
           <div className={styles.headerContent}>
             <h1>AI Learning Assistant</h1>
             <p>Your personalized tutor for every subject</p>
-          </div>
-          <div className={styles.navActions}>
-            <BackToDashboardButton />
           </div>
         </div>
 
