@@ -1,12 +1,13 @@
 import AIQuickPrompts from '@/components/AIQuickPrompts'
 import AITestComponent from '@/components/AITestComponent'
 import BackToDashboardButton from '@/components/BackToDashboardButton'
+import StreamingMessage from '@/components/StreamingMessage'
 import { useAI } from '@/hooks/useAI'
 import { useAIStream } from '@/hooks/useAIStream'
 import { useTasks } from '@/hooks/useTasks'
 import { AIAssistantConfig, Task } from '@/types'
 import { formatDateTime } from '@/utils'
-import { LucideBot, LucideChevronDown, LucideLightbulb, LucideMessageSquare, LucidePlus, LucideRefreshCw, LucideSend, LucideSettings, LucideTrash2, LucideUser } from 'lucide-react'
+import { LucideBot, LucideChevronDown, LucideLightbulb, LucideMessageSquare, LucidePlus, LucideRefreshCw, LucideSend, LucideSettings, LucideSquare, LucideTrash2, LucideUser } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import SubscriptionStatus from '../components/SubscriptionStatus'
 import styles from './TaskAssistant.module.css'
@@ -101,13 +102,16 @@ const TaskAssistant = () => {
     }
 
     if (useStreamMode && currentConversation) {
-      // 使用流式响应
-      await sendStreamMessage(message, currentConversation, aiConfig)
+      // 使用流式响应，完成后刷新消息列表
+      await sendStreamMessage(message, currentConversation, aiConfig, () => {
+        // 流式完成后重新加载消息列表
+        selectConversation(currentConversation.id)
+      })
     } else {
       // 使用传统模式
       await sendMessage(message)
     }
-  }, [inputMessage, loading, currentConversation, createConversation, selectedTask, useStreamMode, sendStreamMessage, sendMessage, aiConfig])
+  }, [inputMessage, loading, currentConversation, createConversation, selectedTask, useStreamMode, sendStreamMessage, sendMessage, aiConfig, selectConversation])
 
   // 处理快速提示选择
   const handleQuickPromptSelect = useCallback((prompt: string) => {
@@ -140,6 +144,17 @@ const TaskAssistant = () => {
   const handleConfigChange = useCallback((config: Partial<AIAssistantConfig>) => {
     updateAIConfig(config)
   }, [updateAIConfig])
+
+  // 清除错误（同时清除两种模式的错误）
+  const handleClearError = useCallback(() => {
+    clearError()
+    clearStreamError()
+  }, [clearError, clearStreamError])
+
+  // 停止流式响应
+  const handleStopStreaming = useCallback(() => {
+    stopStreaming()
+  }, [stopStreaming])
 
   // 删除对话
   const handleDeleteConversation = useCallback(async (conversationId: string, e: React.MouseEvent) => {
@@ -218,278 +233,336 @@ const TaskAssistant = () => {
 
   return (
     <div className={styles.assistant}>
-      <BackToDashboardButton />
-      
-      <div className="container">
-        <div className={styles.header}>
-          <div className={styles.headerContent}>
-            <h1>AI Learning Assistant</h1>
-            <p>Let AI become your personal learning mentor, providing personalized guidance</p>
-          </div>
-          <div className={styles.headerActions}>
-            {/* AI Config Dropdown */}
-            <div className={styles.dropdown} ref={configDropdownRef}>
-              <button 
-                className={`${styles.dropdownBtn} ${showConfig ? styles.active : ''}`}
-                onClick={() => {
-                  setShowConfig(!showConfig)
-                  setShowQuickPrompts(false)
-                }}
-              >
-                <LucideSettings size={20} />
-                AI Config
-                <LucideChevronDown size={16} className={`${styles.chevron} ${showConfig ? styles.chevronUp : ''}`} />
+      <div className={styles.header}>
+        <div className={styles.headerContent}>
+          <h1>AI Learning Assistant</h1>
+          <p>Your personalized tutor for every subject</p>
+          {error && (
+            <div className={styles.errorMessage}>
+              <span>⚠️ {error}</span>
+              <button onClick={handleClearError} className={styles.clearErrorBtn}>
+                ✕
               </button>
-              {showConfig && (
-                <div className={styles.dropdownContent}>
-                  <div className={styles.dropdownHeader}>
-                    <h3>AI Configuration</h3>
-                  </div>
-                  <div className={styles.dropdownBody}>
-                    <div className={styles.configSection}>
-                      <label>Writing Style</label>
-                      <select 
-                        value={aiConfig.writing_style || 'academic'}
-                        onChange={(e) => handleConfigChange({ writing_style: e.target.value as any })}
-                        className={styles.configSelect}
-                      >
-                        <option value="academic">Academic</option>
-                        <option value="creative">Creative</option>
-                        <option value="technical">Technical</option>
-                      </select>
-                    </div>
-                    <div className={styles.configSection}>
-                      <label>Citation Format</label>
-                      <select 
-                        value={aiConfig.citation_format || 'apa'}
-                        onChange={(e) => handleConfigChange({ citation_format: e.target.value as any })}
-                        className={styles.configSelect}
-                      >
-                        <option value="apa">APA</option>
-                        <option value="mla">MLA</option>
-                        <option value="chicago">Chicago</option>
-                      </select>
-                    </div>
-                    <div className={styles.configSection}>
-                      <label>Difficulty Level</label>
-                      <select 
-                        value={aiConfig.difficulty_level || 'intermediate'}
-                        onChange={(e) => handleConfigChange({ difficulty_level: e.target.value as any })}
-                        className={styles.configSelect}
-                      >
-                        <option value="beginner">Beginner</option>
-                        <option value="intermediate">Intermediate</option>
-                        <option value="advanced">Advanced</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
-
-            {/* Quick Prompts Dropdown */}
-            <div className={styles.dropdown} ref={promptsDropdownRef}>
-              <button 
-                className={`${styles.dropdownBtn} ${styles.quickPromptsBtn} ${showQuickPrompts ? styles.active : ''}`}
-                onClick={() => {
-                  setShowQuickPrompts(!showQuickPrompts)
-                  setShowConfig(false)
-                }}
-              >
-                <LucideLightbulb size={20} />
-                Quick Prompts
-                <LucideChevronDown size={16} className={`${styles.chevron} ${showQuickPrompts ? styles.chevronUp : ''}`} />
-              </button>
-              {showQuickPrompts && (
-                <div className={styles.dropdownContent}>
-                  <AIQuickPrompts 
-                    onSelectPrompt={handleQuickPromptSelect}
-                    currentCategory={selectedTask?.type}
-                    disabled={loading}
-                  />
-                </div>
-              )}
-            </div>
-
-            <button 
-              className={styles.newChatBtn}
-              onClick={handleNewConversation}
-              disabled={loading}
-            >
-              <LucidePlus size={20} />
-              New Chat
-            </button>
-          </div>
+          )}
         </div>
-
-        <div className={styles.assistantContent}>
-          {/* 左侧边栏 */}
-          <div className={styles.sidebar}>
-            {/* 任务选择器 */}
-            <div className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <h3>Select Task</h3>
-                <button 
-                  className={styles.toggleBtn}
-                  onClick={() => setShowTaskSelector(!showTaskSelector)}
-                >
-                  {showTaskSelector ? 'Collapse' : 'Expand'}
-                </button>
-              </div>
-              
-              {showTaskSelector && (
-                <div className={styles.taskList}>
-                  {tasks.map((task) => (
-                    <div 
-                      key={task.id}
-                      className={`${styles.taskItem} ${selectedTask?.id === task.id ? styles.selected : ''}`}
-                      onClick={() => setSelectedTask(task)}
-                    >
-                      <div className={styles.taskIcon}>
-                        {getTaskTypeIcon(task.type)}
-                      </div>
-                      <div className={styles.taskInfo}>
-                        <div className={styles.taskTitle}>{task.title}</div>
-                        <div className={styles.taskMeta}>
-                          <span className={styles.taskType}>{task.type}</span>
-                          <span className={styles.taskDue}>
-                            {formatDateTime(task.due_date)}
-                          </span>
-                        </div>
-                      </div>
-                      <div 
-                        className={styles.taskStatus}
-                        style={{ backgroundColor: getTaskStatusColor(task.status) }}
-                      />
-                    </div>
-                  ))}
+        <div className={styles.headerActions}>
+          {/* 流式模式切换 */}
+          <div className={styles.streamModeToggle}>
+            <label className={styles.toggleLabel}>
+              <input
+                type="checkbox"
+                checked={useStreamMode}
+                onChange={(e) => setUseStreamMode(e.target.checked)}
+                className={styles.toggleInput}
+              />
+              <span className={styles.toggleSlider}></span>
+              <span className={styles.toggleText}>🚀 Stream Mode</span>
+            </label>
+          </div>
+          
+          {/* AI Config Dropdown */}
+          <div className={styles.dropdown} ref={configDropdownRef}>
+            <button 
+              className={`${styles.dropdownBtn} ${showConfig ? styles.active : ''}`}
+              onClick={() => {
+                setShowConfig(!showConfig)
+                setShowQuickPrompts(false)
+              }}
+            >
+              <LucideSettings size={20} />
+              AI Config
+              <LucideChevronDown size={16} className={`${styles.chevron} ${showConfig ? styles.chevronUp : ''}`} />
+            </button>
+            {showConfig && (
+              <div className={styles.dropdownContent}>
+                <div className={styles.dropdownHeader}>
+                  <h3>AI Configuration</h3>
                 </div>
-              )}
-
-              {selectedTask && (
-                <div className={styles.selectedTaskInfo}>
-                  <h4>Current Task</h4>
-                  <div className={styles.taskCard}>
-                    <div className={styles.taskCardHeader}>
-                      <span className={styles.taskCardIcon}>
-                        {getTaskTypeIcon(selectedTask.type)}
-                      </span>
-                      <span className={styles.taskCardTitle}>{selectedTask.title}</span>
-                    </div>
-                    <p className={styles.taskCardDesc}>{selectedTask.description}</p>
-                    <div className={styles.taskCardMeta}>
-                      <span>Due: {formatDateTime(selectedTask.due_date)}</span>
-                      <span>Priority: {selectedTask.priority}</span>
-                    </div>
+                <div className={styles.dropdownBody}>
+                  <div className={styles.configSection}>
+                    <label>Writing Style</label>
+                    <select 
+                      value={aiConfig.writing_style || 'academic'}
+                      onChange={(e) => handleConfigChange({ writing_style: e.target.value as any })}
+                      className={styles.configSelect}
+                    >
+                      <option value="academic">Academic</option>
+                      <option value="creative">Creative</option>
+                      <option value="technical">Technical</option>
+                    </select>
+                  </div>
+                  <div className={styles.configSection}>
+                    <label>Citation Format</label>
+                    <select 
+                      value={aiConfig.citation_format || 'apa'}
+                      onChange={(e) => handleConfigChange({ citation_format: e.target.value as any })}
+                      className={styles.configSelect}
+                    >
+                      <option value="apa">APA</option>
+                      <option value="mla">MLA</option>
+                      <option value="chicago">Chicago</option>
+                    </select>
+                  </div>
+                  <div className={styles.configSection}>
+                    <label>Difficulty Level</label>
+                    <select 
+                      value={aiConfig.difficulty_level || 'intermediate'}
+                      onChange={(e) => handleConfigChange({ difficulty_level: e.target.value as any })}
+                      className={styles.configSelect}
+                    >
+                      <option value="beginner">Beginner</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="advanced">Advanced</option>
+                    </select>
+                  </div>
+                  <div className={styles.configSection}>
+                    <label>AI Model</label>
+                    <select 
+                      value={aiConfig.model || 'gpt-3.5-turbo'}
+                      onChange={(e) => handleConfigChange({ model: e.target.value as any })}
+                      className={styles.configSelect}
+                    >
+                      <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Faster)</option>
+                      <option value="gpt-4o">GPT-4o (Better Quality)</option>
+                    </select>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+          </div>
 
-            {/* AI模式选择 */}
-            <div className={styles.section}>
-              <h3>AI Mode</h3>
-              <div className={styles.modeList}>
-                {getAIModeOptions().map((mode) => (
+          {/* Quick Prompts Dropdown */}
+          <div className={styles.dropdown} ref={promptsDropdownRef}>
+            <button 
+              className={`${styles.dropdownBtn} ${styles.quickPromptsBtn} ${showQuickPrompts ? styles.active : ''}`}
+              onClick={() => {
+                setShowQuickPrompts(!showQuickPrompts)
+                setShowConfig(false)
+              }}
+            >
+              <LucideLightbulb size={20} />
+              Quick Prompts
+              <LucideChevronDown size={16} className={`${styles.chevron} ${showQuickPrompts ? styles.chevronUp : ''}`} />
+            </button>
+            {showQuickPrompts && (
+              <div className={styles.dropdownContent}>
+                <AIQuickPrompts 
+                  currentCategory={selectedTask?.type}
+                  onSelectPrompt={handleQuickPromptSelect}
+                  disabled={loading}
+                />
+              </div>
+            )}
+          </div>
+
+          <button 
+            className={styles.newChatBtn}
+            onClick={handleNewConversation}
+            disabled={loading}
+          >
+            <LucidePlus size={20} />
+            New Chat
+          </button>
+        </div>
+      </div>
+
+      <BackToDashboardButton />
+
+      <div className={styles.assistantContent}>
+        {/* 左侧边栏 */}
+        <div className={styles.sidebar}>
+          {/* 任务选择器 */}
+          <div className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h3>Select Task</h3>
+              <button 
+                className={styles.toggleBtn}
+                onClick={() => setShowTaskSelector(!showTaskSelector)}
+              >
+                {showTaskSelector ? 'Collapse' : 'Expand'}
+              </button>
+            </div>
+            
+            {showTaskSelector && (
+              <div className={styles.taskList}>
+                {tasks.map((task) => (
                   <div 
-                    key={mode.value}
-                    className={`${styles.modeItem} ${aiConfig.mode === mode.value ? styles.selected : ''}`}
-                    onClick={() => handleConfigChange({ mode: mode.value as any })}
+                    key={task.id}
+                    className={`${styles.taskItem} ${selectedTask?.id === task.id ? styles.selected : ''}`}
+                    onClick={() => setSelectedTask(task)}
                   >
-                    <span className={styles.modeIcon}>{mode.icon}</span>
-                    <div className={styles.modeInfo}>
-                      <span className={styles.modeName}>{mode.label}</span>
-                      <span className={styles.modeDesc}>{mode.description}</span>
+                    <div className={styles.taskIcon}>
+                      {getTaskTypeIcon(task.type)}
                     </div>
+                    <div className={styles.taskInfo}>
+                      <div className={styles.taskTitle}>{task.title}</div>
+                      <div className={styles.taskMeta}>
+                        <span className={styles.taskType}>{task.type}</span>
+                        <span className={styles.taskDue}>
+                          {formatDateTime(task.due_date)}
+                        </span>
+                      </div>
+                    </div>
+                    <div 
+                      className={styles.taskStatus}
+                      style={{ backgroundColor: getTaskStatusColor(task.status) }}
+                    />
                   </div>
                 ))}
               </div>
-            </div>
+            )}
 
-            {/* 对话历史 */}
-            <div className={`${styles.section} ${styles.chatHistorySection}`}>
-              <div className={styles.sectionHeader}>
-                <h3>Chat History</h3>
-                <div className={styles.chatHistoryActions}>
-                  <button 
-                    className={styles.newChatBtn}
-                    onClick={handleNewConversation}
-                    title="Start new conversation"
-                  >
-                    <LucidePlus size={16} />
-                  </button>
-                  {conversations.length > 0 && (
-                    <button 
-                      className={styles.deleteAllBtn}
-                      onClick={handleDeleteAllConversations}
-                      title="Delete all conversations"
-                    >
-                      <LucideTrash2 size={16} />
-                    </button>
-                  )}
+            {selectedTask && (
+              <div className={styles.selectedTaskInfo}>
+                <h4>Current Task</h4>
+                <div className={styles.taskCard}>
+                  <div className={styles.taskCardHeader}>
+                    <span className={styles.taskCardIcon}>
+                      {getTaskTypeIcon(selectedTask.type)}
+                    </span>
+                    <span className={styles.taskCardTitle}>{selectedTask.title}</span>
+                  </div>
+                  <p className={styles.taskCardDesc}>{selectedTask.description}</p>
+                  <div className={styles.taskCardMeta}>
+                    <span>Due: {formatDateTime(selectedTask.due_date)}</span>
+                    <span>Priority: {selectedTask.priority}</span>
+                  </div>
                 </div>
               </div>
-              <div className={styles.conversationList}>
-                {conversations.length === 0 ? (
-                  <div className={styles.emptyConversations}>
-                    <p>No conversations yet.</p>
-                    <p>Start a conversation to begin!</p>
+            )}
+          </div>
+
+          {/* AI模式选择 */}
+          <div className={styles.section}>
+            <h3>AI Mode</h3>
+            <div className={styles.modeList}>
+              {getAIModeOptions().map((mode) => (
+                <div 
+                  key={mode.value}
+                  className={`${styles.modeItem} ${aiConfig.mode === mode.value ? styles.selected : ''}`}
+                  onClick={() => handleConfigChange({ mode: mode.value as any })}
+                >
+                  <span className={styles.modeIcon}>{mode.icon}</span>
+                  <div className={styles.modeInfo}>
+                    <span className={styles.modeName}>{mode.label}</span>
+                    <span className={styles.modeDesc}>{mode.description}</span>
                   </div>
-                ) : (
-                  conversations.map((conversation) => (
-                    <div 
-                      key={conversation.id}
-                      className={`${styles.conversationItem} ${currentConversation?.id === conversation.id ? styles.selected : ''}`}
-                      onClick={() => selectConversation(conversation.id)}
-                    >
-                      <div className={styles.conversationIcon}>
-                        <LucideMessageSquare size={16} />
-                      </div>
-                      <div className={styles.conversationInfo}>
-                        <span className={styles.conversationType}>
-                          {conversation.assistant_type}
-                        </span>
-                        <span className={styles.conversationTime}>
-                          {formatDateTime(conversation.updated_at)}
-                        </span>
-                      </div>
-                      <button
-                        className={styles.deleteBtn}
-                        onClick={(e) => handleDeleteConversation(conversation.id, e)}
-                        title="Delete conversation"
-                      >
-                        <LucideTrash2 size={14} />
-                      </button>
-                    </div>
-                  ))
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 对话历史 */}
+          <div className={`${styles.section} ${styles.chatHistorySection}`}>
+            <div className={styles.sectionHeader}>
+              <h3>Chat History</h3>
+              <div className={styles.chatHistoryActions}>
+                <button 
+                  className={styles.newChatBtn}
+                  onClick={handleNewConversation}
+                  title="Start new conversation"
+                >
+                  <LucidePlus size={16} />
+                </button>
+                {conversations.length > 0 && (
+                  <button 
+                    className={styles.deleteAllBtn}
+                    onClick={handleDeleteAllConversations}
+                    title="Delete all conversations"
+                  >
+                    <LucideTrash2 size={16} />
+                  </button>
                 )}
               </div>
             </div>
-
-            {/* 订阅状态 */}
-            <SubscriptionStatus 
-              currentPlan={userSubscription.plan}
-              usageStats={userSubscription.usageStats}
-            />
-
-            {/* AI诊断工具 */}
-            <AITestComponent />
+            <div className={styles.conversationList}>
+              {conversations.length === 0 ? (
+                <div className={styles.emptyConversations}>
+                  <p>No conversations yet.</p>
+                  <p>Start a conversation to begin!</p>
+                </div>
+              ) : (
+                conversations.map((conversation) => (
+                  <div 
+                    key={conversation.id}
+                    className={`${styles.conversationItem} ${currentConversation?.id === conversation.id ? styles.selected : ''}`}
+                    onClick={() => selectConversation(conversation.id)}
+                  >
+                    <div className={styles.conversationIcon}>
+                      <LucideMessageSquare size={16} />
+                    </div>
+                    <div className={styles.conversationInfo}>
+                      <span className={styles.conversationType}>
+                        {conversation.assistant_type}
+                      </span>
+                      <span className={styles.conversationTime}>
+                        {formatDateTime(conversation.updated_at)}
+                      </span>
+                    </div>
+                    <button
+                      className={styles.deleteBtn}
+                      onClick={(e) => handleDeleteConversation(conversation.id, e)}
+                      title="Delete conversation"
+                    >
+                      <LucideTrash2 size={14} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
-          {/* 主聊天区域 */}
-          <div className={styles.mainContent}>
-            <div className={styles.chatContainer}>
-              {/* 聊天头部 */}
-              <div className={styles.chatHeader}>
-                <div className={styles.chatInfo}>
-                  <h2>AI Chat</h2>
-                  <p>{getCurrentConfigDescription()}</p>
-                </div>
-                <div className={styles.chatActions}>
-                  {loading && (
-                    <div className={styles.loadingIndicator}>
-                      <LucideRefreshCw size={16} className={styles.spinning} />
-                      AI thinking...
+          {/* 订阅状态 */}
+          <SubscriptionStatus 
+            currentPlan={userSubscription.plan}
+            usageStats={userSubscription.usageStats}
+          />
+
+          {/* AI诊断工具 */}
+          <AITestComponent />
+        </div>
+
+        {/* 主聊天区域 */}
+        <div className={styles.mainContent}>
+          <div className={styles.chatContainer}>
+            {/* 聊天头部 */}
+            <div className={styles.chatHeader}>
+              <div className={styles.chatInfo}>
+                <h2>
+                  AI Chat
+                  {useStreamMode && <span className={styles.streamBadge}>🚀 STREAM</span>}
+                </h2>
+                <p>{getCurrentConfigDescription()}</p>
+              </div>
+              <div className={styles.chatActions}>
+                {loading && (
+                  <div className={styles.loadingIndicator}>
+                    <LucideRefreshCw size={16} className={styles.spinning} />
+                    {useStreamMode ? 'AI streaming...' : 'AI thinking...'}
+                    {useStreamMode && (
+                      <button 
+                        onClick={handleStopStreaming}
+                        style={{
+                          marginLeft: '10px',
+                          padding: '4px 8px',
+                          background: 'rgba(239, 68, 68, 0.2)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          borderRadius: '4px',
+                          color: '#ef4444',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                        title="停止流式响应"
+                      >
+                        <LucideSquare size={12} />
+                        Stop
+                      </button>
+                    )}
+                    {!useStreamMode && (
                       <button 
                         onClick={forceResetLoading}
                         style={{
@@ -506,74 +579,98 @@ const TaskAssistant = () => {
                       >
                         Reset
                       </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 消息列表 */}
-              <div className={styles.messagesContainer}>
-                {messages.length === 0 ? (
-                  <div className={styles.emptyState}>
-                    <div className={styles.emptyIcon}>
-                      <LucideBot size={48} />
-                    </div>
-                    <h3>Start your AI learning journey</h3>
-                    <p>Ask a question or select a task to begin your conversation</p>
-                  </div>
-                ) : (
-                  <div className={styles.messagesList}>
-                    {messages.map((message) => (
-                      <div 
-                        key={message.id}
-                        className={`${styles.message} ${message.role === 'user' ? styles.userMessage : styles.aiMessage}`}
-                      >
-                        <div className={styles.messageAvatar}>
-                          {message.role === 'user' ? (
-                            <LucideUser size={20} />
-                          ) : (
-                            <LucideBot size={20} />
-                          )}
-                        </div>
-                        <div className={styles.messageContent}>
-                          <div className={styles.messageText}>
-                            {message.content}
-                          </div>
-                          <div className={styles.messageTime}>
-                            {formatDateTime(message.timestamp)}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    <div ref={messagesEndRef} />
+                    )}
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* 输入区域 */}
-              <div className={styles.inputContainer}>
-                <div className={styles.inputWrapper}>
-                  <textarea
-                    ref={inputRef}
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Describe your question or need..."
-                    rows={1}
-                    disabled={loading}
-                    className={styles.messageInput}
-                  />
-                  <button 
-                    onClick={handleSendMessage}
-                    disabled={!inputMessage.trim() || loading}
-                    className={styles.sendButton}
-                  >
-                    <LucideSend size={20} />
-                  </button>
+            {/* 消息列表 */}
+            <div className={styles.messagesContainer}>
+              {messages.length === 0 && !isStreaming ? (
+                <div className={styles.emptyState}>
+                  <div className={styles.emptyIcon}>
+                    <LucideBot size={48} />
+                  </div>
+                  <h3>Start your AI learning journey</h3>
+                  <p>Ask a question or select a task to begin your conversation</p>
+                  {useStreamMode && (
+                    <div className={styles.streamModeInfo}>
+                      <span className={styles.streamIcon}>🚀</span>
+                      <p>Stream Mode enabled - Experience ChatGPT-like real-time responses!</p>
+                    </div>
+                  )}
                 </div>
-                <div className={styles.inputHint}>
-                  Press Enter to send, Shift + Enter for new line
+              ) : (
+                <div className={styles.messagesList}>
+                  {messages.map((message) => (
+                    <div 
+                      key={message.id}
+                      className={`${styles.message} ${message.role === 'user' ? styles.userMessage : styles.aiMessage}`}
+                    >
+                      <div className={styles.messageAvatar}>
+                        {message.role === 'user' ? (
+                          <LucideUser size={20} />
+                        ) : (
+                          <LucideBot size={20} />
+                        )}
+                      </div>
+                      <div className={styles.messageContent}>
+                        <div className={styles.messageText}>
+                          {message.content}
+                        </div>
+                        <div className={styles.messageTime}>
+                          {formatDateTime(message.timestamp)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* 流式响应消息 */}
+                  {isStreaming && streamingMessage && (
+                    <div className={`${styles.message} ${styles.aiMessage} ${styles.streamingMessage}`}>
+                      <div className={styles.messageAvatar}>
+                        <LucideBot size={20} />
+                      </div>
+                      <div className={styles.messageContent}>
+                        <StreamingMessage
+                          content={streamingMessage}
+                          isComplete={false}
+                          isStreaming={true}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div ref={messagesEndRef} />
                 </div>
+              )}
+            </div>
+
+            {/* 输入区域 */}
+            <div className={styles.inputContainer}>
+              <div className={styles.inputWrapper}>
+                <textarea
+                  ref={inputRef}
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder={useStreamMode ? "Experience instant AI responses..." : "Describe your question or need..."}
+                  rows={1}
+                  disabled={loading}
+                  className={styles.messageInput}
+                />
+                <button 
+                  onClick={handleSendMessage}
+                  disabled={!inputMessage.trim() || loading}
+                  className={styles.sendButton}
+                >
+                  <LucideSend size={20} />
+                </button>
+              </div>
+              <div className={styles.inputHint}>
+                Press Enter to send, Shift + Enter for new line
+                {useStreamMode && <span className={styles.streamHint}> • 🚀 Stream Mode Active</span>}
               </div>
             </div>
           </div>

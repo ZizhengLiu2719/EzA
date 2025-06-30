@@ -3,16 +3,15 @@ import { supabase } from '@/api/supabase'
 import { AIAssistantConfig, AIConversation, AIMessage } from '@/types'
 import { useCallback, useRef, useState } from 'react'
 
-// 扩展消息类型以支持流式响应需要的字段
+// 流式消息类型，匹配数据库表结构
 interface StreamMessage extends Omit<AIMessage, 'id' | 'timestamp'> {
-  assistant_type?: string
-  mode?: string
+  // 只包含数据库中实际存在的字段
 }
 
 export interface UseAIStreamReturn {
   isStreaming: boolean
   streamingMessage: string
-  sendStreamMessage: (message: string, conversation: AIConversation, config?: AIAssistantConfig) => Promise<void>
+  sendStreamMessage: (message: string, conversation: AIConversation, config?: AIAssistantConfig, onComplete?: () => void) => Promise<void>
   stopStreaming: () => void
   error: string | null
   clearError: () => void
@@ -42,7 +41,8 @@ export function useAIStream(): UseAIStreamReturn {
   const sendStreamMessage = useCallback(async (
     message: string,
     conversation: AIConversation,
-    config?: AIAssistantConfig
+    config?: AIAssistantConfig,
+    onComplete?: () => void
   ) => {
     if (isStreaming || !message.trim()) {
       return
@@ -62,9 +62,7 @@ export function useAIStream(): UseAIStreamReturn {
       const userMessageData: StreamMessage = {
         conversation_id: conversation.id,
         role: 'user',
-        content: message,
-        assistant_type: conversation.assistant_type,
-        mode: config?.mode || 'bullet_tutor'
+        content: message
       }
 
       const { data: savedUserMessage, error: userMessageError } = await supabase
@@ -84,9 +82,7 @@ export function useAIStream(): UseAIStreamReturn {
       const aiMessageData: StreamMessage = {
         conversation_id: conversation.id,
         role: 'assistant',
-        content: '', // 初始为空，流式更新
-        assistant_type: conversation.assistant_type,
-        mode: config?.mode || 'bullet_tutor'
+        content: '' // 初始为空，流式更新
       }
 
       const { data: aiMessage, error: aiMessageError } = await supabase
@@ -132,6 +128,11 @@ export function useAIStream(): UseAIStreamReturn {
               console.error('❌ 更新AI消息失败:', updateError)
             } else {
               console.log('✅ AI消息内容已更新到数据库')
+              
+              // 触发消息列表刷新
+              if (onComplete) {
+                onComplete()
+              }
             }
           } catch (updateErr) {
             console.error('💥 更新消息时出错:', updateErr)
