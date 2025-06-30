@@ -401,6 +401,9 @@ ${tasks.map(task => `- ${task.title}: ${task.status}`).join('\n')}
 // 创建 AI 服务实例
 const aiService = new AIService()
 
+// 导出 AI 服务实例
+export { aiService };
+
 // AI 对话 API
 export const aiConversationApi = {
   // 创建新的 AI 对话

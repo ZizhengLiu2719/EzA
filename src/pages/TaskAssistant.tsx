@@ -25,11 +25,13 @@ const TaskAssistant = () => {
     deleteConversation,
     deleteAllConversations,
     sendMessage,
+    sendMessageFast,
     updateAIConfig,
     getAIModeOptions,
     getCurrentConfigDescription,
     clearError,
-    forceResetLoading
+    forceResetLoading,
+    addMessage
   } = useAI()
 
   const {
@@ -38,7 +40,8 @@ const TaskAssistant = () => {
     sendStreamMessage,
     stopStreaming,
     error: streamError,
-    clearError: clearStreamError
+    clearError: clearStreamError,
+    clearStreamingMessage
   } = useAIStream()
 
   const { tasks, fetchTasks } = useTasks()
@@ -88,30 +91,74 @@ const TaskAssistant = () => {
     if (!inputMessage.trim() || loading) return
 
     const message = inputMessage.trim()
+    
+    // 🚀 性能优化：立即清空输入框和显示用户消息，给用户即时反馈
     setInputMessage('')
 
+    // 确定要使用的对话
+    let conversationToUse = currentConversation
+
     // 如果没有当前对话，创建一个新的
-    if (!currentConversation) {
+    if (!conversationToUse) {
       // 根据选中的任务类型确定assistant_type
       const assistantType = selectedTask?.type === 'writing' ? 'writing' :
                            selectedTask?.type === 'assignment' || selectedTask?.type === 'exam' || selectedTask?.type === 'quiz' ? 'stem' :
                            selectedTask?.type === 'reading' ? 'reading' : 'programming'
       
       const newConversation = await createConversation(assistantType, selectedTask?.id)
-      if (!newConversation) return
+      if (!newConversation) {
+        // 如果创建对话失败，恢复输入框内容
+        setInputMessage(message)
+        return
+      }
+      
+      conversationToUse = newConversation
     }
 
-    if (useStreamMode && currentConversation) {
-      // 使用流式响应，完成后刷新消息列表
-      await sendStreamMessage(message, currentConversation, aiConfig, () => {
-        // 流式完成后重新加载消息列表
-        selectConversation(currentConversation.id)
-      })
-    } else {
-      // 使用传统模式
-      await sendMessage(message)
+    // 🚀 立即添加用户消息到界面，无需等待任何网络操作
+    const userMessage = {
+      id: `user_${Date.now()}`,
+      conversation_id: conversationToUse.id,
+      role: 'user' as const,
+      content: message,
+      timestamp: new Date().toISOString()
     }
-  }, [inputMessage, loading, currentConversation, createConversation, selectedTask, useStreamMode, sendStreamMessage, sendMessage, aiConfig, selectConversation])
+    addMessage(userMessage)
+    console.log('⚡ 用户消息已立即显示')
+
+    if (useStreamMode && conversationToUse) {
+      // 使用优化后的流式响应 - AI调用几乎立即开始
+      try {
+        await sendStreamMessage(message, conversationToUse, aiConfig, async (fullContent: string) => {
+          // 流式完成后直接添加到消息列表
+          console.log('✅ 流式响应完成，添加AI消息')
+          
+          const newAIMessage = {
+            id: `ai_${Date.now()}`,
+            conversation_id: conversationToUse.id,
+            role: 'assistant' as const,
+            content: fullContent,
+            timestamp: new Date().toISOString()
+          }
+          
+          addMessage(newAIMessage)
+          clearStreamingMessage()
+          console.log('🎉 对话流程完成')
+        })
+      } catch (error) {
+        console.error('❌ 流式消息发送失败:', error)
+        // 可以选择是否移除已显示的用户消息或显示错误状态
+      }
+    } else {
+      // 使用优化的普通模式（非流式）
+      try {
+        await sendMessageFast(message, userMessage)
+        console.log('✅ 普通AI响应完成')
+      } catch (error) {
+        console.error('❌ 普通消息发送失败:', error)
+      }
+    }
+  }, [inputMessage, loading, currentConversation, createConversation, selectedTask, useStreamMode, sendStreamMessage, sendMessage, sendMessageFast, aiConfig, addMessage, clearStreamingMessage])
 
   // 处理快速提示选择
   const handleQuickPromptSelect = useCallback((prompt: string) => {
@@ -149,7 +196,8 @@ const TaskAssistant = () => {
   const handleClearError = useCallback(() => {
     clearError()
     clearStreamError()
-  }, [clearError, clearStreamError])
+    clearStreamingMessage()
+  }, [clearError, clearStreamError, clearStreamingMessage])
 
   // 停止流式响应
   const handleStopStreaming = useCallback(() => {
@@ -531,9 +579,27 @@ const TaskAssistant = () => {
               <div className={styles.chatInfo}>
                 <h2>
                   AI Chat
-                  {useStreamMode && <span className={styles.streamBadge}>🚀 STREAM</span>}
+                  <span className={styles.modeBadge}>
+                    {useStreamMode ? '🚀 STREAM' : '📝 NORMAL'}
+                  </span>
                 </h2>
                 <p>{getCurrentConfigDescription()}</p>
+              </div>
+              <div className={styles.modeToggle}>
+                <button
+                  className={`${styles.modeToggleBtn} ${useStreamMode ? styles.active : ''}`}
+                  onClick={() => setUseStreamMode(true)}
+                  title="流式响应模式 - 实时打字效果"
+                >
+                  🚀 Stream
+                </button>
+                <button
+                  className={`${styles.modeToggleBtn} ${!useStreamMode ? styles.active : ''}`}
+                  onClick={() => setUseStreamMode(false)}
+                  title="普通响应模式 - 瞬间显示完整回复"
+                >
+                  📝 Normal
+                </button>
               </div>
               <div className={styles.chatActions}>
                 {loading && (

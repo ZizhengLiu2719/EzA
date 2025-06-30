@@ -52,25 +52,88 @@ export function StreamingMessage({
   }, [content, displayedContent.length, isStreaming])
 
   return (
-    <div className="streaming-message">
+    <div 
+      className="streaming-message"
+      style={{
+        color: '#ffffff',
+        lineHeight: '1.6',
+        fontSize: '14px',
+        wordBreak: 'break-word',
+        whiteSpace: 'pre-wrap'
+      }}
+    >
       <div className="message-content">
         {displayedContent}
         {isStreaming && !isComplete && (
-          <span className="typing-cursor animate-pulse ml-1">▋</span>
+          <span 
+            className="typing-cursor" 
+            style={{
+              color: '#6366f1',
+              marginLeft: '2px',
+              animation: 'blink 1s infinite'
+            }}
+          >▋</span>
         )}
       </div>
       
       {/* 流式状态指示器 */}
       {isStreaming && (
-        <div className="flex items-center mt-2 text-xs text-gray-500">
-          <div className="flex space-x-1">
-            <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce"></div>
-            <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+        <div 
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            marginTop: '8px',
+            fontSize: '12px',
+            color: 'rgba(255, 255, 255, 0.6)'
+          }}
+        >
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <div 
+              style={{
+                width: '4px',
+                height: '4px',
+                backgroundColor: '#6366f1',
+                borderRadius: '50%',
+                animation: 'bounce 1.4s infinite ease-in-out'
+              }}
+            ></div>
+            <div 
+              style={{
+                width: '4px',
+                height: '4px',
+                backgroundColor: '#6366f1',
+                borderRadius: '50%',
+                animation: 'bounce 1.4s infinite ease-in-out 0.2s'
+              }}
+            ></div>
+            <div 
+              style={{
+                width: '4px',
+                height: '4px',
+                backgroundColor: '#6366f1',
+                borderRadius: '50%',
+                animation: 'bounce 1.4s infinite ease-in-out 0.4s'
+              }}
+            ></div>
           </div>
-          <span className="ml-2">AI正在思考...</span>
+          <span style={{ marginLeft: '8px' }}>AI正在思考...</span>
         </div>
       )}
+
+      <style>{`
+        @keyframes blink {
+          0%, 50% { opacity: 1; }
+          51%, 100% { opacity: 0; }
+        }
+        @keyframes bounce {
+          0%, 80%, 100% { 
+            transform: scale(0);
+          }
+          40% { 
+            transform: scale(1);
+          }
+        }
+      `}</style>
     </div>
   )
 }
