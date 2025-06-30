@@ -482,8 +482,8 @@ const TaskAssistant = () => {
       <div className={styles.assistantContent}>
         {/* 左侧边栏 */}
         <div className={styles.sidebar}>
-          {/* 任务选择器 */}
-          <div className={styles.section}>
+          {/* 任务选择器 - 保持固定在顶部 */}
+          <div className={`${styles.section} ${styles.taskSelectorSection}`}>
             <div className={styles.sectionHeader}>
               <h3>Select Task</h3>
               <button 
@@ -543,114 +543,56 @@ const TaskAssistant = () => {
             )}
           </div>
 
-          {/* AI模式选择 */}
-          <div className={styles.section}>
-            {/* Version Switcher */}
-            <VersionSwitcher
-              currentVersion={versionMode.currentVersion}
-              onVersionChange={versionMode.switchVersion}
-              userGrade={versionMode.userGrade}
-              disabled={loading}
-            />
+          {/* AI模式选择 - 添加滚动容器 */}
+          <div className={styles.aiModeContainer}>
+            <div className={styles.section}>
+              {/* Version Switcher */}
+              <VersionSwitcher
+                currentVersion={versionMode.currentVersion}
+                onVersionChange={versionMode.switchVersion}
+                userGrade={versionMode.userGrade}
+                disabled={loading}
+              />
 
-            {/* AI Mode Selector */}
-            <AIModeSelector
-              availableModes={versionMode.availableModes}
-              selectedModeId={versionMode.selectedModeId}
-              onModeSelect={versionMode.selectMode}
-              academicVersion={versionMode.currentVersion}
-              userGrade={versionMode.userGrade}
-              disabled={loading}
-              showExamples={true}
-            />
+              {/* AI Mode Selector */}
+              <AIModeSelector
+                availableModes={versionMode.availableModes}
+                selectedModeId={versionMode.selectedModeId}
+                onModeSelect={versionMode.selectMode}
+                academicVersion={versionMode.currentVersion}
+                userGrade={versionMode.userGrade}
+                disabled={loading}
+                showExamples={true}
+              />
 
-            {/* Current Configuration Display */}
-            <div className={styles.currentConfig}>
-              <div className={styles.configTitle}>Current Setup</div>
-              <div className={styles.configDetails}>
-                <div className={styles.configItem}>
-                  <span className={styles.configLabel}>Version:</span>
-                  <span className={styles.configValue}>
-                    {versionMode.currentVersion === 'high_school' ? 'High School' : 'College'}
-                  </span>
-                </div>
-                {versionMode.userGrade && (
+              {/* Current Configuration Display */}
+              <div className={styles.currentConfig}>
+                <div className={styles.configTitle}>Current Setup</div>
+                <div className={styles.configDetails}>
                   <div className={styles.configItem}>
-                    <span className={styles.configLabel}>Grade:</span>
+                    <span className={styles.configLabel}>Version:</span>
                     <span className={styles.configValue}>
-                      {versionMode.userGrade <= 12 ? `Grade ${versionMode.userGrade}` : `Year ${versionMode.userGrade - 12}`}
+                      {versionMode.currentVersion === 'high_school' ? 'High School' : 'College'}
                     </span>
                   </div>
-                )}
-                {versionMode.selectedMode && (
-                  <div className={styles.configItem}>
-                    <span className={styles.configLabel}>Mode:</span>
-                    <span className={styles.configValue}>
-                      {versionMode.selectedMode.icon} {versionMode.selectedMode.name}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* 对话历史 */}
-          <div className={`${styles.section} ${styles.chatHistorySection}`}>
-            <div className={styles.sectionHeader}>
-              <h3>Chat History</h3>
-              <div className={styles.chatHistoryActions}>
-                <button 
-                  className={styles.newChatBtn}
-                  onClick={handleNewConversation}
-                  title="Start new conversation"
-                >
-                  <LucidePlus size={16} />
-                </button>
-                {conversations.length > 0 && (
-                  <button 
-                    className={styles.deleteAllBtn}
-                    onClick={handleDeleteAllConversations}
-                    title="Delete all conversations"
-                  >
-                    <LucideTrash2 size={16} />
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className={styles.conversationList}>
-              {conversations.length === 0 ? (
-                <div className={styles.emptyConversations}>
-                  <p>No conversations yet.</p>
-                  <p>Start a conversation to begin!</p>
+                  {versionMode.userGrade && (
+                    <div className={styles.configItem}>
+                      <span className={styles.configLabel}>Grade:</span>
+                      <span className={styles.configValue}>
+                        {versionMode.userGrade <= 12 ? `Grade ${versionMode.userGrade}` : `Year ${versionMode.userGrade - 12}`}
+                      </span>
+                    </div>
+                  )}
+                  {versionMode.selectedMode && (
+                    <div className={styles.configItem}>
+                      <span className={styles.configLabel}>Mode:</span>
+                      <span className={styles.configValue}>
+                        {versionMode.selectedMode.icon} {versionMode.selectedMode.name}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                conversations.map((conversation) => (
-                  <div 
-                    key={conversation.id}
-                    className={`${styles.conversationItem} ${currentConversation?.id === conversation.id ? styles.selected : ''}`}
-                    onClick={() => selectConversation(conversation.id)}
-                  >
-                    <div className={styles.conversationIcon}>
-                      <LucideMessageSquare size={16} />
-                    </div>
-                    <div className={styles.conversationInfo}>
-                      <span className={styles.conversationType}>
-                        {conversation.assistant_type}
-                      </span>
-                      <span className={styles.conversationTime}>
-                        {formatDateTime(conversation.updated_at)}
-                      </span>
-                    </div>
-                    <button
-                      className={styles.deleteBtn}
-                      onClick={(e) => handleDeleteConversation(conversation.id, e)}
-                      title="Delete conversation"
-                    >
-                      <LucideTrash2 size={14} />
-                    </button>
-                  </div>
-                ))
-              )}
+              </div>
             </div>
           </div>
 
@@ -844,6 +786,66 @@ const TaskAssistant = () => {
             currentPlan={userSubscription.plan}
             usageStats={userSubscription.usageStats}
           />
+          
+          {/* Chat History - 移到右侧 */}
+          <div className={`${styles.section} ${styles.chatHistorySection}`}>
+            <div className={styles.sectionHeader}>
+              <h3>Chat History</h3>
+              <div className={styles.chatHistoryActions}>
+                <button 
+                  className={styles.newChatBtn}
+                  onClick={handleNewConversation}
+                  title="Start new conversation"
+                >
+                  <LucidePlus size={16} />
+                </button>
+                {conversations.length > 0 && (
+                  <button 
+                    className={styles.deleteAllBtn}
+                    onClick={handleDeleteAllConversations}
+                    title="Delete all conversations"
+                  >
+                    <LucideTrash2 size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className={`${styles.conversationList} ${styles.chatHistoryContainer}`}>
+              {conversations.length === 0 ? (
+                <div className={styles.emptyConversations}>
+                  <p>No conversations yet.</p>
+                  <p>Start a conversation to begin!</p>
+                </div>
+              ) : (
+                conversations.map((conversation) => (
+                  <div 
+                    key={conversation.id}
+                    className={`${styles.conversationItem} ${currentConversation?.id === conversation.id ? styles.selected : ''}`}
+                    onClick={() => selectConversation(conversation.id)}
+                  >
+                    <div className={styles.conversationIcon}>
+                      <LucideMessageSquare size={16} />
+                    </div>
+                    <div className={styles.conversationInfo}>
+                      <span className={styles.conversationType}>
+                        {conversation.assistant_type}
+                      </span>
+                      <span className={styles.conversationTime}>
+                        {formatDateTime(conversation.updated_at)}
+                      </span>
+                    </div>
+                    <button
+                      className={styles.deleteBtn}
+                      onClick={(e) => handleDeleteConversation(conversation.id, e)}
+                      title="Delete conversation"
+                    >
+                      <LucideTrash2 size={14} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

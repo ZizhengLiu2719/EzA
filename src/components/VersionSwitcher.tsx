@@ -28,15 +28,7 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({
     }
   }
 
-  const getRecommendedVersion = () => {
-    if (userGrade && userGrade <= 12) {
-      return 'high_school'
-    }
-    return 'college'
-  }
 
-  const recommendedVersion = getRecommendedVersion()
-  const isRecommended = (version: AcademicVersion) => version === recommendedVersion
 
   return (
     <div className={styles.versionSwitcher}>
@@ -63,9 +55,6 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({
           <div className={styles.buttonContent}>
             <div className={styles.buttonTitle}>High School</div>
             <div className={styles.buttonSubtitle}>Grades 9-12</div>
-            {isRecommended('high_school') && (
-              <div className={styles.recommendedBadge}>Recommended</div>
-            )}
           </div>
         </button>
         
@@ -82,9 +71,6 @@ const VersionSwitcher: React.FC<VersionSwitcherProps> = ({
           <div className={styles.buttonContent}>
             <div className={styles.buttonTitle}>College</div>
             <div className={styles.buttonSubtitle}>Advanced</div>
-            {isRecommended('college') && (
-              <div className={styles.recommendedBadge}>Recommended</div>
-            )}
           </div>
         </button>
       </div>

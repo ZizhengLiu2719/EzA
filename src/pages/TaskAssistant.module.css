@@ -894,7 +894,7 @@
 /* Main Content Layout */
 .assistantContent {
   display: grid;
-  grid-template-columns: 380px 1fr 320px;
+  grid-template-columns: 420px 1fr 360px;
   gap: var(--space-8);
   position: relative;
   z-index: 1;
@@ -906,6 +906,69 @@
   flex-direction: column;
   gap: var(--space-6);
   z-index: 2;
+  max-height: calc(100vh - 120px);
+  overflow: hidden;
+}
+
+/* AI Mode Selector Container - 固定高度并添加滚动 */
+.aiModeContainer {
+  max-height: 1100px; /* 大幅增加AI模式选择器区域的最大高度 */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px; /* 为滚动条留出空间 */
+  flex-shrink: 1; /* 允许这个区域在空间不足时缩小 */
+}
+
+/* AI Mode Container Scrollbar Styling */
+.aiModeContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.aiModeContainer::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.aiModeContainer::-webkit-scrollbar-thumb {
+  background: rgba(79, 70, 229, 0.3);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.aiModeContainer::-webkit-scrollbar-thumb:hover {
+  background: rgba(79, 70, 229, 0.5);
+}
+
+/* 任务选择器保持独立，不受滚动影响 */
+.taskSelectorSection {
+  flex-shrink: 0;
+}
+
+/* Chat History Container - 固定高度并添加滚动 */
+.chatHistoryContainer {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px; /* 为滚动条留出空间 */
+}
+
+.chatHistoryContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chatHistoryContainer::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.chatHistoryContainer::-webkit-scrollbar-thumb {
+  background: rgba(79, 70, 229, 0.3);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.chatHistoryContainer::-webkit-scrollbar-thumb:hover {
+  background: rgba(79, 70, 229, 0.5);
 }
 
 /* 右侧状态栏 */
@@ -1762,7 +1825,7 @@
 /* Responsive Design - Gen Z Style */
 @media (max-width: 1200px) {
   .assistantContent {
-    grid-template-columns: 320px 1fr 280px;
+    grid-template-columns: 360px 1fr 320px;
     gap: var(--space-6);
   }
   
@@ -1874,7 +1937,7 @@
   }
   
   .rightSidebar {
-    order: 1; /* 在移动端将状态栏放在顶部 */
+    order: 1; /* 在移动端将状态栏和Chat History放在顶部 */
   }
   
   .sidebar {
@@ -1885,6 +1948,11 @@
     height: 600px;
     border-radius: var(--radius-lg);
     order: 2; /* 主聊天区域在中间 */
+  }
+
+  /* Chat History在移动端的样式 */
+  .chatHistoryContainer {
+    max-height: 200px;
   }
   
   .messageContent {
@@ -1904,6 +1972,15 @@
   .section {
     padding: var(--space-4);
     border-radius: var(--radius-lg);
+  }
+
+  /* Mobile AI Mode Container */
+  .aiModeContainer {
+    max-height: 600px;
+  }
+
+  .chatHistoryContainer {
+    max-height: 250px;
   }
   
   .inputContainer {
@@ -1953,6 +2030,15 @@
   
   .mainContent {
     height: 500px;
+  }
+
+  /* Extra Small Mobile - AI Mode Container */
+  .aiModeContainer {
+    max-height: 450px;
+  }
+
+  .chatHistoryContainer {
+    max-height: 200px;
   }
   
   .messagesContainer {

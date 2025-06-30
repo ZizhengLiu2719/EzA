@@ -1,7 +1,7 @@
 import { aiConversationApi } from '@/api/ai'
 import { supabase } from '@/api/supabase'
 import { AIAssistantConfig, AIConversation, AIMessage } from '@/types'
-import { AI_MODES, getAIConfigDescription, validateAIConfig } from '@/utils/ai'
+import { AI_MODES, getAIConfigDescription } from '@/utils/ai'
 import { useCallback, useEffect, useState } from 'react'
 
 // 🚀 静态导入AI服务，消除动态导入延迟
@@ -52,7 +52,8 @@ export const useAI = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [aiConfig, setAIConfig] = useState<AIAssistantConfig>({
-    mode: 'bullet_tutor',
+    mode: 'study_buddy',
+    academicVersion: 'high_school',
     model: 'gpt-3.5-turbo' // 默认使用GPT-3.5-turbo
   })
 
@@ -673,12 +674,7 @@ export const useAI = () => {
   // 更新 AI 配置
   const updateAIConfig = useCallback((config: Partial<AIAssistantConfig>) => {
     const newConfig = { ...aiConfig, ...config }
-    
-    if (validateAIConfig(newConfig)) {
-      setAIConfig(newConfig)
-    } else {
-      setError('Invalid AI configuration')
-    }
+    setAIConfig(newConfig)
   }, [aiConfig])
 
   // 获取 AI 模式选项
