@@ -1,5 +1,4 @@
 import AIQuickPrompts from '@/components/AIQuickPrompts'
-import AITestComponent from '@/components/AITestComponent'
 import BackToDashboardButton from '@/components/BackToDashboardButton'
 import StreamingMessage from '@/components/StreamingMessage'
 import { useAI } from '@/hooks/useAI'
@@ -282,140 +281,155 @@ const TaskAssistant = () => {
   return (
     <div className={styles.assistant}>
       <div className={styles.header}>
-        <div className={styles.headerContent}>
-          <h1>AI Learning Assistant</h1>
-          <p>Your personalized tutor for every subject</p>
-          {error && (
-            <div className={styles.errorMessage}>
-              <span>⚠️ {error}</span>
-              <button onClick={handleClearError} className={styles.clearErrorBtn}>
-                ✕
-              </button>
-            </div>
-          )}
+        {/* 顶层导航 */}
+        <div className={styles.topNav}>
+          <div className={styles.headerContent}>
+            <h1>AI Learning Assistant</h1>
+            <p>Your personalized tutor for every subject</p>
+          </div>
+          <div className={styles.navActions}>
+            <BackToDashboardButton />
+          </div>
         </div>
-        <div className={styles.headerActions}>
-          {/* 流式模式切换 */}
-          <div className={styles.streamModeToggle}>
-            <label className={styles.toggleLabel}>
-              <input
-                type="checkbox"
-                checked={useStreamMode}
-                onChange={(e) => setUseStreamMode(e.target.checked)}
-                className={styles.toggleInput}
-              />
-              <span className={styles.toggleSlider}></span>
-              <span className={styles.toggleText}>🚀 Stream Mode</span>
-            </label>
-          </div>
-          
-          {/* AI Config Dropdown */}
-          <div className={styles.dropdown} ref={configDropdownRef}>
-            <button 
-              className={`${styles.dropdownBtn} ${showConfig ? styles.active : ''}`}
-              onClick={() => {
-                setShowConfig(!showConfig)
-                setShowQuickPrompts(false)
-              }}
-            >
-              <LucideSettings size={20} />
-              AI Config
-              <LucideChevronDown size={16} className={`${styles.chevron} ${showConfig ? styles.chevronUp : ''}`} />
-            </button>
-            {showConfig && (
-              <div className={styles.dropdownContent}>
-                <div className={styles.dropdownHeader}>
-                  <h3>AI Configuration</h3>
-                </div>
-                <div className={styles.dropdownBody}>
-                  <div className={styles.configSection}>
-                    <label>Writing Style</label>
-                    <select 
-                      value={aiConfig.writing_style || 'academic'}
-                      onChange={(e) => handleConfigChange({ writing_style: e.target.value as any })}
-                      className={styles.configSelect}
-                    >
-                      <option value="academic">Academic</option>
-                      <option value="creative">Creative</option>
-                      <option value="technical">Technical</option>
-                    </select>
-                  </div>
-                  <div className={styles.configSection}>
-                    <label>Citation Format</label>
-                    <select 
-                      value={aiConfig.citation_format || 'apa'}
-                      onChange={(e) => handleConfigChange({ citation_format: e.target.value as any })}
-                      className={styles.configSelect}
-                    >
-                      <option value="apa">APA</option>
-                      <option value="mla">MLA</option>
-                      <option value="chicago">Chicago</option>
-                    </select>
-                  </div>
-                  <div className={styles.configSection}>
-                    <label>Difficulty Level</label>
-                    <select 
-                      value={aiConfig.difficulty_level || 'intermediate'}
-                      onChange={(e) => handleConfigChange({ difficulty_level: e.target.value as any })}
-                      className={styles.configSelect}
-                    >
-                      <option value="beginner">Beginner</option>
-                      <option value="intermediate">Intermediate</option>
-                      <option value="advanced">Advanced</option>
-                    </select>
-                  </div>
-                  <div className={styles.configSection}>
-                    <label>AI Model</label>
-                    <select 
-                      value={aiConfig.model || 'gpt-3.5-turbo'}
-                      onChange={(e) => handleConfigChange({ model: e.target.value as any })}
-                      className={styles.configSelect}
-                    >
-                      <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Faster)</option>
-                      <option value="gpt-4o">GPT-4o (Better Quality)</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
 
-          {/* Quick Prompts Dropdown */}
-          <div className={styles.dropdown} ref={promptsDropdownRef}>
-            <button 
-              className={`${styles.dropdownBtn} ${styles.quickPromptsBtn} ${showQuickPrompts ? styles.active : ''}`}
-              onClick={() => {
-                setShowQuickPrompts(!showQuickPrompts)
-                setShowConfig(false)
-              }}
-            >
-              <LucideLightbulb size={20} />
-              Quick Prompts
-              <LucideChevronDown size={16} className={`${styles.chevron} ${showQuickPrompts ? styles.chevronUp : ''}`} />
-            </button>
-            {showQuickPrompts && (
-              <div className={styles.dropdownContent}>
-                <AIQuickPrompts 
-                  currentCategory={selectedTask?.type}
-                  onSelectPrompt={handleQuickPromptSelect}
-                  disabled={loading}
+        {/* 底层工具栏 */}
+        <div className={styles.toolbar}>
+          <div className={styles.toolbarLeft}>
+            {/* Stream/Normal模式切换 */}
+            <div className={styles.streamModeToggle}>
+              <label className={styles.toggleLabel}>
+                <input
+                  type="checkbox"
+                  checked={useStreamMode}
+                  onChange={(e) => setUseStreamMode(e.target.checked)}
+                  className={styles.toggleInput}
                 />
+                <span className={styles.toggleSlider}></span>
+                <span className={styles.toggleText}>🚀 Stream Mode</span>
+              </label>
+            </div>
+          </div>
+
+          <div className={styles.toolbarCenter}>
+            {/* 错误提示 */}
+            {error && (
+              <div className={styles.errorMessage}>
+                <span>⚠️ {error}</span>
+                <button onClick={handleClearError} className={styles.clearErrorBtn}>
+                  ✕
+                </button>
               </div>
             )}
           </div>
 
-          <button 
-            className={styles.newChatBtn}
-            onClick={handleNewConversation}
-            disabled={loading}
-          >
-            <LucidePlus size={20} />
-            New Chat
-          </button>
+          <div className={styles.toolbarRight}>
+            {/* AI Config Dropdown */}
+            <div className={styles.dropdown} ref={configDropdownRef}>
+              <button 
+                className={`${styles.toolbarBtn} ${showConfig ? styles.active : ''}`}
+                onClick={() => {
+                  setShowConfig(!showConfig)
+                  setShowQuickPrompts(false)
+                }}
+              >
+                <LucideSettings size={18} />
+                <span>Config</span>
+                <LucideChevronDown size={14} className={`${styles.chevron} ${showConfig ? styles.chevronUp : ''}`} />
+              </button>
+              {showConfig && (
+                <div className={styles.dropdownContent}>
+                  <div className={styles.dropdownHeader}>
+                    <h3>AI Configuration</h3>
+                  </div>
+                  <div className={styles.dropdownBody}>
+                    <div className={styles.configSection}>
+                      <label>Writing Style</label>
+                      <select 
+                        value={aiConfig.writing_style || 'academic'}
+                        onChange={(e) => handleConfigChange({ writing_style: e.target.value as any })}
+                        className={styles.configSelect}
+                      >
+                        <option value="academic">Academic</option>
+                        <option value="creative">Creative</option>
+                        <option value="technical">Technical</option>
+                      </select>
+                    </div>
+                    <div className={styles.configSection}>
+                      <label>Citation Format</label>
+                      <select 
+                        value={aiConfig.citation_format || 'apa'}
+                        onChange={(e) => handleConfigChange({ citation_format: e.target.value as any })}
+                        className={styles.configSelect}
+                      >
+                        <option value="apa">APA</option>
+                        <option value="mla">MLA</option>
+                        <option value="chicago">Chicago</option>
+                      </select>
+                    </div>
+                    <div className={styles.configSection}>
+                      <label>Difficulty Level</label>
+                      <select 
+                        value={aiConfig.difficulty_level || 'intermediate'}
+                        onChange={(e) => handleConfigChange({ difficulty_level: e.target.value as any })}
+                        className={styles.configSelect}
+                      >
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                      </select>
+                    </div>
+                    <div className={styles.configSection}>
+                      <label>AI Model</label>
+                      <select 
+                        value={aiConfig.model || 'gpt-3.5-turbo'}
+                        onChange={(e) => handleConfigChange({ model: e.target.value as any })}
+                        className={styles.configSelect}
+                      >
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Faster)</option>
+                        <option value="gpt-4o">GPT-4o (Better Quality)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Quick Prompts Dropdown */}
+            <div className={styles.dropdown} ref={promptsDropdownRef}>
+              <button 
+                className={`${styles.toolbarBtn} ${styles.quickPromptsBtn} ${showQuickPrompts ? styles.active : ''}`}
+                onClick={() => {
+                  setShowQuickPrompts(!showQuickPrompts)
+                  setShowConfig(false)
+                }}
+              >
+                <LucideLightbulb size={18} />
+                <span>Prompts</span>
+                <LucideChevronDown size={14} className={`${styles.chevron} ${showQuickPrompts ? styles.chevronUp : ''}`} />
+              </button>
+              {showQuickPrompts && (
+                <div className={styles.dropdownContent}>
+                  <AIQuickPrompts 
+                    currentCategory={selectedTask?.type}
+                    onSelectPrompt={handleQuickPromptSelect}
+                    disabled={loading}
+                  />
+                </div>
+              )}
+            </div>
+
+            <button 
+              className={styles.newChatBtn}
+              onClick={handleNewConversation}
+              disabled={loading}
+              title="开始新对话"
+            >
+              <LucidePlus size={18} />
+              <span>New Chat</span>
+            </button>
+          </div>
         </div>
       </div>
-
-      <BackToDashboardButton />
 
       <div className={styles.assistantContent}>
         {/* 左侧边栏 */}
@@ -561,14 +575,6 @@ const TaskAssistant = () => {
             </div>
           </div>
 
-          {/* 订阅状态 */}
-          <SubscriptionStatus 
-            currentPlan={userSubscription.plan}
-            usageStats={userSubscription.usageStats}
-          />
-
-          {/* AI诊断工具 */}
-          <AITestComponent />
         </div>
 
         {/* 主聊天区域 */}
@@ -740,6 +746,14 @@ const TaskAssistant = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* 右侧状态栏 */}
+        <div className={styles.rightSidebar}>
+          <SubscriptionStatus 
+            currentPlan={userSubscription.plan}
+            usageStats={userSubscription.usageStats}
+          />
         </div>
       </div>
     </div>
