@@ -49,7 +49,7 @@ const TaskAssistant = () => {
   const [showConfig, setShowConfig] = useState(false)
   const [showTaskSelector, setShowTaskSelector] = useState(false)
   const [showQuickPrompts, setShowQuickPrompts] = useState(false)
-  const [useStreamMode, setUseStreamMode] = useState(true)
+  const [useStreamMode, setUseStreamMode] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -151,13 +151,16 @@ const TaskAssistant = () => {
     } else {
       // 使用优化的普通模式（非流式）
       try {
+        console.log('🔄 开始普通模式AI对话')
         await sendMessageFast(message, userMessage)
         console.log('✅ 普通AI响应完成')
       } catch (error) {
         console.error('❌ 普通消息发送失败:', error)
+        setInputMessage(message) // 恢复输入内容
+        // 可以选择移除用户消息或显示错误状态
       }
     }
-  }, [inputMessage, loading, currentConversation, createConversation, selectedTask, useStreamMode, sendStreamMessage, sendMessage, sendMessageFast, aiConfig, addMessage, clearStreamingMessage])
+  }, [inputMessage, loading, currentConversation, createConversation, selectedTask, useStreamMode, sendStreamMessage, sendMessageFast, aiConfig, addMessage, clearStreamingMessage])
 
   // 处理快速提示选择
   const handleQuickPromptSelect = useCallback((prompt: string) => {

@@ -429,7 +429,7 @@ export const useAI = () => {
       setLoading(false)
       console.log('🏁 普通AI调用完成')
     }
-  }, [currentConversation, aiConfig, setMessages, setConversations])
+  }, [currentConversation, aiConfig])
 
   // 更新 AI 配置
   const updateAIConfig = useCallback((config: Partial<AIAssistantConfig>) => {
