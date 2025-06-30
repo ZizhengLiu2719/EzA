@@ -153,6 +153,16 @@ export const useAI = () => {
     setLoading(true)
     setError(null)
     
+    console.log('🚀 开始发送消息:', message)
+    console.log('📝 当前对话:', currentConversation)
+    
+    // 设置30秒超时自动重置
+    const timeoutId = setTimeout(() => {
+      console.warn('⏰ AI请求超时，自动重置loading状态')
+      setLoading(false)
+      setError('AI request timed out. Please try again.')
+    }, 30000)
+    
     try {
       const response = await aiConversationApi.sendMessage(
         currentConversation.id,
@@ -163,9 +173,13 @@ export const useAI = () => {
         }
       )
       
+      console.log('📨 API响应:', response)
+      
       if (response.error) {
+        console.error('❌ API错误:', response.error)
         setError(response.error)
       } else {
+        console.log('✅ 消息发送成功:', response.data)
         const newMessage = response.data
         setMessages(prev => [...prev, newMessage])
         
@@ -177,8 +191,11 @@ export const useAI = () => {
         ))
       }
     } catch (err: any) {
+      console.error('💥 发送消息异常:', err)
       setError(err.message)
     } finally {
+      clearTimeout(timeoutId) // 清除超时
+      console.log('🏁 清除loading状态')
       setLoading(false)
     }
   }, [currentConversation, aiConfig])
@@ -215,6 +232,13 @@ export const useAI = () => {
     setError(null)
   }, [])
 
+  // 强制重置loading状态
+  const forceResetLoading = useCallback(() => {
+    console.log('🔄 强制重置loading状态')
+    setLoading(false)
+    setError(null)
+  }, [])
+
   // 初始化加载
   useEffect(() => {
     fetchConversations()
@@ -239,7 +263,8 @@ export const useAI = () => {
     updateAIConfig,
     getAIModeOptions,
     getCurrentConfigDescription,
-    clearError
+    clearError,
+    forceResetLoading
   }
 }
 

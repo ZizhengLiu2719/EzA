@@ -1,4 +1,5 @@
 import AIQuickPrompts from '@/components/AIQuickPrompts'
+import AITestComponent from '@/components/AITestComponent'
 import BackToDashboardButton from '@/components/BackToDashboardButton'
 import { useAI } from '@/hooks/useAI'
 import { useTasks } from '@/hooks/useTasks'
@@ -25,7 +26,8 @@ const TaskAssistant = () => {
     updateAIConfig,
     getAIModeOptions,
     getCurrentConfigDescription,
-    clearError
+    clearError,
+    forceResetLoading
   } = useAI()
 
   const { tasks, fetchTasks } = useTasks()
@@ -452,6 +454,9 @@ const TaskAssistant = () => {
               currentPlan={userSubscription.plan}
               usageStats={userSubscription.usageStats}
             />
+
+            {/* AI诊断工具 */}
+            <AITestComponent />
           </div>
 
           {/* 主聊天区域 */}
@@ -468,6 +473,22 @@ const TaskAssistant = () => {
                     <div className={styles.loadingIndicator}>
                       <LucideRefreshCw size={16} className={styles.spinning} />
                       AI thinking...
+                      <button 
+                        onClick={forceResetLoading}
+                        style={{
+                          marginLeft: '10px',
+                          padding: '4px 8px',
+                          background: 'rgba(239, 68, 68, 0.2)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          borderRadius: '4px',
+                          color: '#ef4444',
+                          fontSize: '12px',
+                          cursor: 'pointer'
+                        }}
+                        title="重置AI状态"
+                      >
+                        Reset
+                      </button>
                     </div>
                   )}
                 </div>
