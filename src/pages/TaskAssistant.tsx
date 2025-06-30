@@ -152,7 +152,7 @@ const TaskAssistant = () => {
       // 使用优化的普通模式（非流式）
       try {
         console.log('🔄 开始普通模式AI对话')
-        await sendMessageFast(message, userMessage)
+        await sendMessageFast(message, conversationToUse, userMessage)
         console.log('✅ 普通AI响应完成')
       } catch (error) {
         console.error('❌ 普通消息发送失败:', error)

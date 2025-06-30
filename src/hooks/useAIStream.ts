@@ -135,6 +135,12 @@ export function useAIStream(): UseAIStreamReturn {
         // 数据库操作 - 后台并行执行
         (async () => {
           try {
+            // 🚀 检测临时对话：跳过数据库操作，避免保存失败
+            if (conversation.id.startsWith('temp_')) {
+              console.log('⏭️ 检测到临时对话，跳过数据库操作，等待真实对话ID')
+              return
+            }
+
             // 快速认证检查（可以考虑缓存）
             const { data: { user }, error: authError } = await supabase.auth.getUser()
             if (authError || !user) {

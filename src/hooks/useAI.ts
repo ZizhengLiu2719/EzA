@@ -37,32 +37,74 @@ export const useAI = () => {
     }
   }, [])
 
-  // 创建新对话
+  // 创建新对话 - 🚀 乐观更新版本，立即响应
   const createConversation = useCallback(async (
     assistantType: AIConversation['assistant_type'],
     taskId?: string
   ) => {
-    setLoading(true)
-    setError(null)
+    console.log('🚀 开始创建新对话（乐观更新）:', assistantType)
     
-    try {
-      const response = await aiConversationApi.createConversation(assistantType, taskId)
-      if (response.error) {
-        setError(response.error)
-        return null
-      } else {
-        const newConversation = response.data
-        setConversations(prev => [newConversation, ...prev])
-        setCurrentConversation(newConversation)
-        setMessages([])
-        return newConversation
-      }
-    } catch (err: any) {
-      setError(err.message)
-      return null
-    } finally {
-      setLoading(false)
+    // 🚀 立即创建临时对话 - 用户无需等待
+    const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const tempConversation: AIConversation = {
+      id: tempId,
+      user_id: '', // 临时为空，后台会更新
+      task_id: taskId,
+      assistant_type: assistantType,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
+
+    // 🚀 立即更新UI - 用户可以马上看到新对话
+    setConversations(prev => [tempConversation, ...prev])
+    setCurrentConversation(tempConversation)
+    setMessages([])
+    
+    console.log('✅ 临时对话已创建，用户可以立即开始聊天')
+
+    // 🔥 后台异步保存到数据库 - 完全不阻塞用户体验
+    Promise.resolve().then(async () => {
+      try {
+        console.log('💾 开始后台保存对话到数据库')
+        
+        const response = await aiConversationApi.createConversation(assistantType, taskId)
+        
+        if (response.error) {
+          console.error('❌ 对话保存失败:', response.error)
+          
+          // 保存失败，但不影响用户当前体验
+          // 可以选择：1) 静默失败  2) 显示警告  3) 回滚
+          // 这里选择静默失败，因为用户已经在使用对话了
+          console.warn('⚠️ 对话将以临时模式运行，数据可能不会持久化')
+          return
+        }
+
+        const realConversation = response.data
+        console.log('✅ 对话已保存到数据库，ID:', realConversation.id)
+
+        // 🚀 更新UI中的临时对话为真实对话
+        setConversations(prev => prev.map(conv => 
+          conv.id === tempId ? realConversation : conv
+        ))
+        
+        // 如果这个临时对话仍然是当前对话，更新为真实对话
+        setCurrentConversation(current => 
+          current?.id === tempId ? realConversation : current
+        )
+
+        console.log('✅ 临时对话已更新为真实对话')
+
+      } catch (err: any) {
+        console.error('💥 后台保存对话失败:', err)
+        // 同样选择静默失败，保持用户体验流畅
+        console.warn('⚠️ 对话将以临时模式运行，重新加载页面后可能丢失')
+      }
+    }).catch(err => {
+      console.warn('⚠️ 后台任务启动失败:', err)
+    })
+
+    // 🚀 立即返回临时对话，不等待数据库操作
+    return tempConversation
   }, [])
 
   // 选择对话
@@ -267,8 +309,12 @@ export const useAI = () => {
   }, [currentConversation, aiConfig])
 
   // 🚀 优化版本：普通发送消息（完全分离AI和数据库）
-  const sendMessageFast = useCallback(async (message: string, userMessage: AIMessage) => {
-    if (!currentConversation) {
+  const sendMessageFast = useCallback(async (
+    message: string, 
+    conversation: AIConversation, 
+    userMessage: AIMessage
+  ) => {
+    if (!conversation) {
       setError('Please select or create a conversation first')
       return
     }
@@ -277,6 +323,7 @@ export const useAI = () => {
     setError(null)
     
     console.log('🚀 开始普通AI调用（完全分离版）:', message)
+    console.log('📝 使用对话:', conversation.id)
     
     // 短超时控制 - 仅针对AI调用
     const timeoutId = setTimeout(() => {
@@ -292,7 +339,7 @@ export const useAI = () => {
       console.log('🤖 开始AI调用（静态导入）')
       
       const aiContent = await aiService.generateConversationResponse(
-        currentConversation,
+        conversation, // 🚀 使用传入的对话，而不是状态中的对话
         message,
         {
           ...aiConfig,
@@ -306,7 +353,7 @@ export const useAI = () => {
       // 创建AI消息对象
       const aiMessage: AIMessage = {
         id: `ai_${Date.now()}`,
-        conversation_id: currentConversation.id,
+        conversation_id: conversation.id, // 🚀 使用传入的对话ID
         role: 'assistant',
         content: aiContent,
         timestamp: new Date().toISOString()
@@ -317,7 +364,7 @@ export const useAI = () => {
       
       // 更新对话列表中的最后更新时间
       setConversations(prev => prev.map(conv => 
-        conv.id === currentConversation.id 
+        conv.id === conversation.id // 🚀 使用传入的对话ID
           ? { ...conv, updated_at: aiMessage.timestamp }
           : conv
       ))
@@ -327,6 +374,12 @@ export const useAI = () => {
       // 🔥 完全后台的数据库操作 - 不阻塞任何用户体验
       Promise.resolve().then(async () => {
         try {
+          // 🚀 检测临时对话：跳过数据库操作，避免保存失败
+          if (conversation.id.startsWith('temp_')) {
+            console.log('⏭️ 检测到临时对话，跳过数据库操作，等待真实对话ID')
+            return
+          }
+
           console.log('💾 开始后台数据库操作（完全异步）')
           
           // 快速认证检查
@@ -342,7 +395,7 @@ export const useAI = () => {
             supabase
               .from('ai_messages')
               .insert({
-                conversation_id: currentConversation.id,
+                conversation_id: conversation.id, // 🚀 使用传入的对话ID
                 role: 'user',
                 content: message,
                 timestamp: userMessage.timestamp
@@ -352,7 +405,7 @@ export const useAI = () => {
             supabase
               .from('ai_messages')
               .insert({
-                conversation_id: currentConversation.id,
+                conversation_id: conversation.id, // 🚀 使用传入的对话ID
                 role: 'assistant',
                 content: aiContent,
                 timestamp: aiMessage.timestamp
@@ -376,7 +429,7 @@ export const useAI = () => {
           const conversationUpdate = await supabase
             .from('ai_conversations')
             .update({ updated_at: aiMessage.timestamp })
-            .eq('id', currentConversation.id)
+            .eq('id', conversation.id) // 🚀 使用传入的对话ID
 
           if (!conversationUpdate.error) {
             console.log('✅ 对话时间戳已更新')
@@ -409,7 +462,7 @@ export const useAI = () => {
       setLoading(false)
       console.log('🏁 AI调用完成')
     }
-  }, [currentConversation, aiConfig])
+  }, [aiConfig])
 
   // 更新 AI 配置
   const updateAIConfig = useCallback((config: Partial<AIAssistantConfig>) => {
