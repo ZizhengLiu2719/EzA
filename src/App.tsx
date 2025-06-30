@@ -10,7 +10,7 @@ import TaskAssistant from '@/pages/TaskAssistant'
 import UploadCourse from '@/pages/UploadCourse'
 import { Route, Routes } from 'react-router-dom'
 import Dashboard from './pages/Dashboard'
-import WeeklyReport from './pages/WeeklyReport'
+import LearningInsights from './pages/LearningInsights'
 
 function App() {
   return (
@@ -26,7 +26,8 @@ function App() {
         <Route path="/planner" element={<Planner />} />
         <Route path="/assistant" element={<TaskAssistant />} />
         <Route path="/review" element={<Review />} />
-        <Route path="/weekly-report" element={<WeeklyReport />} />
+        <Route path="/learning-insights" element={<LearningInsights />} />
+        <Route path="/weekly-report" element={<LearningInsights />} />
         <Route path="/subscription" element={<Subscription />} />
         <Route path="/courses/:courseId" element={<CourseDetail />} />
       </Routes>

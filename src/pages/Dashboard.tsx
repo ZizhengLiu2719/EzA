@@ -41,9 +41,9 @@ const modules = [
   },
   {
     icon: <LucideBarChart2 size={48} color="#6366f1" />,
-    title: 'Weekly Feedback Coach',
-    desc: 'Task completion rate analysis, procrastination index, personalized recommendations',
-    to: '/weekly-report',
+          title: 'AI Learning Insights',
+      desc: 'Advanced analytics, performance patterns, predictive recommendations, learning health score',
+    to: '/learning-insights',
     emoji: '📊',
     status: 'ANALYZING',
     xp: '+130 XP'
