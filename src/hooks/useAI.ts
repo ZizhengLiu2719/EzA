@@ -7,6 +7,27 @@ import { useCallback, useEffect, useState } from 'react'
 // 🚀 静态导入AI服务，消除动态导入延迟
 import { aiService } from '@/api/ai'
 
+// 🚀 缓存管理工具函数
+const clearMessageCache = (conversationId: string) => {
+  try {
+    const cacheKey = `messages_${conversationId}`
+    sessionStorage.removeItem(cacheKey)
+    console.log('🗑️ 已清理对话缓存:', conversationId)
+  } catch (err) {
+    console.warn('⚠️ 清理缓存失败:', err)
+  }
+}
+
+const clearAllMessageCaches = () => {
+  try {
+    const keys = Object.keys(sessionStorage).filter(key => key.startsWith('messages_'))
+    keys.forEach(key => sessionStorage.removeItem(key))
+    console.log('🗑️ 已清理所有消息缓存，数量:', keys.length)
+  } catch (err) {
+    console.warn('⚠️ 清理所有缓存失败:', err)
+  }
+}
+
 export const useAI = () => {
   const [conversations, setConversations] = useState<AIConversation[]>([])
   const [currentConversation, setCurrentConversation] = useState<AIConversation | null>(null)
@@ -107,10 +128,9 @@ export const useAI = () => {
     return tempConversation
   }, [])
 
-  // 选择对话
+  // 选择对话 - 🚀 乐观更新版本，立即切换
   const selectConversation = useCallback(async (conversationId: string) => {
-    setLoading(true)
-    setError(null)
+    console.log('🚀 开始切换对话（乐观更新）:', conversationId)
     
     try {
       const conversation = conversations.find(c => c.id === conversationId)
@@ -119,19 +139,80 @@ export const useAI = () => {
         return
       }
 
+      // 🚀 立即切换到选中的对话 - 用户无需等待
       setCurrentConversation(conversation)
+      setError(null)
       
-      // 获取对话消息
-      const response = await aiConversationApi.getConversationMessages(conversationId)
-      if (response.error) {
-        setError(response.error)
-      } else {
-        setMessages(response.data)
+      console.log('✅ 对话已立即切换，开始加载消息')
+
+      // 🚀 检查是否已有缓存的消息
+      const cacheKey = `messages_${conversationId}`
+      const cachedMessages = sessionStorage.getItem(cacheKey)
+      
+      if (cachedMessages) {
+        try {
+          const parsedMessages = JSON.parse(cachedMessages)
+          setMessages(parsedMessages)
+          console.log('✅ 使用缓存消息，立即显示')
+          
+          // 后台刷新缓存（可选）
+          Promise.resolve().then(async () => {
+            try {
+              const response = await aiConversationApi.getConversationMessages(conversationId)
+              if (!response.error && response.data) {
+                // 检查是否有新消息
+                if (JSON.stringify(response.data) !== cachedMessages) {
+                  setMessages(response.data)
+                  sessionStorage.setItem(cacheKey, JSON.stringify(response.data))
+                  console.log('🔄 缓存已更新')
+                }
+              }
+            } catch (err) {
+              console.warn('⚠️ 后台刷新缓存失败:', err)
+            }
+          })
+          
+          return // 使用缓存，直接返回
+        } catch (err) {
+          console.warn('⚠️ 缓存解析失败，回退到网络加载:', err)
+        }
       }
+
+      // 🔥 没有缓存，后台异步加载消息 - 不阻塞UI
+      setMessages([]) // 先清空消息，显示loading状态
+      
+      Promise.resolve().then(async () => {
+        try {
+          console.log('💾 开始后台加载消息')
+          const response = await aiConversationApi.getConversationMessages(conversationId)
+          
+          if (response.error) {
+            console.error('❌ 加载消息失败:', response.error)
+            setError(response.error)
+          } else {
+            setMessages(response.data)
+            
+            // 🚀 缓存消息以供下次快速访问
+            try {
+              sessionStorage.setItem(cacheKey, JSON.stringify(response.data))
+              console.log('✅ 消息已缓存')
+            } catch (cacheErr) {
+              console.warn('⚠️ 缓存保存失败:', cacheErr)
+            }
+            
+            console.log('✅ 消息加载完成')
+          }
+        } catch (err: any) {
+          console.error('💥 后台加载消息失败:', err)
+          setError(err.message)
+        }
+      }).catch(err => {
+        console.warn('⚠️ 后台任务启动失败:', err)
+      })
+
     } catch (err: any) {
+      console.error('💥 切换对话失败:', err)
       setError(err.message)
-    } finally {
-      setLoading(false)
     }
   }, [conversations])
 
@@ -150,6 +231,9 @@ export const useAI = () => {
       setCurrentConversation(null)
       setMessages([])
     }
+
+    // 🚀 立即清理缓存
+    clearMessageCache(conversationId)
 
     console.log('🗑️ 乐观删除：UI已立即更新')
 
@@ -197,6 +281,9 @@ export const useAI = () => {
     setCurrentConversation(null)
     setMessages([])
 
+    // 🚀 立即清理所有缓存
+    clearAllMessageCaches()
+
     console.log(`🗑️ 乐观删除：${deletedCount}个对话已立即清空`)
 
     try {
@@ -214,6 +301,7 @@ export const useAI = () => {
       }
 
       console.log(`✅ 后台批量删除成功确认: ${response.data.deletedCount}个对话`)
+
       return { success: true, deletedCount: response.data.deletedCount }
     } catch (err: any) {
       // ❌ 网络错误，回滚UI状态
@@ -360,7 +448,20 @@ export const useAI = () => {
       }
 
       // 🚀 立即添加到UI - 无等待
-      setMessages(prev => [...prev, aiMessage])
+      setMessages(prev => {
+        const newMessages = [...prev, aiMessage]
+        
+        // 🚀 同步更新缓存
+        const cacheKey = `messages_${conversation.id}`
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify(newMessages))
+          console.log('✅ 消息缓存已同步更新')
+        } catch (cacheErr) {
+          console.warn('⚠️ 缓存更新失败:', cacheErr)
+        }
+        
+        return newMessages
+      })
       
       // 更新对话列表中的最后更新时间
       setConversations(prev => prev.map(conv => 
@@ -506,7 +607,22 @@ export const useAI = () => {
   // 添加消息到当前对话
   const addMessage = useCallback((message: AIMessage) => {
     console.log('➕ 添加消息到对话:', message)
-    setMessages(prev => [...prev, message])
+    setMessages(prev => {
+      const newMessages = [...prev, message]
+      
+      // 🚀 同步更新缓存
+      if (currentConversation) {
+        const cacheKey = `messages_${currentConversation.id}`
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify(newMessages))
+          console.log('✅ 消息缓存已同步更新')
+        } catch (cacheErr) {
+          console.warn('⚠️ 缓存更新失败:', cacheErr)
+        }
+      }
+      
+      return newMessages
+    })
     
     // 更新对话列表中的最后更新时间
     if (currentConversation) {
