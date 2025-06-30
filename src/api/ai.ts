@@ -530,6 +530,106 @@ export const aiConversationApi = {
     }
   },
 
+  // 🚀 获取对话的最近消息（分页加载优化）
+  async getRecentConversationMessages(
+    conversationId: string, 
+    limit: number = 20
+  ): Promise<ApiResponse<AIMessage[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('ai_messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('timestamp', { ascending: false }) // 降序获取最新的
+        .limit(limit)
+
+      if (error) throw error
+      
+      // 翻转顺序，让最老的消息在前面
+      const messages = (data || []).reverse()
+      return { data: messages }
+    } catch (error: any) {
+      return { data: [], error: error.message }
+    }
+  },
+
+  // 🚀 获取对话的最近消息预览（超快速加载）
+  async getRecentConversationMessagesPreviews(
+    conversationId: string, 
+    limit: number = 20
+  ): Promise<ApiResponse<AIMessage[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('ai_messages')
+        .select(`
+          id,
+          conversation_id,
+          role,
+          timestamp,
+          content
+        `)
+        .eq('conversation_id', conversationId)
+        .order('timestamp', { ascending: false })
+        .limit(limit)
+
+      if (error) throw error
+      
+      // 处理消息：截断长内容为预览
+      const processedMessages = (data || []).map(message => ({
+        ...message,
+        content: message.content.length > 150 
+          ? message.content.substring(0, 150) + '...' 
+          : message.content,
+        isPreview: message.content.length > 150 // 标记是否为预览
+      })).reverse() // 翻转顺序
+
+      return { data: processedMessages as AIMessage[] }
+    } catch (error: any) {
+      return { data: [], error: error.message }
+    }
+  },
+
+  // 🚀 获取消息的完整内容
+  async getMessageFullContent(messageId: string): Promise<ApiResponse<string>> {
+    try {
+      const { data, error } = await supabase
+        .from('ai_messages')
+        .select('content')
+        .eq('id', messageId)
+        .single()
+
+      if (error) throw error
+      return { data: data.content }
+    } catch (error: any) {
+      return { data: '', error: error.message }
+    }
+  },
+
+  // 🚀 获取对话的更多历史消息（向前分页）
+  async getMoreConversationMessages(
+    conversationId: string,
+    beforeTimestamp: string,
+    limit: number = 20
+  ): Promise<ApiResponse<AIMessage[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('ai_messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .lt('timestamp', beforeTimestamp)
+        .order('timestamp', { ascending: false })
+        .limit(limit)
+
+      if (error) throw error
+      
+      // 翻转顺序，让最老的消息在前面
+      const messages = (data || []).reverse()
+      return { data: messages }
+    } catch (error: any) {
+      return { data: [], error: error.message }
+    }
+  },
+
   // 删除对话和相关消息 - 优化版本
   async deleteConversation(conversationId: string): Promise<ApiResponse<{ success: boolean }>> {
     try {

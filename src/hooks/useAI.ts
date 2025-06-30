@@ -10,8 +10,10 @@ import { aiService } from '@/api/ai'
 // 🚀 缓存管理工具函数
 const clearMessageCache = (conversationId: string) => {
   try {
-    const cacheKey = `messages_${conversationId}`
-    sessionStorage.removeItem(cacheKey)
+    const oldCacheKey = `messages_${conversationId}`
+    const recentCacheKey = `recent_messages_${conversationId}`
+    sessionStorage.removeItem(oldCacheKey)
+    sessionStorage.removeItem(recentCacheKey)
     console.log('🗑️ 已清理对话缓存:', conversationId)
   } catch (err) {
     console.warn('⚠️ 清理缓存失败:', err)
@@ -20,11 +22,26 @@ const clearMessageCache = (conversationId: string) => {
 
 const clearAllMessageCaches = () => {
   try {
-    const keys = Object.keys(sessionStorage).filter(key => key.startsWith('messages_'))
+    const keys = Object.keys(sessionStorage).filter(key => 
+      key.startsWith('messages_') || key.startsWith('recent_messages_')
+    )
     keys.forEach(key => sessionStorage.removeItem(key))
     console.log('🗑️ 已清理所有消息缓存，数量:', keys.length)
   } catch (err) {
     console.warn('⚠️ 清理所有缓存失败:', err)
+  }
+}
+
+// 🚀 更新最近消息缓存的工具函数
+const updateRecentMessagesCache = (conversationId: string, newMessages: AIMessage[]) => {
+  try {
+    // 只缓存最近20条消息
+    const recentMessages = newMessages.slice(-20)
+    const recentCacheKey = `recent_messages_${conversationId}`
+    sessionStorage.setItem(recentCacheKey, JSON.stringify(recentMessages))
+    console.log('✅ 最近消息缓存已更新')
+  } catch (err) {
+    console.warn('⚠️ 更新最近消息缓存失败:', err)
   }
 }
 
@@ -50,6 +67,34 @@ export const useAI = () => {
         setError(response.error)
       } else {
         setConversations(response.data)
+        
+        // 🚀 并行预加载所有对话的最近消息
+        if (response.data && response.data.length > 0) {
+          console.log('🚀 开始预加载所有对话的最近消息')
+          
+          Promise.allSettled(
+            response.data.map(async (conversation) => {
+              try {
+                // 检查是否已有缓存
+                const recentCacheKey = `recent_messages_${conversation.id}`
+                const cachedMessages = sessionStorage.getItem(recentCacheKey)
+                
+                if (!cachedMessages) {
+                  // 没有缓存，预加载最近消息
+                  const messagesResponse = await aiConversationApi.getRecentConversationMessages(conversation.id, 10)
+                  if (!messagesResponse.error && messagesResponse.data) {
+                    sessionStorage.setItem(recentCacheKey, JSON.stringify(messagesResponse.data))
+                    console.log(`✅ 预加载对话 ${conversation.id} 的最近消息`)
+                  }
+                }
+              } catch (err) {
+                console.warn(`⚠️ 预加载对话 ${conversation.id} 消息失败:`, err)
+              }
+            })
+          ).then(() => {
+            console.log('🎉 所有对话预加载完成，用户切换将极其流畅')
+          })
+        }
       }
     } catch (err: any) {
       setError(err.message)
@@ -145,70 +190,51 @@ export const useAI = () => {
       
       console.log('✅ 对话已立即切换，开始加载消息')
 
-      // 🚀 检查是否已有缓存的消息
-      const cacheKey = `messages_${conversationId}`
-      const cachedMessages = sessionStorage.getItem(cacheKey)
+      // 🚀 检查是否已有缓存的完整消息
+      const fullCacheKey = `recent_messages_${conversationId}`
+      const cachedFullMessages = sessionStorage.getItem(fullCacheKey)
       
-      if (cachedMessages) {
+      if (cachedFullMessages) {
         try {
-          const parsedMessages = JSON.parse(cachedMessages)
+          const parsedMessages = JSON.parse(cachedFullMessages)
           setMessages(parsedMessages)
-          console.log('✅ 使用缓存消息，立即显示')
-          
-          // 后台刷新缓存（可选）
-          Promise.resolve().then(async () => {
-            try {
-              const response = await aiConversationApi.getConversationMessages(conversationId)
-              if (!response.error && response.data) {
-                // 检查是否有新消息
-                if (JSON.stringify(response.data) !== cachedMessages) {
-                  setMessages(response.data)
-                  sessionStorage.setItem(cacheKey, JSON.stringify(response.data))
-                  console.log('🔄 缓存已更新')
-                }
-              }
-            } catch (err) {
-              console.warn('⚠️ 后台刷新缓存失败:', err)
-            }
-          })
-          
-          return // 使用缓存，直接返回
+          console.log('✅ 使用缓存的完整消息，立即显示')
+          return // 有完整缓存，直接返回
         } catch (err) {
-          console.warn('⚠️ 缓存解析失败，回退到网络加载:', err)
+          console.warn('⚠️ 完整消息缓存解析失败:', err)
         }
       }
 
-      // 🔥 没有缓存，后台异步加载消息 - 不阻塞UI
-      setMessages([]) // 先清空消息，显示loading状态
+      // 🔥 直接加载完整消息（临时移除预览逻辑）
+      setMessages([]) // 先清空消息
       
-      Promise.resolve().then(async () => {
-        try {
-          console.log('💾 开始后台加载消息')
-          const response = await aiConversationApi.getConversationMessages(conversationId)
+      try {
+        console.log('💾 开始加载完整消息')
+        const response = await aiConversationApi.getRecentConversationMessages(conversationId, 20)
+        
+        if (!response.error && response.data) {
+          console.log('✅ 获取到消息:', response.data.length, '条')
+          response.data.forEach((msg, index) => {
+            console.log(`📝 消息${index}: role=${msg.role}, content长度=${msg.content?.length || 0}`)
+          })
           
-          if (response.error) {
-            console.error('❌ 加载消息失败:', response.error)
-            setError(response.error)
-          } else {
-            setMessages(response.data)
-            
-            // 🚀 缓存消息以供下次快速访问
-            try {
-              sessionStorage.setItem(cacheKey, JSON.stringify(response.data))
-              console.log('✅ 消息已缓存')
-            } catch (cacheErr) {
-              console.warn('⚠️ 缓存保存失败:', cacheErr)
-            }
-            
-            console.log('✅ 消息加载完成')
+          setMessages(response.data)
+          
+          // 缓存完整消息
+          try {
+            sessionStorage.setItem(fullCacheKey, JSON.stringify(response.data))
+            console.log('✅ 完整消息已缓存')
+          } catch (cacheErr) {
+            console.warn('⚠️ 缓存保存失败:', cacheErr)
           }
-        } catch (err: any) {
-          console.error('💥 后台加载消息失败:', err)
-          setError(err.message)
+        } else {
+          console.error('❌ 获取消息失败:', response.error)
+          setError(response.error || '获取消息失败')
         }
-      }).catch(err => {
-        console.warn('⚠️ 后台任务启动失败:', err)
-      })
+      } catch (err: any) {
+        console.error('💥 消息加载异常:', err)
+        setError(err.message)
+      }
 
     } catch (err: any) {
       console.error('💥 切换对话失败:', err)
@@ -451,14 +477,8 @@ export const useAI = () => {
       setMessages(prev => {
         const newMessages = [...prev, aiMessage]
         
-        // 🚀 同步更新缓存
-        const cacheKey = `messages_${conversation.id}`
-        try {
-          sessionStorage.setItem(cacheKey, JSON.stringify(newMessages))
-          console.log('✅ 消息缓存已同步更新')
-        } catch (cacheErr) {
-          console.warn('⚠️ 缓存更新失败:', cacheErr)
-        }
+        // 🚀 更新最近消息缓存
+        updateRecentMessagesCache(conversation.id, newMessages)
         
         return newMessages
       })
@@ -610,15 +630,9 @@ export const useAI = () => {
     setMessages(prev => {
       const newMessages = [...prev, message]
       
-      // 🚀 同步更新缓存
+      // 🚀 更新最近消息缓存
       if (currentConversation) {
-        const cacheKey = `messages_${currentConversation.id}`
-        try {
-          sessionStorage.setItem(cacheKey, JSON.stringify(newMessages))
-          console.log('✅ 消息缓存已同步更新')
-        } catch (cacheErr) {
-          console.warn('⚠️ 缓存更新失败:', cacheErr)
-        }
+        updateRecentMessagesCache(currentConversation.id, newMessages)
       }
       
       return newMessages
@@ -633,6 +647,52 @@ export const useAI = () => {
       ))
     }
   }, [currentConversation])
+
+  // 🚀 加载更多历史消息
+  const loadMoreMessages = useCallback(async () => {
+    if (!currentConversation || messages.length === 0) {
+      console.warn('⚠️ 没有当前对话或消息，无法加载更多')
+      return
+    }
+
+    setLoading(true)
+    console.log('🔄 开始加载更多历史消息')
+
+    try {
+      // 获取当前最早消息的时间戳
+      const earliestMessage = messages[0]
+      const beforeTimestamp = earliestMessage.timestamp
+
+      const response = await aiConversationApi.getMoreConversationMessages(
+        currentConversation.id,
+        beforeTimestamp,
+        20
+      )
+
+      if (response.error) {
+        setError(response.error)
+        console.error('❌ 加载更多消息失败:', response.error)
+      } else {
+        if (response.data && response.data.length > 0) {
+          // 将新消息添加到当前消息列表的前面
+          setMessages(prev => [...response.data, ...prev])
+          
+          // 更新缓存
+          const newAllMessages = [...response.data, ...messages]
+          updateRecentMessagesCache(currentConversation.id, newAllMessages)
+          
+          console.log(`✅ 已加载 ${response.data.length} 条历史消息`)
+        } else {
+          console.log('📝 没有更多历史消息了')
+        }
+      }
+    } catch (err: any) {
+      setError(err.message)
+      console.error('💥 加载更多消息异常:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [currentConversation, messages])
 
   // 初始化加载
   useEffect(() => {
@@ -661,13 +721,14 @@ export const useAI = () => {
     getCurrentConfigDescription,
     clearError,
     forceResetLoading,
-    addMessage
+    addMessage,
+    loadMoreMessages
   }
 }
 
 // AI 统计 Hook
 export const useAIStats = () => {
-  const [stats, setStats] = useState({
+  const [stats] = useState({
     totalConversations: 0,
     totalMessages: 0,
     averageMessagesPerConversation: 0,

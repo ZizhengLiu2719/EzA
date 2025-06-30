@@ -1,6 +1,7 @@
+import { aiConversationApi } from '@/api/ai'
 import AIQuickPrompts from '@/components/AIQuickPrompts'
 import BackToDashboardButton from '@/components/BackToDashboardButton'
-import StreamingMessage from '@/components/StreamingMessage'
+import StreamingMessage from '@/components/streaming/StreamingMessage'
 import { useAI } from '@/hooks/useAI'
 import { useAIStream } from '@/hooks/useAIStream'
 import { useTasks } from '@/hooks/useTasks'
@@ -19,11 +20,11 @@ const TaskAssistant = () => {
     loading: classicLoading,
     error: classicError,
     aiConfig,
+    fetchConversations,
     createConversation,
     selectConversation,
     deleteConversation,
     deleteAllConversations,
-    sendMessage,
     sendMessageFast,
     updateAIConfig,
     getAIModeOptions,
@@ -280,6 +281,25 @@ const TaskAssistant = () => {
       monthly_courses_limit: 5
     }
   })
+
+  // 🚀 获取消息的完整内容
+  const getMessageFullContent = useCallback(async (messageId: string) => {
+    try {
+      const response = await aiConversationApi.getMessageFullContent(messageId)
+      if (!response.error && response.data) {
+        // 更新消息列表中的该消息 - 通过重新获取对话消息
+        if (currentConversation) {
+          await selectConversation(currentConversation.id)
+        }
+        
+        console.log('✅ 完整内容已加载:', messageId)
+      }
+    } catch (err: any) {
+      console.error('❌ 获取完整内容失败:', err)
+      // 使用正确的错误处理方式，或者可以显示一个toast通知
+      console.warn(`获取完整内容失败: ${err.message}`)
+    }
+  }, [currentConversation, selectConversation])
 
   return (
     <div className={styles.assistant}>
@@ -691,12 +711,24 @@ const TaskAssistant = () => {
                         )}
                       </div>
                       <div className={styles.messageContent}>
-                        <div className={styles.messageText}>
-                          {message.content}
-                        </div>
-                        <div className={styles.messageTime}>
-                          {formatDateTime(message.timestamp)}
-                        </div>
+                        {message.role === 'assistant' ? (
+                          // AI消息使用StreamingMessage组件处理预览
+                          <StreamingMessage
+                            content={message.content}
+                            isComplete={true}
+                            onExpandToggle={() => getMessageFullContent(message.id)}
+                          />
+                        ) : (
+                          // 用户消息保持原样
+                          <>
+                            <div className={styles.messageText}>
+                              {message.content}
+                            </div>
+                            <div className={styles.messageTime}>
+                              {formatDateTime(message.timestamp)}
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -711,7 +743,6 @@ const TaskAssistant = () => {
                         <StreamingMessage
                           content={streamingMessage}
                           isComplete={false}
-                          isStreaming={true}
                         />
                       </div>
                     </div>
