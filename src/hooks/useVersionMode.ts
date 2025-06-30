@@ -1,6 +1,6 @@
 import { getAvailableModesForGrade, getModeConfig } from '@/config/aiModeConfigs'
 import { AcademicVersion, AIAssistantConfig, AIModeConfig, AIModeId } from '@/types'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 interface VersionModeState {
   currentVersion: AcademicVersion
@@ -92,7 +92,7 @@ export const useVersionMode = (initialGrade?: number): UseVersionModeReturn => {
       const newAvailableModes = getAvailableModesForGrade(version, prevState.userGrade)
       const newSelectedModeId = newAvailableModes[0]?.id || null
       
-      const newState: VersionModeState = {
+      return {
         ...prevState,
         currentVersion: version,
         availableModes: newAvailableModes,
@@ -104,20 +104,6 @@ export const useVersionMode = (initialGrade?: number): UseVersionModeReturn => {
           difficulty_level: version === 'high_school' ? 'beginner' : 'intermediate'
         }
       }
-      
-      // Track analytics
-      try {
-        // Add analytics tracking here if available
-        console.log('📊 Version switch tracked:', {
-          from: prevState.currentVersion,
-          to: version,
-          userGrade: prevState.userGrade
-        })
-      } catch (error) {
-        console.warn('Analytics tracking failed:', error)
-      }
-      
-      return newState
     })
   }, [])
 
@@ -129,24 +115,26 @@ export const useVersionMode = (initialGrade?: number): UseVersionModeReturn => {
       return
     }
 
-    // Check if mode is available for current version and grade
-    const isAvailable = state.availableModes.some(mode => mode.id === modeId)
-    if (!isAvailable) {
-      console.warn(`Mode ${modeId} not available for current version/grade`)
-      return
-    }
-
-    console.log(`🎯 Selecting AI mode: ${modeId}`)
-    
-    setState(prevState => ({
-      ...prevState,
-      selectedModeId: modeId,
-      aiConfig: {
-        ...prevState.aiConfig,
-        mode: modeId
+    setState(prevState => {
+      // Check if mode is available for current version and grade
+      const isAvailable = prevState.availableModes.some(mode => mode.id === modeId)
+      if (!isAvailable) {
+        console.warn(`Mode ${modeId} not available for current version/grade`)
+        return prevState
       }
-    }))
-  }, [state.availableModes])
+
+      console.log(`🎯 Selecting AI mode: ${modeId}`)
+      
+      return {
+        ...prevState,
+        selectedModeId: modeId,
+        aiConfig: {
+          ...prevState.aiConfig,
+          mode: modeId
+        }
+      }
+    })
+  }, [])
 
   // Update user grade and potentially switch version
   const updateUserGrade = useCallback((grade: number) => {
@@ -160,7 +148,7 @@ export const useVersionMode = (initialGrade?: number): UseVersionModeReturn => {
       const newAvailableModes = getAvailableModesForGrade(newVersion, grade)
       const newSelectedModeId = newAvailableModes[0]?.id || prevState.selectedModeId
       
-      const newState: VersionModeState = {
+      return {
         ...prevState,
         userGrade: grade,
         currentVersion: newVersion,
@@ -174,12 +162,6 @@ export const useVersionMode = (initialGrade?: number): UseVersionModeReturn => {
           difficulty_level: newVersion === 'high_school' ? 'beginner' : 'intermediate'
         }
       }
-      
-      if (shouldSwitchVersion) {
-        console.log(`🔄 Auto-switching to ${recommendedVersion} version based on grade`)
-      }
-      
-      return newState
     })
   }, [])
 
@@ -198,21 +180,32 @@ export const useVersionMode = (initialGrade?: number): UseVersionModeReturn => {
 
   // Get recommended version based on user grade
   const getRecommendedVersion = useCallback((): AcademicVersion => {
-    return state.userGrade && state.userGrade <= 12 ? 'high_school' : 'college'
+    const currentGrade = state.userGrade
+    return currentGrade && currentGrade <= 12 ? 'high_school' : 'college'
   }, [state.userGrade])
 
-  // Derived state
-  const selectedMode = state.selectedModeId ? getModeConfig(state.selectedModeId) || null : null
-  const isHighSchoolMode = state.currentVersion === 'high_school'
-  const isCollegeMode = state.currentVersion === 'college'
-  const hasAdvancedModes = Boolean(isHighSchoolMode && state.userGrade && state.userGrade >= 11)
+  // Derived state - 使用useMemo避免每次重新计算
+  const derivedState = useMemo(() => {
+    const selectedMode = state.selectedModeId ? getModeConfig(state.selectedModeId) || null : null
+    const isHighSchoolMode = state.currentVersion === 'high_school'
+    const isCollegeMode = state.currentVersion === 'college'
+    const hasAdvancedModes = Boolean(isHighSchoolMode && state.userGrade && state.userGrade >= 11)
+    
+    return {
+      selectedMode,
+      isHighSchoolMode,
+      isCollegeMode,
+      hasAdvancedModes
+    }
+  }, [state.selectedModeId, state.currentVersion, state.userGrade])
 
-  return {
+  // 返回对象使用useMemo优化
+  return useMemo(() => ({
     // State
     currentVersion: state.currentVersion,
     availableModes: state.availableModes,
     selectedModeId: state.selectedModeId,
-    selectedMode,
+    selectedMode: derivedState.selectedMode,
     userGrade: state.userGrade,
     aiConfig: state.aiConfig,
     
@@ -223,11 +216,26 @@ export const useVersionMode = (initialGrade?: number): UseVersionModeReturn => {
     updateAIConfig,
     
     // Utilities
-    isHighSchoolMode,
-    isCollegeMode,
-    hasAdvancedModes,
+    isHighSchoolMode: derivedState.isHighSchoolMode,
+    isCollegeMode: derivedState.isCollegeMode,
+    hasAdvancedModes: derivedState.hasAdvancedModes,
     getRecommendedVersion
-  }
+  }), [
+    state.currentVersion,
+    state.availableModes,
+    state.selectedModeId,
+    state.userGrade,
+    state.aiConfig,
+    derivedState.selectedMode,
+    derivedState.isHighSchoolMode,
+    derivedState.isCollegeMode,
+    derivedState.hasAdvancedModes,
+    switchVersion,
+    selectMode,
+    updateUserGrade,
+    updateAIConfig,
+    getRecommendedVersion
+  ])
 }
 
 // Helper hook for getting mode information

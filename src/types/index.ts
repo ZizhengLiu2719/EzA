@@ -264,3 +264,56 @@ export interface UsageStats {
 // 重新导出增强AI类型
 export * from './ai-enhanced'
 
+export interface EnhancedAIConfig {
+  // 智能模式设置
+  auto_adjust_difficulty: boolean; // 根据学术等级自动调整难度
+  adaptive_language: boolean; // 根据AI模式调整语言风格
+  
+  // 学术等级相关设置
+  academic_level_config: {
+    high_school: {
+      max_complexity: 'basic' | 'intermediate';
+      preferred_explanation_style: 'step_by_step' | 'visual' | 'analogy';
+      vocabulary_level: 'grade_appropriate' | 'advanced';
+    };
+    college: {
+      max_complexity: 'intermediate' | 'advanced' | 'expert';
+      preferred_explanation_style: 'analytical' | 'research_based' | 'theoretical';
+      vocabulary_level: 'academic' | 'professional' | 'technical';
+    };
+  };
+  
+  // AI模式特定设置
+  mode_specific_config: {
+    response_length: 'concise' | 'detailed' | 'comprehensive';
+    interaction_style: 'tutorial' | 'conversational' | 'professional';
+    feedback_frequency: 'minimal' | 'moderate' | 'extensive';
+  };
+  
+  // 传统设置（保留但智能化）
+  writing_style?: 'academic' | 'creative' | 'technical';
+  citation_format?: 'apa' | 'mla' | 'chicago';
+  difficulty_level?: 'beginner' | 'intermediate' | 'advanced';
+  model?: 'gpt-3.5-turbo' | 'gpt-4o';
+}
+
+export interface SmartPromptCategory {
+  id: string;
+  name: string;
+  icon: string;
+  academic_versions: AcademicVersion[];
+  compatible_modes: (HighSchoolModeId | CollegeModeId)[];
+  prompts: SmartPrompt[];
+}
+
+export interface SmartPrompt {
+  id: string;
+  title: string;
+  description: string;
+  academic_version: AcademicVersion;
+  target_modes: (HighSchoolModeId | CollegeModeId)[];
+  prompt_template: string;
+  variables?: string[]; // 可替换的变量如 {subject}, {difficulty}
+  examples?: string[];
+}
+

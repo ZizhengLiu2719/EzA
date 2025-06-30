@@ -1,0 +1,263 @@
+.backButton {
+  position: absolute;
+  top: 24px;
+  right: 32px;
+  z-index: 100;
+  
+  /* Layout */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  
+  /* Modern Design System - 更亮的背景 */
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(102, 126, 234, 0.6);
+  border-radius: 12px;
+  
+  /* Typography */
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  
+  /* Interactive */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
+  
+  /* Enhanced Shadow for visibility */
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 4px 16px rgba(102, 126, 234, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.backButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(102, 126, 234, 0.2) 0%, 
+    rgba(139, 92, 246, 0.2) 100%);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.backButton:hover {
+  transform: translateY(-2px);
+  border-color: rgba(102, 126, 234, 0.8);
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(102, 126, 234, 0.4),
+    0 0 40px rgba(102, 126, 234, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+.backButton:hover::before {
+  opacity: 1;
+  background: linear-gradient(135deg, 
+    rgba(102, 126, 234, 0.3) 0%, 
+    rgba(139, 92, 246, 0.3) 100%);
+}
+
+.backButton:hover .glowEffect {
+  opacity: 1;
+  animation: pulse 2s infinite;
+}
+
+.backButton:active {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(102, 126, 234, 0.4);
+  border: 1px solid rgba(102, 126, 234, 0.6);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.iconWrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(102, 126, 234, 0.4) 0%, 
+    rgba(139, 92, 246, 0.4) 100%);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.backButton:hover .iconWrapper {
+  background: rgba(102, 126, 234, 0.6);
+  border-color: rgba(102, 126, 234, 0.8);
+  box-shadow: 
+    0 0 15px rgba(102, 126, 234, 0.5),
+    0 0 30px rgba(102, 126, 234, 0.3);
+}
+
+.backButton:hover .iconWrapper::before {
+  opacity: 1;
+  background: linear-gradient(135deg, 
+    rgba(102, 126, 234, 0.5) 0%, 
+    rgba(139, 92, 246, 0.5) 100%);
+}
+
+.icon {
+  font-size: 16px;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+  transition: all 0.3s ease;
+}
+
+.backButton:hover .icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.6));
+}
+
+.text {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.backButton:hover .text {
+  text-shadow: 
+    0 0 10px rgba(102, 126, 234, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.glowEffect {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(135deg, 
+    rgba(102, 126, 234, 0.6) 0%, 
+    rgba(139, 92, 246, 0.6) 50%,
+    rgba(6, 182, 212, 0.6) 100%);
+  border-radius: 15px;
+  opacity: 0;
+  z-index: -2;
+  filter: blur(12px);
+  transition: opacity 0.3s ease;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .backButton {
+    top: 16px;
+    right: 16px;
+    padding: 10px 16px;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.15);
+  }
+  
+  .iconWrapper {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .icon {
+    font-size: 14px;
+  }
+  
+  .text {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .backButton {
+    top: 12px;
+    right: 12px;
+    padding: 8px 12px;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.15);
+  }
+  
+  .text {
+    display: none;
+  }
+  
+  .iconWrapper {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .icon {
+    font-size: 16px;
+  }
+}
+
+/* Dark mode compatibility */
+@media (prefers-color-scheme: dark) {
+  .backButton {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(102, 126, 234, 0.7);
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .backButton {
+    border-width: 2px;
+    border-color: rgba(102, 126, 234, 1);
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .backButton,
+  .iconWrapper,
+  .icon,
+  .text,
+  .glowEffect {
+    transition: none;
+  }
+  
+  .backButton:hover {
+    transform: none;
+  }
+  
+  .glowEffect {
+    animation: none;
+  }
+} 

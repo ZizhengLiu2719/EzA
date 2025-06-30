@@ -195,7 +195,7 @@ const Planner: React.FC = () => {
 
   return (
     <div className={styles.smartPlannerRoot}>
-      <button className={styles.backToMenuBtn} onClick={() => navigate('/dashboard')}>Return to Main Interface</button>
+      <button className={styles.backToMenuBtn} onClick={() => navigate('/dashboard')}>Return to Main</button>
       <div className={styles.leftPanel}>
         <div className={styles.calendarHeader}>
           <span className={styles.title}>Calendar</span>

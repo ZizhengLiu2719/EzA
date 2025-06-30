@@ -65,7 +65,7 @@ const Subscription: React.FC = () => {
           className={styles.backButton}
           onClick={() => navigate('/')}
         >
-          ← Return to Main Interface
+          ← Return to Main
         </button>
         <h1 className={styles.title}>Subscription Plans</h1>
       </div>

@@ -1,14 +1,15 @@
 import { aiConversationApi } from '@/api/ai'
 import AIModeSelector from '@/components/AIModeSelector'
-import AIQuickPrompts from '@/components/AIQuickPrompts'
 import BackToDashboardButton from '@/components/BackToDashboardButton'
+import SmartAIConfig from '@/components/SmartAIConfig'
+import SmartPrompts from '@/components/SmartPrompts'
 import StreamingMessage from '@/components/streaming/StreamingMessage'
 import VersionSwitcher from '@/components/VersionSwitcher'
 import { useAI } from '@/hooks/useAI'
 import { useAIStream } from '@/hooks/useAIStream'
 import { useTasks } from '@/hooks/useTasks'
 import { useVersionMode } from '@/hooks/useVersionMode'
-import { AIAssistantConfig, Task } from '@/types'
+import { AIAssistantConfig, EnhancedAIConfig, Task } from '@/types'
 import { formatDateTime } from '@/utils'
 import { LucideBot, LucideChevronDown, LucideLightbulb, LucideMessageSquare, LucidePlus, LucideRefreshCw, LucideSend, LucideSettings, LucideSquare, LucideTrash2, LucideUser } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -59,6 +60,34 @@ const TaskAssistant = () => {
   const [useStreamMode, setUseStreamMode] = useState(false)
   const [showVersionSelector, setShowVersionSelector] = useState(false)
   const [showModeSelector, setShowModeSelector] = useState(false)
+  
+  // Enhanced AI Configuration State - 使用默认值避免循环依赖
+  const [enhancedConfig, setEnhancedConfig] = useState<EnhancedAIConfig>({
+    auto_adjust_difficulty: true,
+    adaptive_language: true,
+    academic_level_config: {
+      high_school: {
+        max_complexity: 'intermediate',
+        preferred_explanation_style: 'step_by_step',
+        vocabulary_level: 'grade_appropriate'
+      },
+      college: {
+        max_complexity: 'advanced',
+        preferred_explanation_style: 'analytical',
+        vocabulary_level: 'academic'
+      }
+    },
+    mode_specific_config: {
+      response_length: 'detailed',
+      interaction_style: 'conversational',
+      feedback_frequency: 'moderate'
+    },
+    writing_style: 'academic',
+    citation_format: 'apa',
+    difficulty_level: 'intermediate',
+    model: 'gpt-3.5-turbo'
+  })
+  
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -70,14 +99,16 @@ const TaskAssistant = () => {
   const loading = useStreamMode ? isStreaming : classicLoading
   const error = useStreamMode ? streamError : classicError
 
-  // Sync version mode with AI config
+  // 初始化enhancedConfig与aiConfig同步 - 只在初始化时同步一次
   useEffect(() => {
-    updateAIConfig({
-      mode: versionMode.selectedModeId || 'study_buddy',
-      academicVersion: versionMode.currentVersion,
-      userGrade: versionMode.userGrade
-    })
-  }, [versionMode.selectedModeId, versionMode.currentVersion, versionMode.userGrade, updateAIConfig])
+    setEnhancedConfig(prev => ({
+      ...prev,
+      writing_style: aiConfig.writing_style || prev.writing_style,
+      citation_format: aiConfig.citation_format || prev.citation_format,
+      difficulty_level: aiConfig.difficulty_level || prev.difficulty_level,
+      model: aiConfig.model || prev.model
+    }))
+  }, []) // 空依赖数组，只在组件挂载时执行一次
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -386,58 +417,32 @@ const TaskAssistant = () => {
               </button>
               {showConfig && (
                 <div className={styles.dropdownContent}>
-                  <div className={styles.dropdownHeader}>
-                    <h3>AI Configuration</h3>
-                  </div>
-                  <div className={styles.dropdownBody}>
-                    <div className={styles.configSection}>
-                      <label>Writing Style</label>
-                      <select 
-                        value={aiConfig.writing_style || 'academic'}
-                        onChange={(e) => handleConfigChange({ writing_style: e.target.value as any })}
-                        className={styles.configSelect}
-                      >
-                        <option value="academic">Academic</option>
-                        <option value="creative">Creative</option>
-                        <option value="technical">Technical</option>
-                      </select>
-                    </div>
-                    <div className={styles.configSection}>
-                      <label>Citation Format</label>
-                      <select 
-                        value={aiConfig.citation_format || 'apa'}
-                        onChange={(e) => handleConfigChange({ citation_format: e.target.value as any })}
-                        className={styles.configSelect}
-                      >
-                        <option value="apa">APA</option>
-                        <option value="mla">MLA</option>
-                        <option value="chicago">Chicago</option>
-                      </select>
-                    </div>
-                    <div className={styles.configSection}>
-                      <label>Difficulty Level</label>
-                      <select 
-                        value={aiConfig.difficulty_level || 'intermediate'}
-                        onChange={(e) => handleConfigChange({ difficulty_level: e.target.value as any })}
-                        className={styles.configSelect}
-                      >
-                        <option value="beginner">Beginner</option>
-                        <option value="intermediate">Intermediate</option>
-                        <option value="advanced">Advanced</option>
-                      </select>
-                    </div>
-                    <div className={styles.configSection}>
-                      <label>AI Model</label>
-                      <select 
-                        value={aiConfig.model || 'gpt-3.5-turbo'}
-                        onChange={(e) => handleConfigChange({ model: e.target.value as any })}
-                        className={styles.configSelect}
-                      >
-                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Faster)</option>
-                        <option value="gpt-4o">GPT-4o (Better Quality)</option>
-                      </select>
-                    </div>
-                  </div>
+                  <SmartAIConfig
+                    currentMode={versionMode.selectedModeId || 'study_buddy'}
+                    onConfigChange={(configUpdate) => {
+                      setEnhancedConfig(prev => ({ ...prev, ...configUpdate }))
+                      // Also update legacy aiConfig for backward compatibility
+                      const legacyUpdate: Partial<AIAssistantConfig> = {}
+                      if (configUpdate.writing_style) {
+                        legacyUpdate.writing_style = configUpdate.writing_style
+                      }
+                      if (configUpdate.citation_format) {
+                        legacyUpdate.citation_format = configUpdate.citation_format
+                      }
+                      if (configUpdate.difficulty_level) {
+                        legacyUpdate.difficulty_level = configUpdate.difficulty_level
+                      }
+                      if (configUpdate.model) {
+                        legacyUpdate.model = configUpdate.model
+                      }
+                      
+                      // 只在有更新时才调用
+                      if (Object.keys(legacyUpdate).length > 0) {
+                        handleConfigChange(legacyUpdate)
+                      }
+                    }}
+                    currentConfig={enhancedConfig}
+                  />
                 </div>
               )}
             </div>
@@ -457,8 +462,8 @@ const TaskAssistant = () => {
               </button>
               {showQuickPrompts && (
                 <div className={styles.dropdownContent}>
-                  <AIQuickPrompts 
-                    currentCategory={selectedTask?.type}
+                  <SmartPrompts 
+                    currentMode={versionMode.selectedModeId || 'study_buddy'}
                     onSelectPrompt={handleQuickPromptSelect}
                     disabled={loading}
                   />
