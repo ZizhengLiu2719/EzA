@@ -1,0 +1,669 @@
+/**
+ * SRS 调度器组件样式
+ */
+
+.srsScheduler {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background: rgba(13, 13, 13, 0.95);
+  border-radius: 16px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* 标签页导航 */
+.tabNav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 4px;
+  background: rgba(17, 17, 17, 0.8);
+  border-radius: 12px;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.tabButton {
+  flex: 1;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.tabButton:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.tabButton.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+}
+
+/* 概览标签页 */
+.overviewTab {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 统计卡片网格 */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.statCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(17, 17, 17, 0.9), rgba(28, 28, 28, 0.9));
+  border-radius: 12px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  transition: all 0.3s ease;
+}
+
+.statCard:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.1);
+}
+
+.statIcon {
+  font-size: 32px;
+  min-width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statContent {
+  flex: 1;
+}
+
+.statValue {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.statLabel {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+/* 进度条部分 */
+.progressSection {
+  background: linear-gradient(135deg, rgba(17, 17, 17, 0.8), rgba(28, 28, 28, 0.8));
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.progressSection h3 {
+  margin: 0 0 16px 0;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.progressBars {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.progressItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progressLabel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.progressBar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.8), rgba(168, 85, 247, 0.8));
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* 即将复习部分 */
+.upcomingSection {
+  background: linear-gradient(135deg, rgba(17, 17, 17, 0.8), rgba(28, 28, 28, 0.8));
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.upcomingSection h3 {
+  margin: 0 0 16px 0;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.upcomingCards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.upcomingCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cardQuestion {
+  flex: 1;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 16px;
+}
+
+.cardDue {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+/* 预测部分 */
+.predictionSection {
+  background: linear-gradient(135deg, rgba(17, 17, 17, 0.8), rgba(28, 28, 28, 0.8));
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.predictionSection h3 {
+  margin: 0 0 16px 0;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.predictionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.predictionItem {
+  text-align: center;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.predictionLabel {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 8px;
+}
+
+.predictionValue {
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* 快速学习部分 */
+.quickStudySection {
+  background: linear-gradient(135deg, rgba(17, 17, 17, 0.8), rgba(28, 28, 28, 0.8));
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.quickStudySection h3 {
+  margin: 0 0 16px 0;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.studyButtons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.studyButton {
+  flex: 1;
+  min-width: 140px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(168, 85, 247, 0.8));
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.studyButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+}
+
+/* 设置标签页 */
+.settingsTab {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.settingsTab h3 {
+  margin: 0 0 20px 0;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.settingGroup {
+  background: linear-gradient(135deg, rgba(17, 17, 17, 0.8), rgba(28, 28, 28, 0.8));
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.settingGroup h4 {
+  margin: 0 0 16px 0;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.settingItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.settingItem:last-child {
+  margin-bottom: 0;
+}
+
+.settingItem label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 输入控件 */
+.numberInput,
+.textInput {
+  width: 120px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.numberInput:focus,
+.textInput:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.6);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.rangeInput {
+  width: 120px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  outline: none;
+  appearance: none;
+}
+
+.rangeInput::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(168, 85, 247, 0.8));
+  cursor: pointer;
+}
+
+.rangeValue {
+  margin-left: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  min-width: 40px;
+}
+
+/* 重置按钮 */
+.resetSection {
+  text-align: center;
+  padding-top: 20px;
+}
+
+.resetButton {
+  padding: 12px 24px;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 8px;
+  color: rgba(220, 38, 38, 0.9);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resetButton:hover {
+  background: rgba(220, 38, 38, 0.2);
+  border-color: rgba(220, 38, 38, 0.5);
+}
+
+/* 高级标签页 */
+.advancedTab {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.advancedTab h3 {
+  margin: 0 0 20px 0;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* 难度分布 */
+.difficultySection {
+  background: linear-gradient(135deg, rgba(17, 17, 17, 0.8), rgba(28, 28, 28, 0.8));
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.difficultySection h4 {
+  margin: 0 0 16px 0;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.difficultyChart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.difficultyBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.difficultyLabel {
+  min-width: 80px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.difficultyProgress {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.difficultyFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.difficultyFill.easy {
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.8), rgba(74, 222, 128, 0.8));
+}
+
+.difficultyFill.medium {
+  background: linear-gradient(90deg, rgba(251, 146, 60, 0.8), rgba(253, 186, 116, 0.8));
+}
+
+.difficultyFill.hard {
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.8), rgba(248, 113, 113, 0.8));
+}
+
+.difficultyValue {
+  min-width: 40px;
+  text-align: right;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.averageDifficulty {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* 参数调优 */
+.parametersSection {
+  background: linear-gradient(135deg, rgba(17, 17, 17, 0.8), rgba(28, 28, 28, 0.8));
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.parametersHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.parametersHeader h4 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.toggleButton {
+  padding: 6px 12px;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 6px;
+  color: rgba(99, 102, 241, 0.9);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggleButton:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.advancedParameters {
+  margin-top: 16px;
+}
+
+.paramWarning {
+  padding: 12px;
+  background: rgba(251, 146, 60, 0.1);
+  border: 1px solid rgba(251, 146, 60, 0.3);
+  border-radius: 8px;
+  color: rgba(251, 146, 60, 0.9);
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.paramGroup {
+  margin-bottom: 20px;
+}
+
+.paramGroup h5 {
+  margin: 0 0 12px 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.paramItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 8px 0;
+}
+
+.paramInput {
+  width: 80px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 12px;
+}
+
+.paramInput:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.6);
+}
+
+/* 会话历史 */
+.historySection {
+  background: linear-gradient(135deg, rgba(17, 17, 17, 0.8), rgba(28, 28, 28, 0.8));
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.historySection h4 {
+  margin: 0 0 16px 0;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.sessionHistory {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sessionItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sessionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sessionMode {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.sessionDate {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.sessionStats {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .srsScheduler {
+    padding: 16px;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .studyButtons {
+    flex-direction: column;
+  }
+
+  .studyButton {
+    min-width: auto;
+  }
+
+  .predictionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .sessionItem {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .sessionStats {
+    justify-content: space-between;
+  }
+} 
