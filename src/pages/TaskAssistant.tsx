@@ -4,9 +4,8 @@ import { useAI } from '@/hooks/useAI'
 import { useTasks } from '@/hooks/useTasks'
 import { AIAssistantConfig, Task } from '@/types'
 import { formatDateTime } from '@/utils'
-import { LucideBot, LucideChevronDown, LucideLightbulb, LucideMessageSquare, LucidePlus, LucideRefreshCw, LucideSend, LucideSettings, LucideUser } from 'lucide-react'
+import { LucideBot, LucideChevronDown, LucideLightbulb, LucideMessageSquare, LucidePlus, LucideRefreshCw, LucideSend, LucideSettings, LucideTrash2, LucideUser } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import AILearningProgress from '../components/AILearningProgress'
 import SubscriptionStatus from '../components/SubscriptionStatus'
 import styles from './TaskAssistant.module.css'
 
@@ -20,6 +19,7 @@ const TaskAssistant = () => {
     aiConfig,
     createConversation,
     selectConversation,
+    deleteConversation,
     sendMessage,
     updateAIConfig,
     getAIModeOptions,
@@ -33,14 +33,12 @@ const TaskAssistant = () => {
   const [showConfig, setShowConfig] = useState(false)
   const [showTaskSelector, setShowTaskSelector] = useState(false)
   const [showQuickPrompts, setShowQuickPrompts] = useState(false)
-  const [showProgress, setShowProgress] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   // 下拉框外部点击关闭的ref
   const configDropdownRef = useRef<HTMLDivElement>(null)
   const promptsDropdownRef = useRef<HTMLDivElement>(null)
-  const progressDropdownRef = useRef<HTMLDivElement>(null)
 
   // 处理外部点击关闭下拉框
   useEffect(() => {
@@ -50,9 +48,6 @@ const TaskAssistant = () => {
       }
       if (promptsDropdownRef.current && !promptsDropdownRef.current.contains(event.target as Node)) {
         setShowQuickPrompts(false)
-      }
-      if (progressDropdownRef.current && !progressDropdownRef.current.contains(event.target as Node)) {
-        setShowProgress(false)
       }
     }
 
@@ -126,6 +121,19 @@ const TaskAssistant = () => {
     updateAIConfig(config)
   }, [updateAIConfig])
 
+  // 删除对话
+  const handleDeleteConversation = useCallback(async (conversationId: string, e: React.MouseEvent) => {
+    e.stopPropagation() // 防止触发选择对话
+    
+    if (window.confirm('Are you sure you want to delete this conversation?')) {
+      try {
+        await deleteConversation(conversationId)
+      } catch (error) {
+        console.error('Failed to delete conversation:', error)
+      }
+    }
+  }, [deleteConversation])
+
   // 获取任务类型图标
   const getTaskTypeIcon = (type: string) => {
     switch (type) {
@@ -186,7 +194,6 @@ const TaskAssistant = () => {
                 onClick={() => {
                   setShowConfig(!showConfig)
                   setShowQuickPrompts(false)
-                  setShowProgress(false)
                 }}
               >
                 <LucideSettings size={20} />
@@ -247,7 +254,6 @@ const TaskAssistant = () => {
                 onClick={() => {
                   setShowQuickPrompts(!showQuickPrompts)
                   setShowConfig(false)
-                  setShowProgress(false)
                 }}
               >
                 <LucideLightbulb size={20} />
@@ -261,27 +267,6 @@ const TaskAssistant = () => {
                     currentCategory={selectedTask?.type}
                     disabled={loading}
                   />
-                </div>
-              )}
-            </div>
-
-            {/* Learning Progress Dropdown */}
-            <div className={styles.dropdown} ref={progressDropdownRef}>
-              <button 
-                className={`${styles.dropdownBtn} ${styles.progressBtn} ${showProgress ? styles.active : ''}`}
-                onClick={() => {
-                  setShowProgress(!showProgress)
-                  setShowConfig(false)
-                  setShowQuickPrompts(false)
-                }}
-              >
-                <LucideBot size={20} />
-                Learning Progress
-                <LucideChevronDown size={16} className={`${styles.chevron} ${showProgress ? styles.chevronUp : ''}`} />
-              </button>
-              {showProgress && (
-                <div className={styles.dropdownContent}>
-                  <AILearningProgress />
                 </div>
               )}
             </div>
@@ -411,6 +396,13 @@ const TaskAssistant = () => {
                         {formatDateTime(conversation.updated_at)}
                       </span>
                     </div>
+                    <button
+                      className={styles.deleteBtn}
+                      onClick={(e) => handleDeleteConversation(conversation.id, e)}
+                      title="Delete conversation"
+                    >
+                      <LucideTrash2 size={14} />
+                    </button>
                   </div>
                 ))}
               </div>

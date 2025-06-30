@@ -89,6 +89,30 @@ export const useAI = () => {
     }
   }, [conversations])
 
+  // 删除对话
+  const deleteConversation = useCallback(async (conversationId: string) => {
+    setError(null)
+    
+    try {
+      // 从本地状态中移除对话
+      setConversations(prev => prev.filter(conv => conv.id !== conversationId))
+      
+      // 如果删除的是当前对话，清空当前对话
+      if (currentConversation?.id === conversationId) {
+        setCurrentConversation(null)
+        setMessages([])
+      }
+      
+      // TODO: 这里应该调用API删除对话
+      // await aiConversationApi.deleteConversation(conversationId)
+      
+      return { success: true }
+    } catch (err: any) {
+      setError(err.message)
+      return { success: false, error: err.message }
+    }
+  }, [currentConversation])
+
   // 发送消息
   const sendMessage = useCallback(async (message: string) => {
     if (!currentConversation) {
@@ -179,6 +203,7 @@ export const useAI = () => {
     fetchConversations,
     createConversation,
     selectConversation,
+    deleteConversation,
     sendMessage,
     updateAIConfig,
     getAIModeOptions,
