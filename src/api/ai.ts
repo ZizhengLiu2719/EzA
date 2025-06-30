@@ -118,9 +118,9 @@ class AIService {
       // 确定使用的模型
       const model = config?.model || 'gpt-3.5-turbo' // 默认使用GPT-3.5-turbo
       
-      // 优化Token配置 - 减少输出长度提升速度
-      const maxTokens = model === 'gpt-4o' ? 800 : 600  // 大幅减少Token数量
-      const temperature = model === 'gpt-4o' ? 0.3 : 0.4  // 略微提高温度，减少推理时间
+      // 🚀 激进性能优化 - 大幅减少Token和时间
+      const maxTokens = model === 'gpt-4o' ? 500 : 400  // 进一步减少Token数量，提升速度
+      const temperature = model === 'gpt-4o' ? 0.5 : 0.6  // 提高温度，减少推理时间
 
       console.log('🔥 开始调用OpenAI API:', model, `(max_tokens: ${maxTokens})`)
       console.log('📝 发送消息长度:', JSON.stringify(messages).length, '字符')
@@ -130,7 +130,7 @@ class AIService {
       const timeoutId = setTimeout(() => {
         console.warn('⏰ OpenAI API请求超时，取消请求')
         controller.abort()
-      }, 20000) // 减少到20秒超时
+      }, 15000) // 🚀 减少到15秒超时，激进优化
 
       const startTime = Date.now()
 
@@ -145,9 +145,9 @@ class AIService {
           messages,
           max_tokens: config?.max_tokens || maxTokens,
           temperature: config?.temperature || temperature,
-          top_p: config?.top_p || 0.9,  // 略微降低，提升生成速度
-          frequency_penalty: config?.frequency_penalty || 0,
-          presence_penalty: config?.presence_penalty || 0,
+          top_p: config?.top_p || 0.8,  // 进一步降低，提升生成速度
+          frequency_penalty: config?.frequency_penalty || 0.1,  // 轻微惩罚，提升速度
+          presence_penalty: config?.presence_penalty || 0.1,    // 轻微惩罚，提升速度
           stream: false  // 确保不使用流式响应
         }),
         signal: controller.signal // 添加信号用于取消请求

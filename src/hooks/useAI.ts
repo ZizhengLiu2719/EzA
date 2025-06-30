@@ -4,6 +4,9 @@ import { AIAssistantConfig, AIConversation, AIMessage } from '@/types'
 import { AI_MODES, getAIConfigDescription, validateAIConfig } from '@/utils/ai'
 import { useCallback, useEffect, useState } from 'react'
 
+// 🚀 静态导入AI服务，消除动态导入延迟
+import { aiService } from '@/api/ai'
+
 export const useAI = () => {
   const [conversations, setConversations] = useState<AIConversation[]>([])
   const [currentConversation, setCurrentConversation] = useState<AIConversation | null>(null)
@@ -263,7 +266,7 @@ export const useAI = () => {
     }
   }, [currentConversation, aiConfig])
 
-  // 🚀 优化版本：普通发送消息（并行处理）
+  // 🚀 优化版本：普通发送消息（完全分离AI和数据库）
   const sendMessageFast = useCallback(async (message: string, userMessage: AIMessage) => {
     if (!currentConversation) {
       setError('Please select or create a conversation first')
@@ -273,100 +276,32 @@ export const useAI = () => {
     setLoading(true)
     setError(null)
     
-    console.log('🚀 开始普通AI调用:', message)
+    console.log('🚀 开始普通AI调用（完全分离版）:', message)
     
-    // 超时控制
+    // 短超时控制 - 仅针对AI调用
     const timeoutId = setTimeout(() => {
-      console.warn('⏰ 普通AI请求超时')
+      console.warn('⏰ AI调用超时（20秒）')
       setLoading(false)
-      setError('AI request timed out. Please try again.')
-    }, 45000) // 45秒超时
+      setError('AI response timeout. Please try again.')
+    }, 20000) // 减少到20秒，只针对AI调用
     
     try {
-      let aiMessageId: string | null = null
       const startTime = Date.now()
 
-      // 🔥 并行执行：AI调用 + 数据库操作
-      const [aiResponse] = await Promise.allSettled([
-        // AI调用 - 最高优先级，立即开始
-        (async () => {
-          console.log('🤖 开始AI调用')
-          
-          // 导入aiService
-          const { aiService } = await import('@/api/ai')
-          
-          const aiResult = await aiService.generateConversationResponse(
-            currentConversation,
-            message,
-            {
-              ...aiConfig,
-              model: aiConfig.model || 'gpt-3.5-turbo'
-            }
-          )
-          
-          console.log('✅ AI响应完成，耗时:', Date.now() - startTime + 'ms')
-          return aiResult
-        })(),
-
-        // 数据库操作 - 后台并行执行
-        (async () => {
-          try {
-            console.log('💾 后台开始数据库操作')
-
-            // 并行执行数据库插入
-            const [userResult, aiResult] = await Promise.allSettled([
-              // 保存用户消息（已在UI显示，这里只是持久化）
-              supabase
-                .from('ai_messages')
-                .insert({
-                  conversation_id: currentConversation.id,
-                  role: 'user',
-                  content: message,
-                  timestamp: userMessage.timestamp
-                })
-                .select()
-                .single(),
-
-              // 创建AI消息记录（稍后更新内容）
-              supabase
-                .from('ai_messages')
-                .insert({
-                  conversation_id: currentConversation.id,
-                  role: 'assistant',
-                  content: '', // 初始为空
-                  timestamp: new Date().toISOString()
-                })
-                .select()
-                .single()
-            ])
-
-            // 处理结果
-            if (userResult.status === 'fulfilled' && !userResult.value.error) {
-              console.log('✅ 用户消息已持久化')
-            } else {
-              console.warn('⚠️ 用户消息持久化失败:', userResult)
-            }
-
-            if (aiResult.status === 'fulfilled' && !aiResult.value.error) {
-              aiMessageId = aiResult.value.data.id
-              console.log('✅ AI消息记录已创建，ID:', aiMessageId)
-            } else {
-              console.warn('⚠️ AI消息记录创建失败:', aiResult)
-            }
-
-          } catch (dbErr) {
-            console.warn('⚠️ 数据库操作失败，但不影响AI响应:', dbErr)
-          }
-        })()
-      ])
-
-      // 检查AI调用结果
-      if (aiResponse.status === 'rejected') {
-        throw new Error(`AI调用失败: ${aiResponse.reason}`)
-      }
-
-      const aiContent = aiResponse.value
-      console.log('🎯 AI回复内容:', aiContent)
+      // 🚀 核心策略：只等待AI调用，数据库操作完全后台进行
+      console.log('🤖 开始AI调用（静态导入）')
+      
+      const aiContent = await aiService.generateConversationResponse(
+        currentConversation,
+        message,
+        {
+          ...aiConfig,
+          model: aiConfig.model || 'gpt-3.5-turbo'
+        }
+      )
+      
+      console.log('✅ AI响应完成，耗时:', Date.now() - startTime + 'ms')
+      console.log('🎯 AI回复内容长度:', aiContent.length, '字符')
 
       // 创建AI消息对象
       const aiMessage: AIMessage = {
@@ -377,7 +312,7 @@ export const useAI = () => {
         timestamp: new Date().toISOString()
       }
 
-      // 立即添加到UI
+      // 🚀 立即添加到UI - 无等待
       setMessages(prev => [...prev, aiMessage])
       
       // 更新对话列表中的最后更新时间
@@ -387,47 +322,92 @@ export const useAI = () => {
           : conv
       ))
       
-      console.log('✅ AI消息已添加到UI')
+      console.log('✅ AI消息已添加到UI，总耗时:', Date.now() - startTime + 'ms')
 
-      // 异步更新数据库（不阻塞UI）
-      if (aiMessageId) {
-        supabase
-          .from('ai_messages')
-          .update({ content: aiContent })
-          .eq('id', aiMessageId)
-          .then(({ error }: { error: any }) => {
-            if (error) {
-              console.warn('⚠️ AI消息更新失败:', error)
-            } else {
-              console.log('✅ AI消息已持久化')
-            }
-          })
-      }
+      // 🔥 完全后台的数据库操作 - 不阻塞任何用户体验
+      Promise.resolve().then(async () => {
+        try {
+          console.log('💾 开始后台数据库操作（完全异步）')
+          
+          // 快速认证检查
+          const { data: { user }, error: authError } = await supabase.auth.getUser()
+          if (authError || !user) {
+            console.warn('⚠️ 用户认证失败，跳过数据库操作')
+            return
+          }
 
-      // 异步更新对话时间戳
-      supabase
-        .from('ai_conversations')
-        .update({ updated_at: aiMessage.timestamp })
-        .eq('id', currentConversation.id)
-        .then(() => console.log('✅ 对话时间戳已更新'))
+          // 并行保存用户消息和AI消息
+          const [userResult, aiResult] = await Promise.allSettled([
+            // 保存用户消息
+            supabase
+              .from('ai_messages')
+              .insert({
+                conversation_id: currentConversation.id,
+                role: 'user',
+                content: message,
+                timestamp: userMessage.timestamp
+              }),
+            
+            // 保存AI消息
+            supabase
+              .from('ai_messages')
+              .insert({
+                conversation_id: currentConversation.id,
+                role: 'assistant',
+                content: aiContent,
+                timestamp: aiMessage.timestamp
+              })
+          ])
+
+          // 处理结果
+          if (userResult.status === 'fulfilled' && !userResult.value.error) {
+            console.log('✅ 用户消息已持久化')
+          } else {
+            console.warn('⚠️ 用户消息持久化失败:', userResult)
+          }
+
+          if (aiResult.status === 'fulfilled' && !aiResult.value.error) {
+            console.log('✅ AI消息已持久化')
+          } else {
+            console.warn('⚠️ AI消息持久化失败:', aiResult)
+          }
+
+          // 更新对话时间戳
+          const conversationUpdate = await supabase
+            .from('ai_conversations')
+            .update({ updated_at: aiMessage.timestamp })
+            .eq('id', currentConversation.id)
+
+          if (!conversationUpdate.error) {
+            console.log('✅ 对话时间戳已更新')
+          }
+
+        } catch (dbErr) {
+          console.warn('⚠️ 后台数据库操作失败，但不影响用户体验:', dbErr)
+        }
+      }).catch(err => {
+        console.warn('⚠️ 后台任务启动失败:', err)
+      })
 
     } catch (err: any) {
-      console.error('💥 普通AI调用失败:', err)
+      console.error('💥 AI调用失败:', err)
       
-      // 用户友好的错误处理
+      // 🚀 快速用户友好的错误处理
       if (err.message.includes('timeout')) {
-        setError('AI response timeout. Please try again.')
+        setError('AI响应超时，请重试')
       } else if (err.message.includes('API key')) {
-        setError('API key issue. Please check configuration.')
+        setError('API配置问题，请检查设置')
       } else if (err.message.includes('rate limit')) {
-        setError('Too many requests. Please wait and try again.')
+        setError('请求过于频繁，请稍后重试')
+      } else if (err.message.includes('network') || err.message.includes('fetch')) {
+        setError('网络连接问题，请重试')
       } else {
-        setError(`AI Error: ${err.message}`)
+        setError(`AI服务错误: ${err.message}`)
       }
     } finally {
       clearTimeout(timeoutId)
       setLoading(false)
-      console.log('🏁 普通AI调用完成')
+      console.log('🏁 AI调用完成')
     }
   }, [currentConversation, aiConfig])
 
