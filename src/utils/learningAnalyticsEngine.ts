@@ -7,6 +7,8 @@ import {
     AggregatedBehaviorMetrics,
     AnalysisModel,
     BehaviorDataCollector,
+    BehaviorDataPoint,
+    BehaviorEventType,
     LearningAnalyticsEngine,
     LearningInsight,
     LearningPattern,
@@ -27,12 +29,7 @@ import {
 /**
  * 行为数据点接口
  */
-export interface BehaviorDataPoint {
-  timestamp: string
-  event_type: string
-  event_data: Record<string, any>
-  significance_score: number
-}
+// Using BehaviorDataPoint from analytics-enhanced types
 
 /**
  * 主学习分析引擎类
@@ -239,7 +236,7 @@ class LearningAnalyticsEngineImpl implements LearningAnalyticsEngine {
 
     // 基于预测的推荐
     predictions.forEach(prediction => {
-      if (prediction.confidence_level > 0.8) {
+      if (prediction.probability > 0.8) {
         switch (prediction.prediction_type) {
           case 'performance':
             recommendations.push(`预期性能优化: 根据${prediction.target_metric}预测结果调整学习策略`)
@@ -413,7 +410,7 @@ class LearningAnalyticsEngineImpl implements LearningAnalyticsEngine {
         user_id: this.user_id,
         analysis_timestamp: new Date().toISOString(),
         total_insights: this.insights.length,
-        high_confidence_predictions: this.predictions.filter(p => p.confidence_level > 0.8).length,
+        high_confidence_predictions: this.predictions.filter(p => p.probability > 0.8).length,
         overall_efficiency: efficiency_analysis.overall_efficiency,
         optimization_potential: efficiency_analysis.time_optimization_potential
       },
@@ -465,7 +462,7 @@ class BehaviorDataCollectorImpl implements BehaviorDataCollector {
       if (message.role === 'user') {
         this.data_points.push({
           timestamp: message.timestamp,
-          event_type: 'message_sent',
+          event_type: 'message_sent' as BehaviorEventType,
           event_data: {
             content_length: message.content.length,
             response_time: this.calculateResponseTime(message)
@@ -785,6 +782,12 @@ class InsightGenerator {
         title: '任务完成率需要改善',
         description: `当前任务完成率为${behaviorData.performance_metrics.task_completion_rate}%，建议调整学习策略`,
         confidence_level: 0.8,
+        evidence: [{
+          evidence_type: 'statistical',
+          data_source: 'task_completion_metrics',
+          evidence_strength: 0.85,
+          description: '基于任务完成率数据的统计分析'
+        }],
         actionable_items: ['分解复杂任务', '设置中间检查点', '提供更多指导'],
         generated_at: new Date().toISOString()
       })
@@ -799,6 +802,12 @@ class InsightGenerator {
         title: '学习速度表现优秀',
         description: '用户学习速度很快，可以考虑增加挑战难度',
         confidence_level: 0.9,
+        evidence: [{
+          evidence_type: 'observational',
+          data_source: 'learning_velocity_tracking',
+          evidence_strength: 0.92,
+          description: '基于学习进度追踪的观察分析'
+        }],
         actionable_items: ['提供进阶内容', '增加实践项目', '设置更高目标'],
         generated_at: new Date().toISOString()
       })
@@ -882,17 +891,18 @@ class PredictionEngine {
 
     // 性能预测
     if (performanceMetrics.improvement_velocity > 0) {
-      predictions.push({
-        prediction_id: `performance_${Date.now()}`,
-        prediction_type: 'performance',
-        target_metric: 'learning_progress',
-        predicted_value: performanceMetrics.improvement_velocity * 1.2,
-        confidence_level: 0.8,
-        timeframe: '2 weeks',
-        factors: [],
-        uncertainty_sources: ['外部因素', '动机变化'],
-        generated_at: new Date().toISOString()
-      })
+              predictions.push({
+          prediction_id: `performance_${Date.now()}`,
+          prediction_type: 'performance',
+          target_metric: 'learning_progress',
+          predicted_value: performanceMetrics.improvement_velocity * 1.2,
+          confidence_interval: [performanceMetrics.improvement_velocity * 1.0, performanceMetrics.improvement_velocity * 1.4],
+          probability: 0.8,
+          timeframe: '2 weeks',
+          factors: [],
+          uncertainty_sources: ['外部因素', '动机变化'],
+          generated_at: new Date().toISOString()
+        })
     }
 
     return predictions
