@@ -1,10 +1,13 @@
 import { aiConversationApi } from '@/api/ai'
+import AIModeSelector from '@/components/AIModeSelector'
 import AIQuickPrompts from '@/components/AIQuickPrompts'
 import BackToDashboardButton from '@/components/BackToDashboardButton'
 import StreamingMessage from '@/components/streaming/StreamingMessage'
+import VersionSwitcher from '@/components/VersionSwitcher'
 import { useAI } from '@/hooks/useAI'
 import { useAIStream } from '@/hooks/useAIStream'
 import { useTasks } from '@/hooks/useTasks'
+import { useVersionMode } from '@/hooks/useVersionMode'
 import { AIAssistantConfig, Task } from '@/types'
 import { formatDateTime } from '@/utils'
 import { LucideBot, LucideChevronDown, LucideLightbulb, LucideMessageSquare, LucidePlus, LucideRefreshCw, LucideSend, LucideSettings, LucideSquare, LucideTrash2, LucideUser } from 'lucide-react'
@@ -13,6 +16,9 @@ import SubscriptionStatus from '../components/SubscriptionStatus'
 import styles from './TaskAssistant.module.css'
 
 const TaskAssistant = () => {
+  // Initialize version mode management
+  const versionMode = useVersionMode(13) // Default to college freshman
+
   const {
     conversations,
     currentConversation,
@@ -51,14 +57,27 @@ const TaskAssistant = () => {
   const [showTaskSelector, setShowTaskSelector] = useState(false)
   const [showQuickPrompts, setShowQuickPrompts] = useState(false)
   const [useStreamMode, setUseStreamMode] = useState(false)
+  const [showVersionSelector, setShowVersionSelector] = useState(false)
+  const [showModeSelector, setShowModeSelector] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   const configDropdownRef = useRef<HTMLDivElement>(null)
   const promptsDropdownRef = useRef<HTMLDivElement>(null)
+  const versionDropdownRef = useRef<HTMLDivElement>(null)
+  const modeDropdownRef = useRef<HTMLDivElement>(null)
 
   const loading = useStreamMode ? isStreaming : classicLoading
   const error = useStreamMode ? streamError : classicError
+
+  // Sync version mode with AI config
+  useEffect(() => {
+    updateAIConfig({
+      mode: versionMode.selectedModeId || 'study_buddy',
+      academicVersion: versionMode.currentVersion,
+      userGrade: versionMode.userGrade
+    })
+  }, [versionMode.selectedModeId, versionMode.currentVersion, versionMode.userGrade, updateAIConfig])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -67,6 +86,12 @@ const TaskAssistant = () => {
       }
       if (promptsDropdownRef.current && !promptsDropdownRef.current.contains(event.target as Node)) {
         setShowQuickPrompts(false)
+      }
+      if (versionDropdownRef.current && !versionDropdownRef.current.contains(event.target as Node)) {
+        setShowVersionSelector(false)
+      }
+      if (modeDropdownRef.current && !modeDropdownRef.current.contains(event.target as Node)) {
+        setShowModeSelector(false)
       }
     }
 
@@ -520,21 +545,52 @@ const TaskAssistant = () => {
 
           {/* AI模式选择 */}
           <div className={styles.section}>
-            <h3>AI Mode</h3>
-            <div className={styles.modeList}>
-              {getAIModeOptions().map((mode) => (
-                <div 
-                  key={mode.value}
-                  className={`${styles.modeItem} ${aiConfig.mode === mode.value ? styles.selected : ''}`}
-                  onClick={() => handleConfigChange({ mode: mode.value as any })}
-                >
-                  <span className={styles.modeIcon}>{mode.icon}</span>
-                  <div className={styles.modeInfo}>
-                    <span className={styles.modeName}>{mode.label}</span>
-                    <span className={styles.modeDesc}>{mode.description}</span>
-                  </div>
+            {/* Version Switcher */}
+            <VersionSwitcher
+              currentVersion={versionMode.currentVersion}
+              onVersionChange={versionMode.switchVersion}
+              userGrade={versionMode.userGrade}
+              disabled={loading}
+            />
+
+            {/* AI Mode Selector */}
+            <AIModeSelector
+              availableModes={versionMode.availableModes}
+              selectedModeId={versionMode.selectedModeId}
+              onModeSelect={versionMode.selectMode}
+              academicVersion={versionMode.currentVersion}
+              userGrade={versionMode.userGrade}
+              disabled={loading}
+              showExamples={true}
+            />
+
+            {/* Current Configuration Display */}
+            <div className={styles.currentConfig}>
+              <div className={styles.configTitle}>Current Setup</div>
+              <div className={styles.configDetails}>
+                <div className={styles.configItem}>
+                  <span className={styles.configLabel}>Version:</span>
+                  <span className={styles.configValue}>
+                    {versionMode.currentVersion === 'high_school' ? 'High School' : 'College'}
+                  </span>
                 </div>
-              ))}
+                {versionMode.userGrade && (
+                  <div className={styles.configItem}>
+                    <span className={styles.configLabel}>Grade:</span>
+                    <span className={styles.configValue}>
+                      {versionMode.userGrade <= 12 ? `Grade ${versionMode.userGrade}` : `Year ${versionMode.userGrade - 12}`}
+                    </span>
+                  </div>
+                )}
+                {versionMode.selectedMode && (
+                  <div className={styles.configItem}>
+                    <span className={styles.configLabel}>Mode:</span>
+                    <span className={styles.configValue}>
+                      {versionMode.selectedMode.icon} {versionMode.selectedMode.name}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

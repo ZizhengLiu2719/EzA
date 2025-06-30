@@ -1,95 +1,34 @@
-import { AIAssistantConfig, AIConversation, AIMessage, ApiResponse, ReviewCard, WeeklyReport } from '@/types';
+import { getModeConfig } from '@/config/aiModeConfigs';
+import { AIAssistantConfig, AIConversation, AIMessage, AIModeId, ApiResponse, ReviewCard, WeeklyReport } from '@/types';
 import { checkFileSizeLimit } from '@/utils';
 import { supabase } from './supabase';
 
-// AI 配置和提示词管理
-const AI_PROMPTS = {
+
+// Legacy AI prompts mapping (for backward compatibility)
+const LEGACY_AI_PROMPTS = {
   writing: {
-    bullet_tutor: `你是学术写作导师。帮助学生：1.思考文章结构 2.提供写作技巧 3.改进表达 4.鼓励独立创作。请引导式回应，控制在200字内。
-
-任务：{task_title}
-问题：{user_message}`,
-    
-    socratic_bot: `你是苏格拉底式导师。通过提问引导学生思考写作，不直接给答案。控制在150字内。
-
-任务：{task_title}
-问题：{user_message}`,
-    
-    quick_fix: `你是高效写作编辑。直接提供具体改进建议，简洁明了，控制在100字内。
-
-任务：{task_title}
-问题：{user_message}`,
-    
-    diagram_ai: `你是视觉化写作导师。帮助学生通过图表组织写作思路，控制在150字内。
-
-任务：{task_title}
-问题：{user_message}`
+    bullet_tutor: 'study_buddy',
+    socratic_bot: 'academic_coach', 
+    quick_fix: 'quick_clarifier',
+    diagram_ai: 'writing_mentor'
   },
-  
   stem: {
-    bullet_tutor: `你是STEM导师。帮助学生：1.理解概念 2.解决问题 3.掌握方法 4.建立信心。引导式教学，控制在200字内。
-
-任务：{task_title}
-问题：{user_message}`,
-    
-    socratic_bot: `你是苏格拉底式STEM导师。通过提问引导学生发现答案，培养逻辑思维。控制在150字内。
-
-任务：{task_title}
-问题：{user_message}`,
-    
-    quick_fix: `你是高效STEM助手。直接提供解题步骤和答案，简洁准确，控制在100字内。
-
-任务：{task_title}
-问题：{user_message}`,
-    
-    diagram_ai: `你是视觉化STEM导师。用图表、公式帮助理解概念，控制在150字内。
-
-任务：{task_title}
-问题：{user_message}`
+    bullet_tutor: 'study_buddy',
+    socratic_bot: 'academic_coach',
+    quick_fix: 'quick_clarifier', 
+    diagram_ai: 'stem_specialist'
   },
-  
   reading: {
-    bullet_tutor: `你是阅读理解导师。帮助学生：1.理解内容 2.分析结构 3.提取要点 4.培养思辨。引导式教学，控制在200字内。
-
-任务：{task_title}
-问题：{user_message}`,
-    
-    socratic_bot: `你是苏格拉底式阅读导师。通过提问帮助学生深入理解文本。控制在150字内。
-
-任务：{task_title}
-问题：{user_message}`,
-    
-    quick_fix: `你是高效阅读助手。直接提供理解要点和答案，简洁明了，控制在100字内。
-
-任务：{task_title}
-问题：{user_message}`,
-    
-    diagram_ai: `你是视觉化阅读导师。用图表帮助理解文章结构和内容，控制在150字内。
-
-任务：{task_title}
-问题：{user_message}`
+    bullet_tutor: 'study_buddy',
+    socratic_bot: 'academic_coach',
+    quick_fix: 'quick_clarifier',
+    diagram_ai: 'humanities_scholar'
   },
-  
   programming: {
-    bullet_tutor: `你是编程导师。帮助学生：1.理解需求 2.编程思路 3.调试代码 4.独立编程。引导式教学，控制在200字内。
-
-任务：{task_title}
-问题：{user_message}`,
-    
-    socratic_bot: `你是苏格拉底式编程导师。通过提问引导学生思考算法和逻辑。控制在150字内。
-
-任务：{task_title}
-问题：{user_message}`,
-    
-    quick_fix: `你是高效编程助手。直接提供代码解决方案和最佳实践，控制在100字内。
-
-任务：{task_title}
-问题：{user_message}`,
-    
-    diagram_ai: `你是视觉化编程导师。用流程图帮助理解程序逻辑，控制在150字内。
-
-任务：{task_title}
-问题：{user_message}`
+    bullet_tutor: 'study_buddy', 
+    socratic_bot: 'academic_coach',
+    quick_fix: 'quick_clarifier',
+    diagram_ai: 'stem_specialist'
   }
 }
 
@@ -190,34 +129,82 @@ class AIService {
     }
   }
 
-  // 生成对话回复
+  // 生成对话回复 - Updated for new English prompt system
   async generateConversationResponse(
     conversation: AIConversation,
     userMessage: string,
     config?: AIAssistantConfig
   ): Promise<string> {
-    const assistantType = conversation.assistant_type
-    const mode = config?.mode || 'bullet_tutor'
+    const modeId = config?.mode || 'study_buddy' as AIModeId
     
-    // 获取对应的提示词模板
-    const promptTemplate = AI_PROMPTS[assistantType]?.[mode] || AI_PROMPTS[assistantType]?.bullet_tutor
+    // Get the AI mode configuration
+    const modeConfig = getModeConfig(modeId)
     
-    if (!promptTemplate) {
-      throw new Error(`不支持的助手类型: ${assistantType}`)
+    if (!modeConfig) {
+      // Fallback to legacy mapping for backward compatibility
+      const assistantType = conversation.assistant_type
+      const legacyMode = config?.mode
+      
+      // Only use legacy mapping for old mode types
+      const legacyModeMapping = {
+        'bullet_tutor': 'bullet_tutor',
+        'socratic_bot': 'socratic_bot', 
+        'quick_fix': 'quick_fix',
+        'diagram_ai': 'diagram_ai'
+      } as const
+      
+      const mappedLegacyMode = legacyMode && legacyMode in legacyModeMapping 
+        ? legacyModeMapping[legacyMode as keyof typeof legacyModeMapping]
+        : 'bullet_tutor'
+      
+      const fallbackModeId = LEGACY_AI_PROMPTS[assistantType]?.[mappedLegacyMode] || 'study_buddy'
+      const fallbackConfig = getModeConfig(fallbackModeId)
+      
+      if (!fallbackConfig) {
+        throw new Error(`Unsupported AI mode: ${modeId}`)
+      }
+      
+      console.log(`🔄 Using fallback mode: ${fallbackModeId} for legacy mode: ${mappedLegacyMode}`)
+      return this.generateResponseWithConfig(fallbackConfig, conversation, userMessage, config)
     }
 
-    // 构建系统提示词
-    const systemPrompt = promptTemplate
-      .replace('{task_title}', conversation.task_id ? '相关任务' : '学习辅导')
+    return this.generateResponseWithConfig(modeConfig, conversation, userMessage, config)
+  }
+
+  // Helper method to generate response with mode configuration
+  private async generateResponseWithConfig(
+    modeConfig: any,
+    conversation: AIConversation,
+    userMessage: string,
+    config?: AIAssistantConfig
+  ): Promise<string> {
+    // Build the system prompt using the English template
+    const taskTitle = conversation.task_id ? 'Related Assignment' : 'Learning Support'
+    const systemPrompt = modeConfig.promptTemplate
+      .replace('{task_title}', taskTitle)
       .replace('{user_message}', userMessage)
 
-    // 构建消息历史
+    // Add academic version context
+    const academicContext = config?.academicVersion === 'high_school' 
+      ? '\n\nNote: This is for a high school student. Keep explanations age-appropriate and supportive.'
+      : '\n\nNote: This is for a college student. Encourage critical thinking and independent analysis.'
+
+    const finalSystemPrompt = systemPrompt + academicContext
+
+    // Build message history
     const messages = [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: finalSystemPrompt },
       { role: 'user', content: userMessage }
     ]
 
-    return await this.callOpenAI(messages)
+    // Use the mode's specific token limit
+    const modelConfig = {
+      ...config,
+      max_tokens: modeConfig.maxTokens || 400,
+      model: config?.model || 'gpt-3.5-turbo'
+    }
+
+    return await this.callOpenAI(messages, modelConfig)
   }
 
   // 生成复习卡片

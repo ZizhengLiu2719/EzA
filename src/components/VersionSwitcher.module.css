@@ -1,0 +1,340 @@
+/* Version Switcher Component Styles */
+.versionSwitcher {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(16px);
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.versionSwitcher::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(99, 102, 241, 0.5) 50%, 
+    transparent 100%);
+}
+
+/* Header Section */
+.switchHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.switchLabel {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gradeIndicator {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Switch Container */
+.switchContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.versionButton {
+  display: flex;
+  align-items: center;
+  padding: 20px 16px;
+  border: 2px solid rgba(100, 116, 139, 0.3);
+  border-radius: 12px;
+  background: rgba(30, 41, 59, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  min-height: 80px;
+}
+
+.versionButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    transparent 100%);
+  transition: left 0.5s ease;
+}
+
+.versionButton:hover::before {
+  left: 100%;
+}
+
+.versionButton:hover {
+  border-color: rgba(99, 102, 241, 0.5);
+  background: rgba(30, 41, 59, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.versionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.versionButton.active {
+  border-color: #6366f1;
+  background: linear-gradient(135deg, 
+    rgba(99, 102, 241, 0.2), 
+    rgba(139, 92, 246, 0.2));
+  box-shadow: 
+    0 4px 14px rgba(99, 102, 241, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.versionButton.active .buttonTitle {
+  color: #a5b4fc;
+}
+
+.buttonIcon {
+  font-size: 28px;
+  margin-right: 16px;
+  flex-shrink: 0;
+}
+
+.buttonContent {
+  flex: 1;
+  text-align: left;
+}
+
+.buttonTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 4px;
+  transition: color 0.3s ease;
+}
+
+.buttonSubtitle {
+  font-size: 12px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.recommendedBadge {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Version Description */
+.versionDescription {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(51, 65, 85, 0.3);
+  border-radius: 12px;
+  border-left: 3px solid #6366f1;
+  margin-bottom: 20px;
+}
+
+.descriptionIcon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.descriptionText {
+  font-size: 14px;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+/* Feature Highlights */
+.featureHighlights {
+  margin-bottom: 20px;
+}
+
+.featureList {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(30, 41, 59, 0.4);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #e2e8f0;
+  border: 1px solid rgba(100, 116, 139, 0.2);
+  transition: all 0.3s ease;
+}
+
+.featureItem:hover {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.featureIcon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Mode Count */
+.modeCount {
+  text-align: center;
+  padding-top: 16px;
+  border-top: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+.countText {
+  font-size: 14px;
+  font-weight: 600;
+  color: #a5b4fc;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.unlockText {
+  font-size: 12px;
+  color: #10b981;
+  font-weight: 500;
+}
+
+/* High School Specific Styling */
+.versionButton.highSchool.active {
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, 
+    rgba(245, 158, 11, 0.2), 
+    rgba(217, 119, 6, 0.2));
+  box-shadow: 
+    0 4px 14px rgba(245, 158, 11, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.versionButton.highSchool.active .buttonTitle {
+  color: #fbbf24;
+}
+
+/* College Specific Styling */
+.versionButton.college.active {
+  border-color: #6366f1;
+  background: linear-gradient(135deg, 
+    rgba(99, 102, 241, 0.2), 
+    rgba(139, 92, 246, 0.2));
+  box-shadow: 
+    0 4px 14px rgba(99, 102, 241, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.versionButton.college.active .buttonTitle {
+  color: #a5b4fc;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .versionSwitcher {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .switchContainer {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .versionButton {
+    padding: 16px 12px;
+    min-height: 70px;
+  }
+  
+  .buttonIcon {
+    font-size: 24px;
+    margin-right: 12px;
+  }
+  
+  .buttonTitle {
+    font-size: 15px;
+  }
+  
+  .featureList {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .featureItem {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .switchHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .versionButton {
+    padding: 14px 10px;
+    min-height: 60px;
+  }
+  
+  .buttonIcon {
+    font-size: 20px;
+    margin-right: 10px;
+  }
+  
+  .buttonTitle {
+    font-size: 14px;
+  }
+  
+  .buttonSubtitle {
+    font-size: 11px;
+  }
+} 

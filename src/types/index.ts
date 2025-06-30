@@ -142,13 +142,74 @@ export interface CourseParseResult {
   course_description?: string
 }
 
-// AI 助手配置类型
+// 新增：学术版本类型
+export type AcademicVersion = 'high_school' | 'college'
+
+// 新增：AI模式ID类型
+export type HighSchoolModeId = 
+  | 'study_buddy' 
+  | 'writing_mentor' 
+  | 'math_tutor' 
+  | 'science_guide' 
+  | 'homework_helper'
+  | 'test_prep_coach'  // 11-12年级解锁
+  | 'research_assistant'  // 11-12年级解锁
+  | 'academic_planner'  // 11-12年级解锁
+
+export type CollegeModeId = 
+  | 'academic_coach'
+  | 'quick_clarifier' 
+  | 'research_mentor'
+  | 'collaboration_facilitator'
+  | 'thesis_developer'
+  | 'exam_strategist'
+  | 'stem_specialist'
+  | 'humanities_scholar'
+  | 'social_science_analyst'
+  | 'business_advisor'
+  | 'creative_guide'
+  | 'lab_mentor'
+
+export type AIModeId = HighSchoolModeId | CollegeModeId
+
+// 新增：AI模式配置接口
+export interface AIModeConfig {
+  id: AIModeId
+  name: string
+  description: string
+  icon: string
+  targetVersion: AcademicVersion | 'both'
+  requiredGrade?: number  // 高中模式的年级要求 (9-12)
+  subjectSpecialization?: string[]
+  promptTemplate: string
+  maxTokens: number
+  responseStyle: 'friendly' | 'academic' | 'professional'
+  example: string  // 使用示例
+}
+
+// 更新：AI助手配置类型
 export interface AIAssistantConfig {
-  mode: 'bullet_tutor' | 'socratic_bot' | 'quick_fix' | 'diagram_ai'
+  mode: AIModeId
+  academicVersion: AcademicVersion
   model?: 'gpt-3.5-turbo' | 'gpt-4o'
   writing_style?: 'academic' | 'creative' | 'technical'
   citation_format?: 'mla' | 'apa' | 'chicago'
   difficulty_level?: 'beginner' | 'intermediate' | 'advanced'
+  userGrade?: number  // 用户年级 (9-12 for high school, 13-16 for college)
+}
+
+// 新增：用户学术档案
+export interface UserAcademicProfile {
+  id: string
+  user_id: string
+  academic_version: AcademicVersion
+  grade?: number  // 9-12 for high school, 13-16 for college years
+  major?: string  // college major
+  gpa?: number
+  preferred_citation_format: 'mla' | 'apa' | 'chicago'
+  learning_style?: 'visual' | 'auditory' | 'kinesthetic' | 'reading_writing'
+  created_at: string
+  updated_at: string
 }
 
 // 日历事件类型
