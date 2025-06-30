@@ -182,6 +182,35 @@ export type ReviewCallback = (
   reviewTime: number
 ) => Promise<void>;
 
+// 闪卡集合类型
+export interface FlashcardSet {
+  id: string;
+  title: string;
+  description?: string;
+  user_id: string;
+  flashcards: Flashcard[];
+  created_at: Date;
+  updated_at: Date;
+  tags?: string[];
+  subject?: string;
+  visibility: 'private' | 'public' | 'shared';
+}
+
+// 基础闪卡类型
+export interface Flashcard {
+  id: string;
+  front: string;
+  back: string;
+  hint?: string;
+  explanation?: string;
+  set_id: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
+// 学习模式类型
+export type StudyMode = 'flashcard' | 'learn' | 'test' | 'match' | 'gravity' | 'ai-tutor';
+
 // SRS Hook 返回值
 export interface UseSpacedRepetitionReturn {
   // 当前学习数据

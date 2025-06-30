@@ -1,0 +1,698 @@
+/* 重力游戏主容器 */
+.gravityGame {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  overflow: hidden;
+}
+
+/* 配置界面 */
+.configScreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.configCard {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  min-width: 500px;
+  max-width: 600px;
+  text-align: center;
+  animation: configSlide 0.6s ease-out;
+}
+
+@keyframes configSlide {
+  from {
+    opacity: 0;
+    transform: translateY(50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.configCard h2 {
+  color: #2c3e50;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.setTitle {
+  color: #7f8c8d;
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  font-style: italic;
+}
+
+.gameInstructions {
+  text-align: left;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 15px;
+  border-left: 4px solid #667eea;
+}
+
+.gameInstructions h3 {
+  color: #2c3e50;
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+}
+
+.gameInstructions ul {
+  list-style: none;
+  padding: 0;
+}
+
+.gameInstructions li {
+  color: #34495e;
+  font-size: 1rem;
+  margin-bottom: 8px;
+  padding-left: 10px;
+}
+
+.configOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.configOption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 12px;
+}
+
+.configOption label {
+  color: #34495e;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.configOption select {
+  padding: 8px 15px;
+  border: 2px solid #e3e8ed;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.configOption select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.configActions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.cancelButton,
+.startButton {
+  padding: 15px 30px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 140px;
+}
+
+.cancelButton {
+  background: #e9ecef;
+  color: #6c757d;
+}
+
+.cancelButton:hover {
+  background: #dee2e6;
+  transform: translateY(-2px);
+}
+
+.startButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.startButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* 游戏UI */
+.gameUI {
+  width: 100%;
+  max-width: 800px;
+  margin-bottom: 20px;
+}
+
+.gameStats {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
+  padding: 15px 25px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  color: #7f8c8d;
+  font-weight: 600;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statValue {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+/* 游戏容器 */
+.gameContainer {
+  position: relative;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 3px solid rgba(102, 126, 234, 0.3);
+}
+
+/* 游戏区域 */
+.gameArea {
+  position: relative;
+  background: linear-gradient(to bottom, 
+    rgba(102, 126, 234, 0.1) 0%, 
+    rgba(102, 126, 234, 0.05) 50%, 
+    rgba(244, 67, 54, 0.1) 100%
+  );
+  overflow: hidden;
+}
+
+/* 掉落卡片 */
+.fallingCard {
+  position: absolute;
+  width: 180px;
+  height: 100px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  animation: cardFloat 0.5s ease-out, cardShadow 2s ease-in-out infinite alternate;
+  transform-style: preserve-3d;
+  transition: all 0.3s ease;
+}
+
+@keyframes cardFloat {
+  from {
+    opacity: 0;
+    transform: scale(0.8) rotateY(180deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotateY(0deg);
+  }
+}
+
+@keyframes cardShadow {
+  from {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  }
+  to {
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.cardQuestion {
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 10px;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+/* 输入区域 */
+.inputArea {
+  width: 100%;
+  max-width: 800px;
+  margin-top: 20px;
+  display: flex;
+  gap: 15px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.gameInput {
+  flex: 1;
+  padding: 15px 20px;
+  border: 2px solid #e3e8ed;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.gameInput:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.gameInput:disabled {
+  background: #f8f9fa;
+  opacity: 0.7;
+}
+
+.submitButton {
+  padding: 15px 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  min-width: 120px;
+}
+
+.submitButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 暂停菜单 */
+.pauseMenu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: pauseShow 0.3s ease-out;
+}
+
+@keyframes pauseShow {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.pauseCard {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  animation: pauseSlide 0.4s ease-out;
+}
+
+@keyframes pauseSlide {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.pauseCard h3 {
+  color: #2c3e50;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.pauseStats {
+  margin-bottom: 30px;
+}
+
+.pauseStats p {
+  color: #34495e;
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.pauseActions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.pauseActions button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 100px;
+}
+
+.pauseActions button:first-child {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.pauseActions button:last-child {
+  background: #e9ecef;
+  color: #6c757d;
+}
+
+.pauseActions button:hover {
+  transform: translateY(-2px);
+}
+
+/* 游戏结束界面 */
+.gameOverScreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.gameOverCard {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  min-width: 600px;
+  max-width: 700px;
+  text-align: center;
+  animation: gameOverShow 0.8s ease-out;
+}
+
+@keyframes gameOverShow {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.gameOverCard h2 {
+  color: #2c3e50;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+}
+
+.finalScore {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40px;
+  padding: 30px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 20px;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+.scoreNumber {
+  font-size: 4rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.scoreLabel {
+  font-size: 1.3rem;
+  color: #7f8c8d;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+.gameOverStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.gameOverStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 15px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.statNumber {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.gameOverActions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.playAgainButton,
+.finishButton {
+  padding: 15px 30px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 150px;
+}
+
+.playAgainButton {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.playAgainButton:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.finishButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.finishButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .gravityGame {
+    padding: 10px;
+  }
+
+  .configCard,
+  .gameOverCard {
+    min-width: auto;
+    margin: 10px;
+    padding: 30px 20px;
+  }
+
+  .gameStats {
+    gap: 10px;
+    padding: 12px 15px;
+  }
+
+  .stat {
+    min-width: 60px;
+  }
+
+  .statLabel {
+    font-size: 0.7rem;
+  }
+
+  .statValue {
+    font-size: 1rem;
+  }
+
+  .gameContainer {
+    transform: scale(0.9);
+    transform-origin: center top;
+  }
+
+  .inputArea {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .gameInput {
+    font-size: 1rem;
+  }
+
+  .fallingCard {
+    width: 140px;
+    height: 80px;
+  }
+
+  .cardQuestion {
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+
+  .gameOverStats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .gameOverActions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .playAgainButton,
+  .finishButton {
+    width: 100%;
+    max-width: 250px;
+  }
+}
+
+/* 深色主题支持 */
+@media (prefers-color-scheme: dark) {
+  .gravityGame {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  }
+
+  .configCard,
+  .gameOverCard,
+  .pauseCard {
+    background: rgba(44, 62, 80, 0.95);
+    color: #ecf0f1;
+  }
+
+  .configCard h2,
+  .gameOverCard h2,
+  .pauseCard h3 {
+    color: #ecf0f1;
+  }
+
+  .gameStats,
+  .inputArea {
+    background: rgba(44, 62, 80, 0.95);
+    color: #ecf0f1;
+  }
+
+  .gameInput {
+    background: rgba(52, 73, 94, 0.8);
+    color: #ecf0f1;
+    border-color: #5d6d7e;
+  }
+
+  .gameArea {
+    background: linear-gradient(to bottom, 
+      rgba(44, 62, 80, 0.3) 0%, 
+      rgba(44, 62, 80, 0.2) 50%, 
+      rgba(231, 76, 60, 0.2) 100%
+    );
+  }
+}
+
+/* 高性能动画 */
+.fallingCard {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 无障碍支持 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 高对比度支持 */
+@media (prefers-contrast: high) {
+  .fallingCard {
+    border: 3px solid white;
+  }
+
+  .gameInput:focus {
+    border-width: 3px;
+  }
+
+  .submitButton,
+  .startButton,
+  .finishButton {
+    border: 2px solid rgba(255, 255, 255, 0.3);
+  }
+} 
