@@ -463,6 +463,7 @@ export const useAI = () => {
       
       console.log('✅ AI响应完成，耗时:', Date.now() - startTime + 'ms')
       console.log('🎯 AI回复内容长度:', aiContent.length, '字符')
+      console.log('📝 AI回复内容预览:', aiContent.substring(0, 200))
 
       // 创建AI消息对象
       const aiMessage: AIMessage = {
@@ -472,6 +473,13 @@ export const useAI = () => {
         content: aiContent,
         timestamp: new Date().toISOString()
       }
+
+      console.log('📦 创建的AI消息对象:', {
+        id: aiMessage.id,
+        role: aiMessage.role,
+        contentLength: aiMessage.content.length,
+        conversationId: aiMessage.conversation_id
+      })
 
       // 🚀 立即添加到UI - 无等待
       setMessages(prev => {
@@ -495,13 +503,73 @@ export const useAI = () => {
       // 🔥 完全后台的数据库操作 - 不阻塞任何用户体验
       Promise.resolve().then(async () => {
         try {
-          // 🚀 检测临时对话：跳过数据库操作，避免保存失败
+          // 🚀 处理临时对话：等待真实对话创建完成
+          let actualConversationId = conversation.id
+          
           if (conversation.id.startsWith('temp_')) {
-            console.log('⏭️ 检测到临时对话，跳过数据库操作，等待真实对话ID')
-            return
+            console.log('⏳ 检测到临时对话，等待真实对话ID')
+            
+            // 等待最多10秒让真实对话创建完成
+            let waitTime = 0
+            const maxWaitTime = 10000 // 10秒
+            const checkInterval = 100 // 100ms检查一次
+            
+            while (waitTime < maxWaitTime) {
+              await new Promise(resolve => setTimeout(resolve, checkInterval))
+              waitTime += checkInterval
+              
+              // 检查对话是否已经更新为真实对话
+              const currentConv = conversations.find(c => 
+                c.id === conversation.id || // 原临时ID还在
+                (c.id !== conversation.id && !c.id.startsWith('temp_')) // 或者找到新的真实对话
+              )
+              
+              if (currentConv && !currentConv.id.startsWith('temp_')) {
+                actualConversationId = currentConv.id
+                console.log('✅ 找到真实对话ID:', actualConversationId)
+                break
+              }
+              
+              // 也检查当前对话状态是否已经更新
+              if (currentConversation && !currentConversation.id.startsWith('temp_')) {
+                actualConversationId = currentConversation.id
+                console.log('✅ 当前对话已更新为真实ID:', actualConversationId)
+                break
+              }
+            }
+            
+            // 如果仍然是临时对话，说明对话创建失败，但仍然尝试保存
+            if (actualConversationId.startsWith('temp_')) {
+              console.warn('⚠️ 等待超时，仍为临时对话，尝试创建对话后保存消息')
+              
+              // 尝试直接创建对话（备用方案）
+              try {
+                const assistantType = conversation.assistant_type || 'programming'
+                const createResponse = await aiConversationApi.createConversation(assistantType)
+                
+                if (!createResponse.error && createResponse.data) {
+                  actualConversationId = createResponse.data.id
+                  console.log('✅ 备用方案：成功创建对话', actualConversationId)
+                  
+                  // 更新当前对话为真实对话
+                  setCurrentConversation(createResponse.data)
+                  setConversations(prev => prev.map(conv => 
+                    conv.id === conversation.id ? createResponse.data : conv
+                  ))
+                } else {
+                  console.error('❌ 备用方案失败，无法创建对话:', createResponse.error)
+                  return // 放弃保存
+                }
+              } catch (createErr) {
+                console.error('❌ 备用对话创建失败:', createErr)
+                return // 放弃保存
+              }
+            }
           }
 
-          console.log('💾 开始后台数据库操作（完全异步）')
+          console.log('💾 开始后台数据库操作，对话ID:', actualConversationId)
+          console.log('💾 准备保存的AI内容长度:', aiContent.length)
+          console.log('💾 准备保存的AI内容预览:', aiContent.substring(0, 100))
           
           // 快速认证检查
           const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -510,13 +578,29 @@ export const useAI = () => {
             return
           }
 
+          // 构建要插入的AI消息数据
+          const aiInsertData = {
+            conversation_id: actualConversationId, // 使用真实对话ID
+            role: 'assistant',
+            content: aiContent,
+            timestamp: aiMessage.timestamp
+          }
+          
+          console.log('📤 准备插入的AI消息数据:', {
+            conversation_id: aiInsertData.conversation_id,
+            role: aiInsertData.role,
+            contentLength: aiInsertData.content.length,
+            contentPreview: aiInsertData.content.substring(0, 100),
+            timestamp: aiInsertData.timestamp
+          })
+
           // 并行保存用户消息和AI消息
           const [userResult, aiResult] = await Promise.allSettled([
             // 保存用户消息
             supabase
               .from('ai_messages')
               .insert({
-                conversation_id: conversation.id, // 🚀 使用传入的对话ID
+                conversation_id: actualConversationId, // 使用真实对话ID
                 role: 'user',
                 content: message,
                 timestamp: userMessage.timestamp
@@ -525,12 +609,7 @@ export const useAI = () => {
             // 保存AI消息
             supabase
               .from('ai_messages')
-              .insert({
-                conversation_id: conversation.id, // 🚀 使用传入的对话ID
-                role: 'assistant',
-                content: aiContent,
-                timestamp: aiMessage.timestamp
-              })
+              .insert(aiInsertData)
           ])
 
           // 处理结果
@@ -541,26 +620,32 @@ export const useAI = () => {
           }
 
           if (aiResult.status === 'fulfilled' && !aiResult.value.error) {
-            console.log('✅ AI消息已持久化')
+            console.log('✅ AI消息已持久化成功')
+            console.log('✅ 持久化的数据:', aiResult.value.data)
           } else {
-            console.warn('⚠️ AI消息持久化失败:', aiResult)
+            console.error('❌ AI消息持久化失败:', aiResult)
+            if (aiResult.status === 'rejected') {
+              console.error('❌ AI消息插入被拒绝:', aiResult.reason)
+            } else {
+              console.error('❌ AI消息插入错误:', aiResult.value.error)
+            }
           }
 
           // 更新对话时间戳
           const conversationUpdate = await supabase
             .from('ai_conversations')
             .update({ updated_at: aiMessage.timestamp })
-            .eq('id', conversation.id) // 🚀 使用传入的对话ID
+            .eq('id', actualConversationId) // 使用真实对话ID
 
           if (!conversationUpdate.error) {
             console.log('✅ 对话时间戳已更新')
           }
 
         } catch (dbErr) {
-          console.warn('⚠️ 后台数据库操作失败，但不影响用户体验:', dbErr)
+          console.error('❌ 后台数据库操作异常:', dbErr)
         }
       }).catch(err => {
-        console.warn('⚠️ 后台任务启动失败:', err)
+        console.error('❌ 后台任务启动失败:', err)
       })
 
     } catch (err: any) {

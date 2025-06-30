@@ -17,34 +17,21 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({
   // 检测是否为预览消息（以...结尾且长度>=150）
   const isActualPreview = content.endsWith('...') && content.length >= 150
 
-  // 调试信息
-  console.log('🔍 StreamingMessage props:', { 
-    content: content.substring(0, 100) + '...', 
-    contentLength: content.length,
-    isComplete, 
-    isActualPreview 
-  })
-
   useEffect(() => {
-    console.log('🔄 StreamingMessage useEffect triggered:', { content, isComplete, isActualPreview })
-    
     // 简化逻辑：如果是完成状态，直接显示全部内容
     if (isComplete) {
       setDisplayedContent(content)
-      console.log('✅ 设置完成状态内容:', content.length)
       return
     }
 
     // 如果是预览，立即显示预览内容  
     if (isActualPreview) {
       setDisplayedContent(content)
-      console.log('📄 设置预览内容:', content.length)
       return
     }
 
     // 打字机效果（流式响应时）
     if (content && !isComplete) {
-      console.log('⌨️ 开始打字机效果')
       setDisplayedContent('')
       let index = 0
       const timer = setInterval(() => {
@@ -53,7 +40,6 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({
           index++
         } else {
           clearInterval(timer)
-          console.log('✅ 打字机效果完成')
         }
       }, 20)
 
@@ -70,24 +56,19 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({
     }
   }
 
-  console.log('🖼️ 即将渲染内容:', displayedContent.length)
-
   return (
     <>      
-      {/* 消息文本 - 确保内容能显示 */}
+      {/* 消息文本 - 恢复正常样式 */}
       <div 
         style={{ 
           whiteSpace: 'pre-wrap', 
           wordBreak: 'break-word',
           color: '#ffffff',
           lineHeight: 1.6,
-          position: 'relative',
-          minHeight: '20px', // 确保有最小高度
-          border: '1px solid rgba(255,255,255,0.1)', // 临时调试边框
-          padding: '8px' // 临时调试内边距
+          position: 'relative'
         }}
       >
-        {displayedContent || '⚠️ 内容为空'}
+        {displayedContent}
         
         {/* 正在输入指示器 */}
         {!isComplete && !isActualPreview && (
@@ -105,28 +86,23 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({
         )}
       </div>
 
-      {/* 调试信息 */}
-      <div style={{ fontSize: '10px', color: '#666', marginTop: '4px' }}>
-        Debug: content.length={content.length}, displayed.length={displayedContent.length}, isComplete={isComplete.toString()}
-      </div>
-
       {/* 预览状态提示 */}
       {isActualPreview && (
         <div 
           style={{ 
-            marginTop: '12px',
+            marginTop: '8px',
             fontSize: '12px',
-            color: 'rgba(255, 255, 255, 0.7)'
+            color: 'rgba(255, 255, 255, 0.6)'
           }}
         >
           {isLoadingFull ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <div 
                 style={{
                   width: '12px',
                   height: '12px',
-                  border: '2px solid rgba(59, 130, 246, 0.3)',
-                  borderTop: '2px solid #3b82f6',
+                  border: '2px solid rgba(16, 185, 129, 0.3)',
+                  borderTop: '2px solid #10b981',
                   borderRadius: '50%',
                   animation: 'spin 1s linear infinite'
                 }}
@@ -139,7 +115,7 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#3b82f6',
+                color: '#10b981',
                 cursor: 'pointer',
                 fontSize: '12px',
                 textDecoration: 'underline',
@@ -152,18 +128,20 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({
         </div>
       )}
 
-      {/* 状态指示器 */}
+      {/* 消息时间 */}
       <div 
         style={{
           fontSize: '11px',
           color: 'rgba(255, 255, 255, 0.5)',
           marginTop: '4px',
-          fontWeight: '500'
+          fontWeight: '500',
+          textAlign: 'right'
         }}
       >
-        {isActualPreview && '📄 预览模式'}
-        {isComplete && !isActualPreview && '✅ 完成'}
-        {!isComplete && !isActualPreview && '⏳ 正在输入...'}
+        {new Date().toLocaleTimeString('zh-CN', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        })}
       </div>
 
       {/* CSS动画 */}
