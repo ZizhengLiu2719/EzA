@@ -218,6 +218,16 @@ class AIService {
       const maxTokens = model === 'gpt-4o' ? 2000 : 1500
       const temperature = model === 'gpt-4o' ? 0.3 : 0.2
 
+      console.log('🔥 开始调用OpenAI API:', model)
+      console.log('📝 发送消息:', messages)
+
+      // 创建AbortController用于超时控制
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => {
+        console.warn('⏰ OpenAI API请求超时，取消请求')
+        controller.abort()
+      }, 30000) // 30秒超时
+
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -232,19 +242,42 @@ class AIService {
           top_p: config?.top_p || 1,
           frequency_penalty: config?.frequency_penalty || 0,
           presence_penalty: config?.presence_penalty || 0
-        })
+        }),
+        signal: controller.signal // 添加信号用于取消请求
       })
 
+      clearTimeout(timeoutId) // 清除超时计时器
+      console.log('📡 OpenAI API响应状态:', response.status)
+
       if (!response.ok) {
-        const error = await response.json()
+        const errorText = await response.text()
+        console.error('❌ OpenAI API响应错误:', errorText)
+        
+        let error
+        try {
+          error = JSON.parse(errorText)
+        } catch {
+          error = { error: { message: errorText } }
+        }
+        
         throw new Error(`OpenAI API error: ${error.error?.message || response.statusText}`)
       }
 
       const data = await response.json()
-      return data.choices[0]?.message?.content || '抱歉，我无法生成回复。'
+      console.log('✅ OpenAI API调用成功:', data)
+      
+      const content = data.choices[0]?.message?.content || '抱歉，我无法生成回复。'
+      return content
     } catch (error: any) {
-      console.error('OpenAI API call failed:', error)
-      throw new Error(`AI 服务暂时不可用: ${error.message}`)
+      console.error('💥 OpenAI API调用失败:', error)
+      
+      if (error.name === 'AbortError') {
+        throw new Error('请求超时：AI服务响应时间过长，请稍后重试')
+      } else if (error.message.includes('fetch')) {
+        throw new Error('网络连接错误：无法连接到AI服务，请检查网络连接')
+      } else {
+        throw new Error(`AI 服务暂时不可用: ${error.message}`)
+      }
     }
   }
 

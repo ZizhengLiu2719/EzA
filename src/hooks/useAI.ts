@@ -156,14 +156,18 @@ export const useAI = () => {
     console.log('🚀 开始发送消息:', message)
     console.log('📝 当前对话:', currentConversation)
     
-    // 设置30秒超时自动重置
+    // 延长超时时间到60秒
     const timeoutId = setTimeout(() => {
-      console.warn('⏰ AI请求超时，自动重置loading状态')
+      console.warn('⏰ AI请求超时（60秒），自动重置loading状态')
       setLoading(false)
-      setError('AI request timed out. Please try again.')
-    }, 30000)
+      setError('AI request timed out after 60 seconds. This might be due to OpenAI API issues. Please check your internet connection and try again.')
+    }, 60000)
     
     try {
+      // 添加请求开始时间记录
+      const startTime = Date.now()
+      console.log('⏱️ API请求开始时间:', new Date().toLocaleTimeString())
+      
       const response = await aiConversationApi.sendMessage(
         currentConversation.id,
         message,
@@ -173,11 +177,22 @@ export const useAI = () => {
         }
       )
       
+      const duration = Date.now() - startTime
+      console.log('⏱️ API请求完成，耗时:', duration + 'ms')
       console.log('📨 API响应:', response)
       
       if (response.error) {
         console.error('❌ API错误:', response.error)
-        setError(response.error)
+        // 检查是否是特定的错误类型
+        if (response.error.includes('timeout') || response.error.includes('network')) {
+          setError('Network connection issue. Please check your internet and try again.')
+        } else if (response.error.includes('API key') || response.error.includes('authentication')) {
+          setError('API authentication issue. Please check your OpenAI API key configuration.')
+        } else if (response.error.includes('rate limit') || response.error.includes('quota')) {
+          setError('OpenAI API rate limit exceeded. Please wait a moment and try again.')
+        } else {
+          setError(`AI Error: ${response.error}`)
+        }
       } else {
         console.log('✅ 消息发送成功:', response.data)
         const newMessage = response.data
@@ -192,7 +207,17 @@ export const useAI = () => {
       }
     } catch (err: any) {
       console.error('💥 发送消息异常:', err)
-      setError(err.message)
+      
+      // 更详细的错误处理
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        setError('Network error: Unable to connect to AI service. Please check your internet connection.')
+      } else if (err.message.includes('timeout')) {
+        setError('Request timeout: AI service took too long to respond. Please try again.')
+      } else if (err.message.includes('CORS')) {
+        setError('CORS error: Please check your API configuration.')
+      } else {
+        setError(`Unexpected error: ${err.message}`)
+      }
     } finally {
       clearTimeout(timeoutId) // 清除超时
       console.log('🏁 清除loading状态')
