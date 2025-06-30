@@ -198,4 +198,8 @@ export interface UsageStats {
   monthly_courses_used: number
   monthly_conversations_limit: number
   monthly_courses_limit: number
-} 
+}
+
+// 重新导出增强AI类型
+export * from './ai-enhanced'
+
