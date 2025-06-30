@@ -1,5 +1,6 @@
 import { AIAssistantConfig, AIConversation, AIMessage, ApiResponse, ReviewCard, WeeklyReport } from '@/types';
 import { checkFileSizeLimit } from '@/utils';
+import { supabase } from './supabase';
 
 // AI 配置和提示词管理
 const AI_PROMPTS = {
@@ -582,6 +583,90 @@ export const aiConversationApi = {
     } catch (error: any) {
       return { data: [], error: error.message }
     }
+  },
+
+  // 删除对话和相关消息
+  async deleteConversation(conversationId: string): Promise<ApiResponse<{ success: boolean }>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('用户未登录')
+
+      // 首先验证对话是否属于当前用户
+      const { data: conversation, error: verifyError } = await supabase
+        .from('ai_conversations')
+        .select('user_id')
+        .eq('id', conversationId)
+        .single()
+
+      if (verifyError) throw verifyError
+      if (conversation.user_id !== user.id) {
+        throw new Error('无权限删除此对话')
+      }
+
+      // 删除对话相关的所有消息
+      const { error: messagesError } = await supabase
+        .from('ai_messages')
+        .delete()
+        .eq('conversation_id', conversationId)
+
+      if (messagesError) throw messagesError
+
+      // 删除对话记录
+      const { error: conversationError } = await supabase
+        .from('ai_conversations')
+        .delete()
+        .eq('id', conversationId)
+        .eq('user_id', user.id) // 双重安全检查
+
+      if (conversationError) throw conversationError
+
+      return { data: { success: true } }
+    } catch (error: any) {
+      return { data: { success: false }, error: error.message }
+    }
+  },
+
+  // 删除用户的所有对话
+  async deleteAllConversations(): Promise<ApiResponse<{ success: boolean, deletedCount: number }>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('用户未登录')
+
+      // 获取用户的所有对话ID
+      const { data: conversations, error: getError } = await supabase
+        .from('ai_conversations')
+        .select('id')
+        .eq('user_id', user.id)
+
+      if (getError) throw getError
+      
+      const conversationIds = conversations?.map(conv => conv.id) || []
+      const deletedCount = conversationIds.length
+
+      if (deletedCount === 0) {
+        return { data: { success: true, deletedCount: 0 } }
+      }
+
+      // 删除所有对话相关的消息
+      const { error: messagesError } = await supabase
+        .from('ai_messages')
+        .delete()
+        .in('conversation_id', conversationIds)
+
+      if (messagesError) throw messagesError
+
+      // 删除所有对话记录
+      const { error: conversationsError } = await supabase
+        .from('ai_conversations')
+        .delete()
+        .eq('user_id', user.id)
+
+      if (conversationsError) throw conversationsError
+
+      return { data: { success: true, deletedCount } }
+    } catch (error: any) {
+      return { data: { success: false, deletedCount: 0 }, error: error.message }
+    }
   }
 }
 
@@ -782,5 +867,4 @@ export const courseParseApi = {
 }
 
 // 导入 supabase 客户端
-import { supabase } from './supabase';
 

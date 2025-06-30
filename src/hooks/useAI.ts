@@ -94,6 +94,14 @@ export const useAI = () => {
     setError(null)
     
     try {
+      // 调用API删除对话
+      const response = await aiConversationApi.deleteConversation(conversationId)
+      
+      if (response.error) {
+        setError(response.error)
+        return { success: false, error: response.error }
+      }
+
       // 从本地状态中移除对话
       setConversations(prev => prev.filter(conv => conv.id !== conversationId))
       
@@ -103,15 +111,37 @@ export const useAI = () => {
         setMessages([])
       }
       
-      // TODO: 这里应该调用API删除对话
-      // await aiConversationApi.deleteConversation(conversationId)
-      
       return { success: true }
     } catch (err: any) {
       setError(err.message)
       return { success: false, error: err.message }
     }
   }, [currentConversation])
+
+  // 删除所有对话
+  const deleteAllConversations = useCallback(async () => {
+    setError(null)
+    
+    try {
+      // 调用API删除所有对话
+      const response = await aiConversationApi.deleteAllConversations()
+      
+      if (response.error) {
+        setError(response.error)
+        return { success: false, error: response.error }
+      }
+
+      // 清空本地状态
+      setConversations([])
+      setCurrentConversation(null)
+      setMessages([])
+      
+      return { success: true, deletedCount: response.data.deletedCount }
+    } catch (err: any) {
+      setError(err.message)
+      return { success: false, error: err.message }
+    }
+  }, [])
 
   // 发送消息
   const sendMessage = useCallback(async (message: string) => {
@@ -204,6 +234,7 @@ export const useAI = () => {
     createConversation,
     selectConversation,
     deleteConversation,
+    deleteAllConversations,
     sendMessage,
     updateAIConfig,
     getAIModeOptions,

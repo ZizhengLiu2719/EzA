@@ -343,6 +343,12 @@
 }
 
 /* 聊天历史部分的新建对话按钮样式 */
+.chatHistoryActions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
 .chatHistorySection .newChatBtn {
   padding: 6px 8px;
   min-width: 32px;
@@ -350,6 +356,52 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Delete All Button */
+.deleteAllBtn {
+  min-width: 32px;
+  height: 32px;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.deleteAllBtn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+  transform: scale(1.05);
+}
+
+.deleteAllBtn:active {
+  transform: scale(0.95);
+}
+
+/* Empty Conversations State */
+.emptyConversations {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.emptyConversations p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+.emptyConversations p:first-child {
+  color: var(--white);
+  font-weight: var(--font-medium);
+  margin-bottom: var(--space-1);
 }
 
 .errorBanner {
@@ -723,6 +775,8 @@
   opacity: 0;
   transform: scale(0.8);
   flex-shrink: 0;
+  z-index: 10;
+  position: relative;
 }
 
 .conversationItem:hover .deleteBtn {

@@ -20,6 +20,7 @@ const TaskAssistant = () => {
     createConversation,
     selectConversation,
     deleteConversation,
+    deleteAllConversations,
     sendMessage,
     updateAIConfig,
     getAIModeOptions,
@@ -123,16 +124,43 @@ const TaskAssistant = () => {
 
   // 删除对话
   const handleDeleteConversation = useCallback(async (conversationId: string, e: React.MouseEvent) => {
+    e.preventDefault()
     e.stopPropagation() // 防止触发选择对话
     
     if (window.confirm('Are you sure you want to delete this conversation?')) {
       try {
-        await deleteConversation(conversationId)
+        const result = await deleteConversation(conversationId)
+        if (!result.success) {
+          console.error('Failed to delete conversation:', result.error)
+        }
       } catch (error) {
         console.error('Failed to delete conversation:', error)
       }
     }
   }, [deleteConversation])
+
+  // 删除所有对话
+  const handleDeleteAllConversations = useCallback(async () => {
+    if (conversations.length === 0) {
+      alert('No conversations to delete.')
+      return
+    }
+
+    if (window.confirm(`Are you sure you want to delete ALL ${conversations.length} conversations? This action cannot be undone.`)) {
+      try {
+        const result = await deleteAllConversations()
+        if (result.success) {
+          alert(`Successfully deleted ${result.deletedCount} conversations.`)
+        } else {
+          console.error('Failed to delete all conversations:', result.error)
+          alert('Failed to delete conversations. Please try again.')
+        }
+      } catch (error) {
+        console.error('Failed to delete all conversations:', error)
+        alert('Failed to delete conversations. Please try again.')
+      }
+    }
+  }, [deleteAllConversations, conversations.length])
 
   // 获取任务类型图标
   const getTaskTypeIcon = (type: string) => {
@@ -168,13 +196,6 @@ const TaskAssistant = () => {
       monthly_courses_limit: 5
     }
   })
-
-  useEffect(() => {
-    // 自动创建第一个对话
-    if (conversations.length === 0) {
-      createConversation('writing')
-    }
-  }, [conversations.length, createConversation])
 
   return (
     <div className={styles.assistant}>
@@ -370,41 +391,59 @@ const TaskAssistant = () => {
             <div className={`${styles.section} ${styles.chatHistorySection}`}>
               <div className={styles.sectionHeader}>
                 <h3>Chat History</h3>
-                <button 
-                  className={styles.newChatBtn}
-                  onClick={handleNewConversation}
-                  title="Start new conversation"
-                >
-                  <LucidePlus size={16} />
-                </button>
+                <div className={styles.chatHistoryActions}>
+                  <button 
+                    className={styles.newChatBtn}
+                    onClick={handleNewConversation}
+                    title="Start new conversation"
+                  >
+                    <LucidePlus size={16} />
+                  </button>
+                  {conversations.length > 0 && (
+                    <button 
+                      className={styles.deleteAllBtn}
+                      onClick={handleDeleteAllConversations}
+                      title="Delete all conversations"
+                    >
+                      <LucideTrash2 size={16} />
+                    </button>
+                  )}
+                </div>
               </div>
               <div className={styles.conversationList}>
-                {conversations.map((conversation) => (
-                  <div 
-                    key={conversation.id}
-                    className={`${styles.conversationItem} ${currentConversation?.id === conversation.id ? styles.selected : ''}`}
-                    onClick={() => selectConversation(conversation.id)}
-                  >
-                    <div className={styles.conversationIcon}>
-                      <LucideMessageSquare size={16} />
-                    </div>
-                    <div className={styles.conversationInfo}>
-                      <span className={styles.conversationType}>
-                        {conversation.assistant_type}
-                      </span>
-                      <span className={styles.conversationTime}>
-                        {formatDateTime(conversation.updated_at)}
-                      </span>
-                    </div>
-                    <button
-                      className={styles.deleteBtn}
-                      onClick={(e) => handleDeleteConversation(conversation.id, e)}
-                      title="Delete conversation"
-                    >
-                      <LucideTrash2 size={14} />
-                    </button>
+                {conversations.length === 0 ? (
+                  <div className={styles.emptyConversations}>
+                    <p>No conversations yet.</p>
+                    <p>Start a conversation to begin!</p>
                   </div>
-                ))}
+                ) : (
+                  conversations.map((conversation) => (
+                    <div 
+                      key={conversation.id}
+                      className={`${styles.conversationItem} ${currentConversation?.id === conversation.id ? styles.selected : ''}`}
+                      onClick={() => selectConversation(conversation.id)}
+                    >
+                      <div className={styles.conversationIcon}>
+                        <LucideMessageSquare size={16} />
+                      </div>
+                      <div className={styles.conversationInfo}>
+                        <span className={styles.conversationType}>
+                          {conversation.assistant_type}
+                        </span>
+                        <span className={styles.conversationTime}>
+                          {formatDateTime(conversation.updated_at)}
+                        </span>
+                      </div>
+                      <button
+                        className={styles.deleteBtn}
+                        onClick={(e) => handleDeleteConversation(conversation.id, e)}
+                        title="Delete conversation"
+                      >
+                        <LucideTrash2 size={14} />
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -442,7 +481,7 @@ const TaskAssistant = () => {
                       <LucideBot size={48} />
                     </div>
                     <h3>Start your AI learning journey</h3>
-                    <p>Select a task, then tell me what help you need</p>
+                    <p>Ask a question or select a task to begin your conversation</p>
                   </div>
                 ) : (
                   <div className={styles.messagesList}>
