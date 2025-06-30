@@ -530,38 +530,19 @@ export const aiConversationApi = {
     }
   },
 
-  // 删除对话和相关消息
+  // 删除对话和相关消息 - 优化版本
   async deleteConversation(conversationId: string): Promise<ApiResponse<{ success: boolean }>> {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('用户未登录')
 
-      // 首先验证对话是否属于当前用户
-      const { data: conversation, error: verifyError } = await supabase
-        .from('ai_conversations')
-        .select('user_id')
-        .eq('id', conversationId)
-        .single()
-
-      if (verifyError) throw verifyError
-      if (conversation.user_id !== user.id) {
-        throw new Error('无权限删除此对话')
-      }
-
-      // 删除对话相关的所有消息
-      const { error: messagesError } = await supabase
-        .from('ai_messages')
-        .delete()
-        .eq('conversation_id', conversationId)
-
-      if (messagesError) throw messagesError
-
-      // 删除对话记录
+      // 🚀 优化：利用CASCADE删除和RLS策略，一次操作删除对话及所有相关消息
+      // 数据库的外键约束会自动删除相关消息，RLS会确保权限安全
       const { error: conversationError } = await supabase
         .from('ai_conversations')
         .delete()
         .eq('id', conversationId)
-        .eq('user_id', user.id) // 双重安全检查
+        .eq('user_id', user.id) // RLS会确保用户只能删除自己的对话
 
       if (conversationError) throw conversationError
 
@@ -571,36 +552,27 @@ export const aiConversationApi = {
     }
   },
 
-  // 删除用户的所有对话
+  // 删除用户的所有对话 - 优化版本
   async deleteAllConversations(): Promise<ApiResponse<{ success: boolean, deletedCount: number }>> {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('用户未登录')
 
-      // 获取用户的所有对话ID
-      const { data: conversations, error: getError } = await supabase
+      // 🚀 优化：先获取要删除的对话数量，然后利用CASCADE一次性删除
+      const { data: conversations, error: countError } = await supabase
         .from('ai_conversations')
         .select('id')
         .eq('user_id', user.id)
 
-      if (getError) throw getError
+      if (countError) throw countError
       
-      const conversationIds = conversations?.map(conv => conv.id) || []
-      const deletedCount = conversationIds.length
+      const deletedCount = conversations?.length || 0
 
       if (deletedCount === 0) {
         return { data: { success: true, deletedCount: 0 } }
       }
 
-      // 删除所有对话相关的消息
-      const { error: messagesError } = await supabase
-        .from('ai_messages')
-        .delete()
-        .in('conversation_id', conversationIds)
-
-      if (messagesError) throw messagesError
-
-      // 删除所有对话记录
+      // 🚀 利用CASCADE删除：删除所有对话，相关消息会自动删除
       const { error: conversationsError } = await supabase
         .from('ai_conversations')
         .delete()

@@ -90,59 +90,96 @@ export const useAI = () => {
     }
   }, [conversations])
 
-  // 删除对话
+  // 删除对话 - 优化版本，支持乐观更新
   const deleteConversation = useCallback(async (conversationId: string) => {
-    setError(null)
+    // 🚀 乐观更新：立即更新UI，给用户瞬间反馈
+    const originalConversations = conversations
+    const originalCurrentConversation = currentConversation
+    const originalMessages = messages
+
+    // 立即从本地状态中移除对话
+    setConversations(prev => prev.filter(conv => conv.id !== conversationId))
     
+    // 如果删除的是当前对话，立即清空当前对话
+    if (currentConversation?.id === conversationId) {
+      setCurrentConversation(null)
+      setMessages([])
+    }
+
+    console.log('🗑️ 乐观删除：UI已立即更新')
+
     try {
-      // 调用API删除对话
+      // 🚀 后台异步执行实际删除操作
       const response = await aiConversationApi.deleteConversation(conversationId)
       
       if (response.error) {
-        setError(response.error)
+        // ❌ 删除失败，回滚UI状态
+        console.error('❌ 删除失败，回滚状态:', response.error)
+        setConversations(originalConversations)
+        setCurrentConversation(originalCurrentConversation)
+        setMessages(originalMessages)
+        setError(`删除失败: ${response.error}`)
         return { success: false, error: response.error }
       }
 
-      // 从本地状态中移除对话
-      setConversations(prev => prev.filter(conv => conv.id !== conversationId))
-      
-      // 如果删除的是当前对话，清空当前对话
-      if (currentConversation?.id === conversationId) {
-        setCurrentConversation(null)
-        setMessages([])
-      }
-      
+      console.log('✅ 后台删除成功确认')
       return { success: true }
     } catch (err: any) {
-      setError(err.message)
+      // ❌ 网络错误，回滚UI状态
+      console.error('❌ 网络错误，回滚状态:', err.message)
+      setConversations(originalConversations)
+      setCurrentConversation(originalCurrentConversation)
+      setMessages(originalMessages)
+      setError(`删除失败: ${err.message}`)
       return { success: false, error: err.message }
     }
-  }, [currentConversation])
+  }, [conversations, currentConversation, messages])
 
-  // 删除所有对话
+  // 删除所有对话 - 优化版本，支持乐观更新
   const deleteAllConversations = useCallback(async () => {
-    setError(null)
-    
+    if (conversations.length === 0) {
+      return { success: true, deletedCount: 0 }
+    }
+
+    // 🚀 乐观更新：立即清空UI
+    const originalConversations = conversations
+    const originalCurrentConversation = currentConversation
+    const originalMessages = messages
+    const deletedCount = conversations.length
+
+    // 立即清空本地状态
+    setConversations([])
+    setCurrentConversation(null)
+    setMessages([])
+
+    console.log(`🗑️ 乐观删除：${deletedCount}个对话已立即清空`)
+
     try {
-      // 调用API删除所有对话
+      // 🚀 后台异步执行实际删除操作
       const response = await aiConversationApi.deleteAllConversations()
       
       if (response.error) {
-        setError(response.error)
+        // ❌ 删除失败，回滚UI状态
+        console.error('❌ 批量删除失败，回滚状态:', response.error)
+        setConversations(originalConversations)
+        setCurrentConversation(originalCurrentConversation)
+        setMessages(originalMessages)
+        setError(`批量删除失败: ${response.error}`)
         return { success: false, error: response.error }
       }
 
-      // 清空本地状态
-      setConversations([])
-      setCurrentConversation(null)
-      setMessages([])
-      
+      console.log(`✅ 后台批量删除成功确认: ${response.data.deletedCount}个对话`)
       return { success: true, deletedCount: response.data.deletedCount }
     } catch (err: any) {
-      setError(err.message)
+      // ❌ 网络错误，回滚UI状态
+      console.error('❌ 批量删除网络错误，回滚状态:', err.message)
+      setConversations(originalConversations)
+      setCurrentConversation(originalCurrentConversation)
+      setMessages(originalMessages)
+      setError(`批量删除失败: ${err.message}`)
       return { success: false, error: err.message }
     }
-  }, [])
+  }, [conversations, currentConversation, messages])
 
   // 发送消息
   const sendMessage = useCallback(async (message: string) => {

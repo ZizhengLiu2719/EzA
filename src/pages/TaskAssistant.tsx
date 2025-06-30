@@ -203,24 +203,23 @@ const TaskAssistant = () => {
     stopStreaming()
   }, [stopStreaming])
 
-  // 删除对话
+  // 删除对话 - 优化版本，更流畅的体验
   const handleDeleteConversation = useCallback(async (conversationId: string, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation() // 防止触发选择对话
     
-    if (window.confirm('Are you sure you want to delete this conversation?')) {
-      try {
-        const result = await deleteConversation(conversationId)
-        if (!result.success) {
-          console.error('Failed to delete conversation:', result.error)
-        }
-      } catch (error) {
-        console.error('Failed to delete conversation:', error)
+    try {
+      const result = await deleteConversation(conversationId)
+      if (!result.success && result.error) {
+        // 只在真正失败时显示错误，乐观更新已经处理了UI
+        console.error('Failed to delete conversation:', result.error)
       }
+    } catch (error) {
+      console.error('Failed to delete conversation:', error)
     }
   }, [deleteConversation])
 
-  // 删除所有对话
+  // 删除所有对话 - 保留确认对话框，因为这是重要操作
   const handleDeleteAllConversations = useCallback(async () => {
     if (conversations.length === 0) {
       alert('No conversations to delete.')
@@ -231,7 +230,8 @@ const TaskAssistant = () => {
       try {
         const result = await deleteAllConversations()
         if (result.success) {
-          alert(`Successfully deleted ${result.deletedCount} conversations.`)
+          // 成功消息是可选的，因为UI已经乐观更新
+          console.log(`Successfully deleted ${result.deletedCount} conversations.`)
         } else {
           console.error('Failed to delete all conversations:', result.error)
           alert('Failed to delete conversations. Please try again.')
