@@ -1,0 +1,546 @@
+/* MatchGame.module.css */
+
+.matchGame {
+  min-height: 100vh;
+  background: linear-gradient(135deg, rgba(15, 15, 35, 0.95), rgba(20, 20, 40, 0.95));
+  color: #e0e0e0;
+  font-family: 'Inter', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Header Styles */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 32px;
+  background: rgba(20, 20, 40, 0.8);
+  border-bottom: 2px solid rgba(79, 70, 229, 0.3);
+  backdrop-filter: blur(20px);
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.gameInfo h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #4F46E5, #06B6D4, #00D4FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 4px 0;
+}
+
+.gameInfo p {
+  color: #a0a0b0;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.stats {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.statCard {
+  background: rgba(79, 70, 229, 0.1);
+  border: 1px solid rgba(79, 70, 229, 0.3);
+  border-radius: 12px;
+  padding: 12px 16px;
+  text-align: center;
+  min-width: 80px;
+}
+
+.statValue {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #00D4FF;
+  line-height: 1.2;
+}
+
+.statLabel {
+  display: block;
+  font-size: 0.8rem;
+  color: #a0a0b0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.streakCard {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+  animation: pulseStreak 2s infinite;
+}
+
+.controls {
+  display: flex;
+  gap: 12px;
+}
+
+.controlBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.controlBtn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+}
+
+.controlIcon {
+  font-size: 1.1rem;
+}
+
+/* Game Area */
+.gameArea {
+  position: relative;
+  height: calc(100vh - 200px);
+  margin: 20px;
+  background: rgba(15, 15, 35, 0.5);
+  border: 2px dashed rgba(79, 70, 229, 0.3);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Game Cards */
+.gameCard {
+  position: absolute;
+  width: 180px;
+  min-height: 120px;
+  background: rgba(20, 20, 40, 0.9);
+  border: 2px solid rgba(79, 70, 229, 0.4);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.gameCard:hover {
+  transform: scale(1.05) rotate(1deg);
+  box-shadow: 0 12px 40px rgba(79, 70, 229, 0.3);
+  z-index: 10;
+}
+
+.termCard {
+  border-color: rgba(6, 182, 212, 0.4);
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(20, 20, 40, 0.9));
+}
+
+.defCard {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(20, 20, 40, 0.9));
+}
+
+.gameCard.selected {
+  border-color: #00D4FF;
+  background: rgba(0, 212, 255, 0.2);
+  transform: scale(1.1) rotate(2deg);
+  box-shadow: 0 15px 50px rgba(0, 212, 255, 0.4);
+  z-index: 20;
+}
+
+.gameCard.matched {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.6);
+  transform: scale(0.95);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.cardContent {
+  text-align: center;
+  width: 100%;
+}
+
+.cardType {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.cardText {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #e0e0e0;
+  font-weight: 500;
+  word-wrap: break-word;
+}
+
+/* Instructions */
+.instructions {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 24px;
+  background: rgba(20, 20, 40, 0.8);
+  padding: 16px 24px;
+  border-radius: 20px;
+  border: 1px solid rgba(79, 70, 229, 0.3);
+  backdrop-filter: blur(20px);
+}
+
+.instructionItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #a0a0b0;
+}
+
+.instructionIcon {
+  font-size: 1.1rem;
+}
+
+/* Completion Screen */
+.completionScreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(20px);
+}
+
+.completionCard {
+  background: linear-gradient(135deg, rgba(20, 20, 40, 0.95), rgba(15, 15, 35, 0.95));
+  border: 2px solid rgba(79, 70, 229, 0.4);
+  border-radius: 24px;
+  padding: 48px;
+  text-align: center;
+  max-width: 500px;
+  width: 90%;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 25px 80px rgba(79, 70, 229, 0.3);
+}
+
+.celebrationIcon {
+  font-size: 4rem;
+  margin-bottom: 16px;
+  animation: celebrate 2s infinite;
+}
+
+.completionCard h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #4F46E5, #06B6D4, #00D4FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 32px 0;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.statItem {
+  background: rgba(79, 70, 229, 0.1);
+  border: 1px solid rgba(79, 70, 229, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.statItem .statValue {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #00D4FF;
+  margin-bottom: 4px;
+}
+
+.statItem .statLabel {
+  display: block;
+  font-size: 0.9rem;
+  color: #a0a0b0;
+}
+
+.actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.playAgainBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #4F46E5, #06B6D4);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.playAgainBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(79, 70, 229, 0.4);
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.backBtn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(239, 68, 68, 0.3);
+}
+
+.actionIcon {
+  font-size: 1.2rem;
+}
+
+/* Animations */
+@keyframes pulseStreak {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
+  }
+}
+
+@keyframes celebrate {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.1) rotate(5deg);
+  }
+  75% {
+    transform: scale(1.1) rotate(-5deg);
+  }
+}
+
+@keyframes matchSuccess {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+    background: rgba(16, 185, 129, 0.4);
+    border-color: rgba(16, 185, 129, 0.8);
+  }
+  100% {
+    transform: scale(0.95);
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.6);
+  }
+}
+
+@keyframes wrongShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+    background: rgba(239, 68, 68, 0.3);
+  }
+  75% {
+    transform: translateX(10px);
+    background: rgba(239, 68, 68, 0.3);
+  }
+}
+
+.matchSuccess {
+  animation: matchSuccess 0.6s ease-out;
+}
+
+.wrongShake {
+  animation: wrongShake 0.5s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .header {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 20px;
+  }
+
+  .stats {
+    order: 2;
+  }
+
+  .controls {
+    order: 3;
+  }
+
+  .gameArea {
+    height: calc(100vh - 280px);
+    margin: 16px;
+  }
+
+  .gameCard {
+    width: 160px;
+    min-height: 100px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 12px 16px;
+  }
+
+  .gameInfo h1 {
+    font-size: 1.5rem;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+    width: 100%;
+  }
+
+  .statCard {
+    min-width: auto;
+    padding: 8px 12px;
+  }
+
+  .statValue {
+    font-size: 1.2rem;
+  }
+
+  .gameArea {
+    height: calc(100vh - 320px);
+    margin: 12px;
+  }
+
+  .gameCard {
+    width: 140px;
+    min-height: 90px;
+    padding: 10px;
+  }
+
+  .cardText {
+    font-size: 0.8rem;
+  }
+
+  .instructions {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .completionCard {
+    padding: 32px 24px;
+  }
+
+  .completionCard h2 {
+    font-size: 2rem;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .gameArea {
+    height: calc(100vh - 360px);
+    margin: 8px;
+  }
+
+  .gameCard {
+    width: 120px;
+    min-height: 80px;
+    padding: 8px;
+  }
+
+  .cardType {
+    font-size: 1.2rem;
+    margin-bottom: 4px;
+  }
+
+  .cardText {
+    font-size: 0.75rem;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .completionCard {
+    padding: 24px 16px;
+  }
+
+  .celebrationIcon {
+    font-size: 3rem;
+  }
+
+  .completionCard h2 {
+    font-size: 1.8rem;
+  }
+}
+
+/* Loading state */
+.gameCard.loading {
+  opacity: 0;
+  animation: cardLoad 0.5s ease-out forwards;
+}
+
+@keyframes cardLoad {
+  from {
+    opacity: 0;
+    transform: scale(0.8) rotate(-10deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.gameCard:nth-child(1) { animation-delay: 0.1s; }
+.gameCard:nth-child(2) { animation-delay: 0.2s; }
+.gameCard:nth-child(3) { animation-delay: 0.3s; }
+.gameCard:nth-child(4) { animation-delay: 0.4s; }
+.gameCard:nth-child(5) { animation-delay: 0.5s; }
+.gameCard:nth-child(6) { animation-delay: 0.6s; }
+.gameCard:nth-child(7) { animation-delay: 0.7s; }
+.gameCard:nth-child(8) { animation-delay: 0.8s; }
+.gameCard:nth-child(9) { animation-delay: 0.9s; }
+.gameCard:nth-child(10) { animation-delay: 1.0s; }
+.gameCard:nth-child(11) { animation-delay: 1.1s; }
+.gameCard:nth-child(12) { animation-delay: 1.2s; } 
