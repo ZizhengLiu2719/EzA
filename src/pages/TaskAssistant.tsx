@@ -2,6 +2,7 @@ import AIQuickPrompts from '@/components/AIQuickPrompts'
 import AITestComponent from '@/components/AITestComponent'
 import BackToDashboardButton from '@/components/BackToDashboardButton'
 import { useAI } from '@/hooks/useAI'
+import { useAIStream } from '@/hooks/useAIStream'
 import { useTasks } from '@/hooks/useTasks'
 import { AIAssistantConfig, Task } from '@/types'
 import { formatDateTime } from '@/utils'
@@ -15,8 +16,8 @@ const TaskAssistant = () => {
     conversations,
     currentConversation,
     messages,
-    loading,
-    error,
+    loading: classicLoading,
+    error: classicError,
     aiConfig,
     createConversation,
     selectConversation,
@@ -30,20 +31,31 @@ const TaskAssistant = () => {
     forceResetLoading
   } = useAI()
 
+  const {
+    isStreaming,
+    streamingMessage,
+    sendStreamMessage,
+    stopStreaming,
+    error: streamError,
+    clearError: clearStreamError
+  } = useAIStream()
+
   const { tasks, fetchTasks } = useTasks()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [inputMessage, setInputMessage] = useState('')
   const [showConfig, setShowConfig] = useState(false)
   const [showTaskSelector, setShowTaskSelector] = useState(false)
   const [showQuickPrompts, setShowQuickPrompts] = useState(false)
+  const [useStreamMode, setUseStreamMode] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
-  // 下拉框外部点击关闭的ref
   const configDropdownRef = useRef<HTMLDivElement>(null)
   const promptsDropdownRef = useRef<HTMLDivElement>(null)
 
-  // 处理外部点击关闭下拉框
+  const loading = useStreamMode ? isStreaming : classicLoading
+  const error = useStreamMode ? streamError : classicError
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (configDropdownRef.current && !configDropdownRef.current.contains(event.target as Node)) {
@@ -70,7 +82,7 @@ const TaskAssistant = () => {
     fetchTasks()
   }, [fetchTasks])
 
-  // 处理发送消息
+  // 处理发送消息（支持流式和非流式模式）
   const handleSendMessage = useCallback(async () => {
     if (!inputMessage.trim() || loading) return
 
@@ -88,9 +100,14 @@ const TaskAssistant = () => {
       if (!newConversation) return
     }
 
-    // 发送消息
-    await sendMessage(message)
-  }, [inputMessage, loading, currentConversation, createConversation, sendMessage, selectedTask])
+    if (useStreamMode && currentConversation) {
+      // 使用流式响应
+      await sendStreamMessage(message, currentConversation, aiConfig)
+    } else {
+      // 使用传统模式
+      await sendMessage(message)
+    }
+  }, [inputMessage, loading, currentConversation, createConversation, selectedTask, useStreamMode, sendStreamMessage, sendMessage, aiConfig])
 
   // 处理快速提示选择
   const handleQuickPromptSelect = useCallback((prompt: string) => {

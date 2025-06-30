@@ -1345,4 +1345,133 @@
   .inputContainer {
     padding: var(--space-3) var(--space-4);
   }
+}
+
+/* 流式模式相关样式 */
+.streamModeToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 16px;
+}
+
+.toggleLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggleInput {
+  display: none;
+}
+
+.toggleSlider {
+  position: relative;
+  width: 40px;
+  height: 20px;
+  background-color: #ccc;
+  border-radius: 20px;
+  transition: background-color 0.3s;
+}
+
+.toggleSlider::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: white;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s;
+}
+
+.toggleInput:checked + .toggleSlider {
+  background-color: #4f46e5;
+}
+
+.toggleInput:checked + .toggleSlider::before {
+  transform: translateX(20px);
+}
+
+.toggleText {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.streamBadge {
+  background: linear-gradient(45deg, #4f46e5, #7c3aed);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: 8px;
+  animation: pulse 2s infinite;
+}
+
+.streamingMessage {
+  position: relative;
+}
+
+.streamingMessage::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -4px;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(180deg, #4f46e5, #7c3aed);
+  border-radius: 1px;
+  animation: streamGlow 1.5s infinite;
+}
+
+.streamModeInfo {
+  text-align: center;
+  margin-top: 16px;
+  padding: 12px;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(124, 58, 237, 0.1));
+  border-radius: 8px;
+  border: 1px solid rgba(79, 70, 229, 0.2);
+}
+
+.streamIcon {
+  font-size: 24px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.streamHint {
+  color: #4f46e5;
+  font-weight: 500;
+}
+
+/* 动画效果 */
+@keyframes streamGlow {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scaleY(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* 打字机光标样式 */
+.message .streamingMessage .typing-cursor {
+  color: #4f46e5;
+  font-weight: bold;
 } 
