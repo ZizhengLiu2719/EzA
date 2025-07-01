@@ -1,9 +1,9 @@
 import { aiConversationApi } from '@/api/ai'
 import { supabase } from '@/api/supabase'
+import { getAIModel } from '@/config/aiModel'
 import { AIAssistantConfig, AIConversation, AIMessage } from '@/types'
 import { AI_MODES, getAIConfigDescription } from '@/utils/ai'
 import { useCallback, useEffect, useState } from 'react'
-import { getAIModel } from '@/config/aiModel'
 
 // 🚀 静态导入AI服务，消除动态导入延迟
 import { aiService } from '@/api/ai'

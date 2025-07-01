@@ -1,6 +1,22 @@
-export type AIModel = 'gpt-4o-mini' | 'o4-mini-high' | 'gpt-4o'
+export type AIModel = 'gpt-4o-mini' | 'gpt-4o'
 
-let currentModel: AIModel = (localStorage.getItem('ai_model') as AIModel) || 'gpt-4o-mini'
+// 兼容旧存储值 (o4-mini / o4-mini-high)
+const rawStored = localStorage.getItem('ai_model') as string | null
+const normalize = (val: string | null): AIModel => {
+  switch (val) {
+    case 'o4-mini':
+      return 'gpt-4o-mini'
+    case 'o4-mini-high':
+      return 'gpt-4o'
+    case 'gpt-4o-mini':
+    case 'gpt-4o':
+      return val as AIModel
+    default:
+      return 'gpt-4o-mini'
+  }
+}
+
+let currentModel: AIModel = normalize(rawStored)
 
 export function getAIModel(): AIModel {
   return currentModel

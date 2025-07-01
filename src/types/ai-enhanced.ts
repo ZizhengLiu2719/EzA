@@ -43,7 +43,7 @@ export interface EnhancedAIConfig {
   
   // 技术配置
   technical: {
-    model: 'gpt-4o-mini' | 'o4-mini-high' | 'gpt-4o'
+    model: 'gpt-4o-mini' | 'gpt-4o'
     temperature: number
     max_tokens: number
     response_format: 'conversational' | 'structured' | 'visual'

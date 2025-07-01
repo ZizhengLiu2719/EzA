@@ -12,9 +12,8 @@ const AIModelSelector: React.FC = () => {
 
   return (
     <select className={styles.selector} value={model} onChange={handleChange}>
-      <option value="gpt-4o-mini">GPT-4o mini</option>
-      <option value="o4-mini-high">o4-mini-high</option>
-      <option value="gpt-4o">GPT-4o</option>
+      <option value="gpt-4o-mini">GPT-4o mini (Fast)</option>
+      <option value="gpt-4o">GPT-4o (Best Quality)</option>
     </select>
   )
 }

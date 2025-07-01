@@ -59,7 +59,7 @@
 - Node.js 18+
 - npm 8+ 或 yarn 1.22+
 - 现代浏览器 (Chrome 90+, Firefox 88+, Safari 14+)
-- OpenAI API Key (GPT-4o 家族: gpt-4o-mini / o4-mini-high / gpt-4o)
+- OpenAI API Key (GPT-4o 家族: gpt-4o-mini / gpt-4o)
 
 ### ⚡ **安装与运行**
 
@@ -142,7 +142,7 @@ VITE_APP_VERSION=2.7.0
 
 ### 🤖 **AI 服务**
 
-- **OpenAI GPT-4o 系列** (gpt-4o-mini • o4-mini-high • gpt-4o) - 对话 AI
+- **OpenAI GPT-4o 系列** (gpt-4o-mini • gpt-4o) - 对话 AI
 - **Stream API** - 实时流式响应
 - **Normal API** - 快速批量响应 **[NEW!]**
 - **Promise.allSettled** - 容错并行处理 **[NEW!]**

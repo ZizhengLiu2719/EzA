@@ -23,7 +23,7 @@ export const SUBSCRIPTION_PLANS: Record<string, SubscriptionConfig> = {
     name: 'Pro Plan',
     price: 4.99,
     currency: 'USD',
-    aiModel: 'o4-mini-high',
+    aiModel: 'gpt-4o',
     monthlyConversations: -1, // 无限
     monthlyCourses: -1, // 无限
     features: [
