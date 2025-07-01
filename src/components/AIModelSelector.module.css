@@ -1,0 +1,13 @@
+.selector {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.selector option {
+  background: #1f2937;
+  color: #ffffff;
+} 

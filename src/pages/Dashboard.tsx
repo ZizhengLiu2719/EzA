@@ -1,3 +1,4 @@
+import AIModelSelector from '@/components/AIModelSelector'
 import { LucideBarChart2, LucideBookOpen, LucideBot, LucideBrain, LucideCalendar, LucideCrown } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import styles from './Dashboard.module.css'
@@ -90,6 +91,11 @@ const Dashboard = () => {
               <span className={styles.statEmoji}>💎</span>
               <span>2,450 XP</span>
             </div>
+          </div>
+
+          {/* AI Model Selector */}
+          <div style={{ marginTop: '12px' }}>
+            <AIModelSelector />
           </div>
         </div>
         

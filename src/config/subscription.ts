@@ -7,7 +7,7 @@ export const SUBSCRIPTION_PLANS: Record<string, SubscriptionConfig> = {
     name: 'Free Plan',
     price: 0,
     currency: 'USD',
-    aiModel: 'gpt-3.5-turbo',
+    aiModel: 'gpt-4o-mini',
     monthlyConversations: 50,
     monthlyCourses: 5,
     features: [
@@ -23,7 +23,7 @@ export const SUBSCRIPTION_PLANS: Record<string, SubscriptionConfig> = {
     name: 'Pro Plan',
     price: 4.99,
     currency: 'USD',
-    aiModel: 'gpt-3.5-turbo',
+    aiModel: 'o4-mini-high',
     monthlyConversations: -1, // 无限
     monthlyCourses: -1, // 无限
     features: [
@@ -90,5 +90,5 @@ export function hasCourseQuota(userPlan: string, usedCount: number): boolean {
 // 获取用户可用的AI模型
 export function getAvailableAIModel(userPlan: string): string {
   const plan = SUBSCRIPTION_PLANS[userPlan]
-  return plan?.aiModel || 'gpt-3.5-turbo'
+  return plan?.aiModel || 'gpt-4o-mini'
 } 

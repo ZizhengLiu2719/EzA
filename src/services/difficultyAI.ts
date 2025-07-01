@@ -3,6 +3,7 @@
  * 基于认知科学和学习心理学的智能难度调节系统
  */
 
+import { getAIModel } from '@/config/aiModel'
 import { FSRSCard } from '../types/SRSTypes'
 
 export interface CognitiveLoad {
@@ -318,7 +319,7 @@ ${this.analyzeSubjectPerformance(historical_data.session_records)}
         'Authorization': `Bearer ${this.apiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: getAIModel(),
         messages: [{ role: 'user', content: prompt }],
         temperature: options.temperature || 0.4,
         max_tokens: options.max_tokens || 400

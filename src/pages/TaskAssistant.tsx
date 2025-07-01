@@ -85,7 +85,7 @@ const TaskAssistant = () => {
     writing_style: 'academic',
     citation_format: 'apa',
     difficulty_level: 'intermediate',
-    model: 'gpt-3.5-turbo'
+    model: 'gpt-4o-mini'
   })
   
   const messagesEndRef = useRef<HTMLDivElement>(null)

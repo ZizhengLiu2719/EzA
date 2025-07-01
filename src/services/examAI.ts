@@ -3,6 +3,7 @@
  * 智能生成个性化考试、自动评分和深度分析
  */
 
+import { getAIModel } from '../config/aiModel'
 import { FSRSCard } from '../types/SRSTypes'
 
 export interface ExamQuestion {
@@ -454,7 +455,7 @@ ${available_questions.map((q, index) =>
         'Authorization': `Bearer ${this.apiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: getAIModel(),
         messages: [{ role: 'user', content: prompt }],
         temperature: options.temperature || 0.6,
         max_tokens: options.max_tokens || 800

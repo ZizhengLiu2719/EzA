@@ -3,6 +3,7 @@
  * 为闪卡学习提供智能提示、记忆技巧和学习策略
  */
 
+import { getAIModel } from '@/config/aiModel'
 import { FSRSCard } from '../types/SRSTypes'
 
 export interface AIHint {
@@ -291,7 +292,7 @@ ${options.time_constraint ? `- 时间限制: ${options.time_constraint}秒` : ''
         'Authorization': `Bearer ${this.apiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: getAIModel(),
         messages: [{ role: 'user', content: prompt }],
         temperature: options.temperature || 0.7,
         max_tokens: options.max_tokens || 400

@@ -3,6 +3,7 @@ import { supabase } from '@/api/supabase'
 import { AIAssistantConfig, AIConversation, AIMessage } from '@/types'
 import { AI_MODES, getAIConfigDescription } from '@/utils/ai'
 import { useCallback, useEffect, useState } from 'react'
+import { getAIModel } from '@/config/aiModel'
 
 // 🚀 静态导入AI服务，消除动态导入延迟
 import { aiService } from '@/api/ai'
@@ -54,7 +55,7 @@ export const useAI = () => {
   const [aiConfig, setAIConfig] = useState<AIAssistantConfig>({
     mode: 'study_buddy',
     academicVersion: 'high_school',
-    model: 'gpt-3.5-turbo' // 默认使用GPT-3.5-turbo
+    model: getAIModel()
   })
 
   // 获取用户的所有对话
@@ -371,7 +372,7 @@ export const useAI = () => {
         message,
         {
           ...aiConfig,
-          model: aiConfig.model || 'gpt-3.5-turbo' // 确保有默认模型
+          model: aiConfig.model || getAIModel()
         }
       )
       
@@ -458,7 +459,7 @@ export const useAI = () => {
         message,
         {
           ...aiConfig,
-          model: aiConfig.model || 'gpt-3.5-turbo'
+          model: aiConfig.model || getAIModel()
         }
       )
       

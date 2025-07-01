@@ -3,6 +3,7 @@
  * 智能生成学习题目、解释、提示和相关学习材料
  */
 
+import { getAIModel } from '@/config/aiModel'
 import { FSRSCard } from '../types/SRSTypes'
 
 export interface GeneratedQuestion {
@@ -369,7 +370,7 @@ ${!incomplete_card.explanation ? '- 编写清晰的解释' : ''}
         'Authorization': `Bearer ${this.apiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: getAIModel(),
         messages: [{ role: 'user', content: prompt }],
         temperature: options.temperature || 0.7,
         max_tokens: options.max_tokens || 600

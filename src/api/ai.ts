@@ -1,6 +1,7 @@
 import { getModeConfig } from '@/config/aiModeConfigs';
 import { AIAssistantConfig, AIConversation, AIMessage, AIModeId, ApiResponse, ReviewCard, WeeklyReport } from '@/types';
 import { checkFileSizeLimit } from '@/utils';
+import { getAIModel } from '../config/aiModel';
 import { supabase } from './supabase';
 
 
@@ -35,7 +36,7 @@ const LEGACY_AI_PROMPTS = {
 // OpenAI API 配置
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
-const OPENAI_MODEL = 'gpt-3.5-turbo'; // 默认使用GPT-3.5-turbo
+const OPENAI_MODEL = getAIModel();
 
 // AI 服务类
 class AIService {
@@ -55,7 +56,7 @@ class AIService {
       }
 
       // 确定使用的模型
-      const model = config?.model || 'gpt-3.5-turbo' // 默认使用GPT-3.5-turbo
+      const model = config?.model || getAIModel()
       
       // 🚀 激进性能优化 - 大幅减少Token和时间
       const maxTokens = model === 'gpt-4o' ? 500 : 400  // 进一步减少Token数量，提升速度
@@ -201,7 +202,7 @@ class AIService {
     const modelConfig = {
       ...config,
       max_tokens: modeConfig.maxTokens || 400,
-      model: config?.model || 'gpt-3.5-turbo'
+      model: config?.model || getAIModel()
     }
 
     return await this.callOpenAI(messages, modelConfig)

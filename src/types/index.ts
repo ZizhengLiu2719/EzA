@@ -196,7 +196,7 @@ export interface AIModeConfig {
 export interface AIAssistantConfig {
   mode: AIModeId
   academicVersion: AcademicVersion
-  model?: 'gpt-3.5-turbo' | 'gpt-4o'
+  model?: 'gpt-4o-mini' | 'o4-mini-high' | 'gpt-4o'
   writing_style?: 'academic' | 'creative' | 'technical'
   citation_format?: 'mla' | 'apa' | 'chicago'
   difficulty_level?: 'beginner' | 'intermediate' | 'advanced'
@@ -239,7 +239,7 @@ export interface SubscriptionConfig {
   name: string
   price: number
   currency: string
-  aiModel: 'gpt-3.5-turbo' | 'gpt-4o'
+  aiModel: 'gpt-4o-mini' | 'o4-mini-high' | 'gpt-4o'
   monthlyConversations: number // -1 表示无限
   monthlyCourses: number // -1 表示无限
   features: string[]
@@ -443,7 +443,7 @@ export interface EnhancedAIConfig {
   writing_style?: 'academic' | 'creative' | 'technical';
   citation_format?: 'apa' | 'mla' | 'chicago';
   difficulty_level?: 'beginner' | 'intermediate' | 'advanced';
-  model?: 'gpt-3.5-turbo' | 'gpt-4o';
+  model?: 'gpt-4o-mini' | 'o4-mini-high' | 'gpt-4o';
 }
 
 export interface SmartPromptCategory {

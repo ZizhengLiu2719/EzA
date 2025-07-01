@@ -1,4 +1,5 @@
 import { getAvailableModesForGrade, getModeConfig } from '@/config/aiModeConfigs'
+import { getAIModel } from '@/config/aiModel'
 import { AcademicVersion, AIAssistantConfig, AIModeConfig, AIModeId } from '@/types'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -67,7 +68,7 @@ export const useVersionMode = (initialGrade?: number): UseVersionModeReturn => {
       aiConfig: {
         mode: availableModes[0]?.id || 'study_buddy',
         academicVersion: defaultVersion,
-        model: 'gpt-3.5-turbo',
+        model: getAIModel(),
         difficulty_level: defaultVersion === 'high_school' ? 'beginner' : 'intermediate',
         citation_format: 'mla',
         userGrade: defaultGrade

@@ -48,7 +48,7 @@ export const useEnhancedAI = () => {
       recent_performance: 'average'
     },
     technical: {
-      model: 'gpt-3.5-turbo',
+      model: getAIModel(),
       temperature: 0.7,
       max_tokens: 1500,
       response_format: 'conversational'

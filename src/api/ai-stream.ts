@@ -1,3 +1,4 @@
+import { getAIModel } from '@/config/aiModel'
 import { AIAssistantConfig, AIConversation } from '@/types'
 
 // 流式响应类型定义
@@ -94,7 +95,7 @@ export class AIStreamService {
           'Authorization': `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
-          model: config?.model || 'gpt-3.5-turbo',
+          model: config?.model || getAIModel(),
           messages,
           max_tokens: 400, // 进一步减少token
           temperature: 0.7,

@@ -285,12 +285,13 @@ const SmartAIConfig: React.FC<SmartAIConfigProps> = ({
             <div className={styles.settingGroup}>
               <label>AI Model</label>
               <select
-                value={currentConfig.model || 'gpt-3.5-turbo'}
+                value={currentConfig.model || 'gpt-4o-mini'}
                 onChange={(e) => onConfigChange({ model: e.target.value as any })}
                 className={styles.select}
               >
-                <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Faster)</option>
-                <option value="gpt-4o">GPT-4o (Better Quality)</option>
+                <option value="gpt-4o-mini">GPT-4o mini (Fast)</option>
+                <option value="o4-mini-high">o4-mini-high (Balanced)</option>
+                <option value="gpt-4o">GPT-4o (Best Quality)</option>
               </select>
             </div>
 
