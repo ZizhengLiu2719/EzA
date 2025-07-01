@@ -1,12 +1,16 @@
 import BackToDashboardButton from '@/components/BackToDashboardButton'
-import BatchImportModal from '@/components/BatchImportModal'
-import CreateFlashcardSetModal from '@/components/CreateFlashcardSetModal'
-import FlashcardsList from '@/components/FlashcardsList'
 import { useUser } from '@/context/UserContext'
 import { useAdvancedLearningAnalytics } from '@/hooks/useAdvancedLearningAnalytics'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createFlashcardSet, CreateFlashcardSetData } from '../api/flashcards'
+import { createFlashcardSet, CreateFlashcardSetData, getDueFlashcards } from '../api/flashcards'
+import AIFlashcardGenerator from '../components/AIFlashcardGenerator'
+import BatchImportModal from '../components/BatchImportModal'
+import CreateFlashcardSetModal from '../components/CreateFlashcardSetModal'
+import FlashcardsList from '../components/FlashcardsList'
+import StudyMode from '../components/StudyMode'
+import StudyResults from '../components/StudyResults'
+import { FSRSCard } from '../types/SRSTypes'
 import styles from './Review.module.css'
 
 interface FlashcardSet {
@@ -48,6 +52,19 @@ interface ExamType {
   format: string[]
 }
 
+interface StudySession {
+  totalCards: number;
+  cardsReviewed: number;
+  correctAnswers: number;
+  totalTime: number;
+  ratingsCount: {
+    again: number;
+    hard: number;
+    good: number;
+    easy: number;
+  };
+}
+
 const Review = () => {
   const { user } = useUser()
   const navigate = useNavigate()
@@ -61,13 +78,16 @@ const Review = () => {
   // State management
   const [activeTab, setActiveTab] = useState<'flashcards' | 'study' | 'exams' | 'analytics'>('flashcards')
   const [selectedSet, setSelectedSet] = useState<FlashcardSet | null>(null)
-  const [studyMode, setStudyMode] = useState<string>('flashcard')
+  const [studyMode, setStudyMode] = useState<'none' | 'studying' | 'results'>('none')
   const [focusMode, setFocusMode] = useState(false)
   const [currentStreak, setCurrentStreak] = useState(7) // Example streak
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [showManageModal, setShowManageModal] = useState(false)
   const [showBatchImportModal, setShowBatchImportModal] = useState(false)
+  const [showAIGenerator, setShowAIGenerator] = useState(false)
+  const [studyCards, setStudyCards] = useState<FSRSCard[]>([])
+  const [studySession, setStudySession] = useState<StudySession | null>(null)
 
   // Mock data - 在实际环境中这些会从API获取
   const myFlashcardSets: FlashcardSet[] = useMemo(() => [
@@ -345,6 +365,72 @@ const Review = () => {
     setSelectedSet(null);
   };
 
+  // 开始学习模式
+  const handleStartStudy = async (set: FlashcardSet) => {
+    try {
+      const dueCards = await getDueFlashcards(set.id);
+      
+      if (dueCards.length === 0) {
+        alert('🎉 恭喜！当前没有需要复习的卡片。');
+        return;
+      }
+
+      setSelectedSet(set);
+      setStudyCards(dueCards);
+      setStudyMode('studying');
+    } catch (error) {
+      console.error('获取待复习卡片失败:', error);
+      alert('无法加载复习卡片，请重试');
+    }
+  };
+
+  // 学习完成
+  const handleStudyComplete = (session: StudySession) => {
+    setStudySession(session);
+    setStudyMode('results');
+    // 刷新数据以更新统计
+    console.log('Study session completed:', session);
+  };
+
+  // 退出学习模式
+  const handleExitStudy = () => {
+    setStudyMode('none');
+    setSelectedSet(null);
+    setStudyCards([]);
+    setStudySession(null);
+  };
+
+  // 再次复习
+  const handleReviewAgain = () => {
+    if (selectedSet) {
+      handleStartStudy(selectedSet);
+    }
+  };
+
+  // 如果正在学习，显示学习模式
+  if (studyMode === 'studying' && selectedSet && studyCards.length > 0) {
+    return (
+      <StudyMode
+        cards={studyCards}
+        setId={selectedSet.id}
+        onComplete={handleStudyComplete}
+        onExit={handleExitStudy}
+      />
+    );
+  }
+
+  // 如果学习完成，显示结果
+  if (studyMode === 'results' && selectedSet && studySession) {
+    return (
+      <StudyResults
+        session={studySession}
+        setTitle={selectedSet.title}
+        onReviewAgain={handleReviewAgain}
+        onBackToSets={handleExitStudy}
+      />
+    );
+  }
+
   return (
     <div className={styles.review} style={{ position: 'relative' }}>
       <BackToDashboardButton />
@@ -520,13 +606,7 @@ const Review = () => {
                     <div className={styles.setActions}>
                       <button 
                         className={`${styles.studyButton} ${set.dueForReview ? styles.reviewButton : ''}`}
-                        onClick={() => {
-                          // 正确的Review Now功能：开始学习模式
-                          setSelectedSet(set);
-                          console.log('Starting study session for:', set.title);
-                          // TODO: 实现学习模式选择器或直接开始学习
-                          alert(`开始学习 "${set.title}"！\n学习模式功能正在开发中...`);
-                        }}
+                        onClick={() => handleStartStudy(set)}
                       >
                         <span className={styles.buttonIcon}>
                           {set.dueForReview ? '🎯' : '📚'}
@@ -568,6 +648,24 @@ const Review = () => {
                         }}
                       >
                         📤 Import
+                      </button>
+                      
+                      <button 
+                        className={styles.aiGenerateButton}
+                        onClick={() => {
+                          setSelectedSet(set);
+                          setShowAIGenerator(true);
+                        }}
+                        style={{ 
+                          background: 'rgba(0, 210, 255, 0.1)', 
+                          color: '#00d2ff',
+                          border: '1px solid rgba(0, 210, 255, 0.3)',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          marginLeft: '8px'
+                        }}
+                      >
+                        🤖 AI Generate
                       </button>
                     </div>
 
@@ -626,7 +724,10 @@ const Review = () => {
                   
                   <button 
                     className={styles.startStudyBtn}
-                    onClick={() => setStudyMode(mode.id)}
+                    onClick={() => {
+                      // TODO: 整合新的学习模式逻辑
+                      alert(`${mode.name} 学习模式正在开发中，请使用卡片集中的"开始学习"按钮`);
+                    }}
                   >
                     Start {mode.name}
                   </button>
@@ -1059,6 +1160,19 @@ const Review = () => {
             }
           }}
           setId={selectedSet.id}
+        />
+      )}
+
+      {/* AI Flashcard Generator */}
+      {selectedSet && showAIGenerator && (
+        <AIFlashcardGenerator
+          setId={selectedSet.id}
+          onClose={() => setShowAIGenerator(false)}
+          onGenerated={(count) => {
+            setShowAIGenerator(false);
+            alert(`🎉 成功生成 ${count} 张闪卡！`);
+            console.log('AI generated cards:', count);
+          }}
         />
       )}
     </div>

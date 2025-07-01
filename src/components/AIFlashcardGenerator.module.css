@@ -1,0 +1,543 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+}
+
+.modal {
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  border-radius: 20px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid rgba(0, 210, 255, 0.2);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.closeButton {
+  background: rgba(255, 69, 58, 0.1);
+  border: 1px solid rgba(255, 69, 58, 0.3);
+  color: #ff453a;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.closeButton:hover {
+  background: rgba(255, 69, 58, 0.2);
+  transform: scale(1.1);
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+  color: #e0e0f0;
+}
+
+/* ========== 配置步骤 ========== */
+.configContainer {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.stepTitle {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 1.4rem;
+  color: #00d2ff;
+}
+
+.formGroup {
+  margin-bottom: 2rem;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: #e0e0f0;
+  font-size: 1rem;
+}
+
+.topicGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.topicButton {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 210, 255, 0.2);
+  color: #e0e0f0;
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.topicButton:hover {
+  background: rgba(0, 210, 255, 0.1);
+  border-color: rgba(0, 210, 255, 0.4);
+}
+
+.topicButton.selected {
+  background: rgba(0, 210, 255, 0.2);
+  border-color: #00d2ff;
+  color: #00d2ff;
+  font-weight: 600;
+}
+
+.customTopicInput {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 210, 255, 0.2);
+  color: #e0e0f0;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.customTopicInput:focus {
+  outline: none;
+  border-color: #00d2ff;
+  box-shadow: 0 0 0 2px rgba(0, 210, 255, 0.2);
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.difficultyButton {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #e0e0f0;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.difficultyButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.difficultyButton.selected {
+  background: var(--accent-color, #00d2ff);
+  border-color: var(--accent-color, #00d2ff);
+  color: white;
+  font-weight: 600;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.numberInput, .select {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 210, 255, 0.2);
+  color: #e0e0f0;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.numberInput:focus, .select:focus {
+  outline: none;
+  border-color: #00d2ff;
+  box-shadow: 0 0 0 2px rgba(0, 210, 255, 0.2);
+}
+
+.checkboxGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #00d2ff;
+  cursor: pointer;
+}
+
+.textarea {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 210, 255, 0.2);
+  color: #e0e0f0;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: #00d2ff;
+  box-shadow: 0 0 0 2px rgba(0, 210, 255, 0.2);
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(0, 210, 255, 0.2);
+}
+
+.cancelButton, .generateButton, .backButton, .saveButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  min-width: 120px;
+}
+
+.cancelButton, .backButton {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #a0a0b0;
+}
+
+.cancelButton:hover, .backButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e0e0f0;
+}
+
+.generateButton, .saveButton {
+  background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+  color: white;
+}
+
+.generateButton:hover:not(:disabled), .saveButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 210, 255, 0.3);
+}
+
+.generateButton:disabled, .saveButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ========== 生成中步骤 ========== */
+.generatingContainer, .savingContainer {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.loadingAnimation {
+  margin-bottom: 2rem;
+}
+
+.aiIcon, .saveIcon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  display: block;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.loadingText {
+  font-size: 1.2rem;
+  color: #00d2ff;
+  margin-bottom: 2rem;
+  font-weight: 600;
+}
+
+.progressBar {
+  width: 300px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+  border-radius: 3px;
+  animation: loading 2s infinite;
+}
+
+@keyframes loading {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 100%; }
+}
+
+.generatingTips {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 210, 255, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: left;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.generatingTips h3 {
+  color: #00d2ff;
+  margin: 0 0 1rem 0;
+  text-align: center;
+}
+
+.generatingTips ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #a0a0b0;
+}
+
+.generatingTips li {
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+/* ========== 预览步骤 ========== */
+.previewContainer {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.previewStats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.previewStats span {
+  background: rgba(0, 210, 255, 0.1);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  color: #00d2ff;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.cardsPreview {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(0, 210, 255, 0.2);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.cardPreview {
+  border-bottom: 1px solid rgba(0, 210, 255, 0.1);
+  padding: 1.5rem;
+}
+
+.cardPreview:last-child {
+  border-bottom: none;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.cardIndex {
+  background: rgba(0, 210, 255, 0.2);
+  color: #00d2ff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.cardType {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.cardType.basic {
+  background: rgba(0, 255, 127, 0.1);
+  color: #00ff7f;
+  border: 1px solid rgba(0, 255, 127, 0.3);
+}
+
+.cardType.cloze {
+  background: rgba(255, 159, 10, 0.1);
+  color: #ff9f0a;
+  border: 1px solid rgba(255, 159, 10, 0.3);
+}
+
+.cardContent {
+  line-height: 1.5;
+}
+
+.question, .answer, .hint, .explanation {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+
+.question {
+  background: rgba(0, 210, 255, 0.05);
+  border-left: 3px solid #00d2ff;
+}
+
+.answer {
+  background: rgba(0, 255, 127, 0.05);
+  border-left: 3px solid #00ff7f;
+}
+
+.hint {
+  background: rgba(255, 159, 10, 0.05);
+  border-left: 3px solid #ff9f0a;
+  font-style: italic;
+}
+
+.explanation {
+  background: rgba(138, 43, 226, 0.05);
+  border-left: 3px solid #8a2be2;
+  font-size: 0.9rem;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.tag {
+  background: rgba(0, 210, 255, 0.1);
+  color: #00d2ff;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid rgba(0, 210, 255, 0.3);
+}
+
+/* ========== 响应式设计 ========== */
+@media (max-width: 768px) {
+  .modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+  
+  .header {
+    padding: 1rem;
+  }
+  
+  .content {
+    padding: 1rem;
+  }
+  
+  .title {
+    font-size: 1.2rem;
+  }
+  
+  .topicGrid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
+  }
+  
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+  
+  .buttonGroup {
+    flex-direction: column;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .previewStats {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .cardPreview {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .topicGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .generatingTips {
+    padding: 1rem;
+  }
+} 

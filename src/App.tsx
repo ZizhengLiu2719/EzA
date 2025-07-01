@@ -10,6 +10,7 @@ import TaskAssistant from '@/pages/TaskAssistant'
 import UploadCourse from '@/pages/UploadCourse'
 import { Route, Routes } from 'react-router-dom'
 import Dashboard from './pages/Dashboard'
+import DatabaseSetup from './pages/DatabaseSetup'
 import FlashcardTest from './pages/FlashcardTest'
 import LearningInsights from './pages/LearningInsights'
 
@@ -27,6 +28,7 @@ function App() {
         <Route path="/planner" element={<Planner />} />
         <Route path="/assistant" element={<TaskAssistant />} />
         <Route path="/review" element={<Review />} />
+        <Route path="/database-setup" element={<DatabaseSetup />} />
         <Route path="/flashcard-test" element={<FlashcardTest />} />
         <Route path="/learning-insights" element={<LearningInsights />} />
         <Route path="/weekly-report" element={<LearningInsights />} />
