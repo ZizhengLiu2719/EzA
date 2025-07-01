@@ -733,4 +733,24 @@ export const updateSetLastStudied = async (setId: string): Promise<void> => {
     .eq('id', setId);
 
   if (error) throw error;
-}; 
+};
+
+// 获取当前用户的所有闪卡（遍历所有集合）
+export const getAllUserFlashcards = async (): Promise<FSRSCard[]> => {
+  // 1. 先获取所有集合
+  const sets = await getFlashcardSets()
+  if (sets.length === 0) return []
+
+  const allCards: FSRSCard[] = []
+  // 2. 逐个集合获取闪卡并合并
+  for (const set of sets) {
+    try {
+      const cards = await getFlashcards(set.id)
+      allCards.push(...cards)
+    } catch (err) {
+      console.error(`Failed to load cards for set ${set.id}:`, err)
+    }
+  }
+
+  return allCards
+} 

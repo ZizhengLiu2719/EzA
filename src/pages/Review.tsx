@@ -1,4 +1,5 @@
 import BackToDashboardButton from '@/components/BackToDashboardButton'
+import ExamFlow from '@/components/ExamFlow'
 import { useUser } from '@/context/UserContext'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -98,6 +99,8 @@ const Review = () => {
   const [studyCards, setStudyCards] = useState<FSRSCard[]>([])
   const [studySession, setStudySession] = useState<StudySession | null>(null)
   const [pendingSetData, setPendingSetData] = useState<CreateFlashcardSetData | null>(null)
+  const [examFlowOpen, setExamFlowOpen] = useState(false)
+  const [selectedExamType, setSelectedExamType] = useState<ExamType | null>(null)
 
   // 加载flashcard sets
   const loadFlashcardSets = async () => {
@@ -437,6 +440,12 @@ const Review = () => {
       handleStartStudy(selectedSet);
     }
   };
+
+  // 开始考试流程
+  const handleStartExamFlow = (examType: ExamType) => {
+    setSelectedExamType(examType)
+    setExamFlowOpen(true)
+  }
 
   // 如果正在学习，显示学习模式
   if (studyMode === 'studying' && selectedSet && studyCards.length > 0) {
@@ -888,7 +897,7 @@ const Review = () => {
                     </div>
                   </div>
                   
-                  <button className={styles.modernExamButton}>
+                  <button className={styles.modernExamButton} onClick={() => handleStartExamFlow(examType)}>
                     <span className={styles.buttonText}>Start Exam</span>
                     <span className={styles.buttonIcon}>🚀</span>
                   </button>
@@ -1410,6 +1419,15 @@ const Review = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Exam Flow Modal */}
+      {examFlowOpen && selectedExamType && (
+        <ExamFlow
+          isOpen={examFlowOpen}
+          examType={selectedExamType}
+          onClose={() => setExamFlowOpen(false)}
+        />
       )}
     </div>
   )
