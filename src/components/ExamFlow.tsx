@@ -56,12 +56,24 @@ const ExamFlow: React.FC<ExamFlowProps> = ({ isOpen, examType: _examType, onClos
   }, [isOpen])
 
   const handleExamGenerated = (generatedExam: GeneratedExam) => {
+    if (!generatedExam || !generatedExam.questions || generatedExam.questions.length === 0) {
+      console.error('Exam generation resulted in an empty question set.', { generatedExam });
+      setError('AI未能生成任何题目。请尝试调整考试配置或稍后再试。');
+      setPhase('loading'); // Use the loading phase to display the modal error
+      return;
+    }
     setExam(generatedExam)
     setPhase('runner')
   }
 
   const handleSessionComplete = async (completedSession: ExamSession) => {
-    if (!exam) return
+    if (!exam || !exam.questions || exam.questions.length === 0) {
+      console.error('Scoring failed: Exam data is incomplete or missing.', { exam });
+      setError('无法评分：考试数据不完整，请尝试重新生成考试。');
+      setPhase('loading'); // Show error in modal
+      return;
+    }
+
     setSession(completedSession)
     setPhase('loading')
     try {

@@ -5,20 +5,19 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-    AlertTriangle,
-    CheckCircle,
     ChevronLeft,
     ChevronRight,
     Clock,
-    Eye,
-    EyeOff,
     Flag,
+    Home,
     PauseCircle,
-    PlayCircle
+    PlayCircle,
+    Send
 } from 'lucide-react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { GeneratedExam } from '../services/examAI'
 import { ExamResponse, ExamSession } from '../types'
+import styles from './ExamRunner.module.css'
 import QuestionRenderer from './QuestionRenderer'
 
 interface ExamRunnerProps {
@@ -65,6 +64,23 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now())
 
   const timerRef = useRef<NodeJS.Timeout>()
+  
+  // Primary defense against invalid exam data
+  if (!exam || !exam.questions || exam.questions.length === 0) {
+    return (
+      <div className={styles.confirmOverlay}>
+          <div className={styles.confirmModal}>
+              <h3>考试加载失败</h3>
+              <p>未能加载有效的考试题目。请返回并尝试重新生成考试。</p>
+              <div className={styles.confirmActions}>
+                  <button onClick={onExit} style={{ flex: '1' }}>返回</button>
+              </div>
+          </div>
+      </div>
+    );
+  }
+
+  // 安全获取当前题目
   const currentQuestion = exam.questions[session.current_question_index]
 
   // 计时器管理
@@ -105,15 +121,24 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
 
   // 格式化时间显示
   const formatTime = useCallback((seconds: number): string => {
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    const secs = seconds % 60
-
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    if (isNaN(seconds) || seconds < 0) {
+      return '0:00'
     }
-    return `${minutes}:${secs.toString().padStart(2, '0')}`
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, '0')}`
   }, [])
+  
+  const formatTimeWithUnits = useCallback((seconds: number): string => {
+    if (isNaN(seconds) || seconds < 0) {
+      return '未知'
+    }
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    if (mins > 0 && secs > 0) return `${mins}分${secs}秒`;
+    if (mins > 0) return `${mins}分钟`;
+    return `${secs}秒`;
+  }, []);
 
   // 获取时间颜色
   const getTimeColor = useCallback((timeRemaining: number, totalTime: number): string => {
@@ -232,263 +257,146 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     setQuestionStartTime(Date.now())
   }, [session.current_question_index])
 
+  // 安全检查：如果题目不存在，则不渲染主要内容 - This is now a secondary check
+  if (!currentQuestion) {
+    return (
+      <div className={styles.confirmOverlay}>
+        <div className={styles.confirmModal}>
+            <h3>加载题目失败</h3>
+            <p>无法加载当前题目。可能是考试数据有误或已全部完成。</p>
+            <div className={styles.confirmActions}>
+              <button onClick={onExit} style={{ flex: '1' }}>返回</button>
+            </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className={`exam-runner min-h-screen bg-gray-50 ${className}`}>
-      {/* 头部工具栏 */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            {/* 左侧：考试信息 */}
-            <div className="flex items-center gap-4">
-              <h1 className="text-lg font-semibold text-gray-800">{exam.config.title}</h1>
-              <span className="text-sm text-gray-500">
-                题目 {session.current_question_index + 1} / {exam.questions.length}
-              </span>
-            </div>
+    <div className={styles.examRunner}>
+      <div className={styles.sidebar}>
+        <div className={styles.sidebarHeader}>
+          <h1 className={styles.examTitle}>{exam.config.title}</h1>
+          <p className={styles.examSubtitle}>由 AI 智能生成</p>
+        </div>
 
-            {/* 中间：进度条 */}
-            <div className="flex-1 max-w-md mx-8">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">进度</span>
-                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                  <motion.div
-                    className="bg-blue-600 h-2 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progressPercentage}%` }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
-                <span className="text-xs text-gray-500">
-                  {answeredCount}/{exam.questions.length}
-                </span>
-              </div>
-            </div>
-
-            {/* 右侧：计时器和控制 */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-gray-500" />
-                <span className={`font-mono text-sm ${getTimeColor(timer.timeRemaining, timer.totalTime)}`}>
-                  {formatTime(timer.timeRemaining)}
-                </span>
-                <button
-                  onClick={toggleTimer}
-                  className="p-1 hover:bg-gray-100 rounded"
-                  title={timer.isRunning ? '暂停' : '继续'}
-                >
-                  {timer.isRunning ? (
-                    <PauseCircle className="w-4 h-4 text-gray-600" />
-                  ) : (
-                    <PlayCircle className="w-4 h-4 text-gray-600" />
-                  )}
+        <div className={styles.sidebarSection}>
+            <div className={styles.timer}>
+                <Clock size={20} />
+                <span>{formatTime(timer.timeRemaining)}</span>
+                <button onClick={toggleTimer} className={styles.timerControl}>
+                    {timer.isRunning ? <PauseCircle size={20} /> : <PlayCircle size={20} />}
                 </button>
-              </div>
-
-              <button
-                onClick={() => setShowReviewPanel(!showReviewPanel)}
-                className="flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                {showReviewPanel ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                {showReviewPanel ? '隐藏' : '概览'}
-              </button>
-
-              <button
-                onClick={() => setShowExitConfirm(true)}
-                className="px-3 py-1 text-sm text-red-600 hover:text-red-700 border border-red-300 rounded-lg hover:bg-red-50"
-              >
-                退出考试
-              </button>
             </div>
-          </div>
+             <div className={styles.progressBar}>
+                <div 
+                    className={styles.progressFill}
+                    style={{ width: `${progressPercentage}%` }}
+                />
+            </div>
+            <div className={styles.progressText}>
+                <span>进度: {answeredCount} / {exam.questions.length}</span>
+            </div>
+        </div>
+
+        <div className={styles.sidebarSection}>
+            <h3 className={styles.sectionTitle}>题目导航</h3>
+            <div className={styles.questionGrid}>
+                {exam.questions.map((q, index) => {
+                    const isAnswered = session.responses.some(r => r.question_id === q.id);
+                    const isCurrent = index === session.current_question_index;
+                    const isFlagged = flaggedQuestions.has(q.id);
+                    
+                    return (
+                        <button
+                            key={q.id}
+                            onClick={() => navigateToQuestion(index)}
+                            className={`${styles.questionGridItem} ${isCurrent ? styles.current : ''} ${isAnswered ? styles.answered : ''}`}
+                        >
+                            {isFlagged && <Flag size={10} className={styles.flagIcon} />}
+                            {index + 1}
+                        </button>
+                    )
+                })}
+            </div>
+        </div>
+
+        <div className={styles.sidebarFooter}>
+            <button className={styles.exitButton} onClick={() => setShowExitConfirm(true)}>
+                <Home size={16} />
+                <span>返回主页</span>
+            </button>
+             <button className={styles.submitButton} onClick={handleSubmitExam}>
+                <Send size={16} />
+                <span>提交试卷</span>
+            </button>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto p-4 flex gap-6">
-        {/* 主要答题区域 */}
-        <div className="flex-1">
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            {/* 题目标题栏 */}
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 font-semibold rounded-lg">
-                  {session.current_question_index + 1}
-                </span>
-                <div>
-                  <span className="text-sm text-gray-500">
-                    {currentQuestion.type.replace('_', ' ')} • {currentQuestion.points}分
-                  </span>
-                  <div className="text-xs text-gray-400">
-                    难度: {currentQuestion.difficulty}/10 • 
-                    预计: {Math.floor(currentQuestion.estimated_time / 60)}分{currentQuestion.estimated_time % 60}秒
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => toggleFlag(currentQuestion.id)}
-                className={`p-2 rounded-lg transition-colors ${
-                  flaggedQuestions.has(currentQuestion.id)
-                    ? 'bg-orange-100 text-orange-600'
-                    : 'bg-gray-100 text-gray-400 hover:text-gray-600'
-                }`}
-                title="标记此题"
-              >
-                <Flag className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* 题目渲染器 */}
-            <QuestionRenderer
-              question={currentQuestion}
-              answer={getCurrentAnswer()}
-              onAnswerChange={handleAnswerSubmit}
-              showHint={false}
-              disabled={false}
-            />
-          </div>
-
-          {/* 导航按钮 */}
-          <div className="flex justify-between mt-6">
-            <button
-              onClick={handlePreviousQuestion}
-              disabled={session.current_question_index === 0}
-              className="flex items-center gap-2 px-4 py-2 text-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed hover:text-gray-800"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              上一题
-            </button>
-
-            <div className="flex gap-3">
-              {session.current_question_index === exam.questions.length - 1 ? (
-                <button
-                  onClick={handleSubmitExam}
-                  disabled={isSubmitting}
-                  className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium rounded-lg flex items-center gap-2"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  {isSubmitting ? '提交中...' : '提交考试'}
-                </button>
-              ) : (
-                <button
-                  onClick={handleNextQuestion}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
-                >
-                  下一题
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* 侧边栏：题目概览 */}
-        <AnimatePresence>
-          {showReviewPanel && (
+      <div className={styles.mainContent}>
+        <AnimatePresence mode="wait">
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="w-72 bg-white rounded-xl shadow-sm p-4"
+                key={currentQuestion.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className={styles.questionContainer}
             >
-              <h3 className="font-semibold text-gray-800 mb-4">题目概览</h3>
-              
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {exam.questions.map((question, index) => {
-                  const isAnswered = session.responses.some(r => r.question_id === question.id)
-                  const isFlagged = flaggedQuestions.has(question.id)
-                  const isCurrent = index === session.current_question_index
-
-                  return (
-                    <button
-                      key={question.id}
-                      onClick={() => navigateToQuestion(index)}
-                      className={`w-full p-2 rounded-lg text-left transition-colors ${
-                        isCurrent
-                          ? 'bg-blue-100 border border-blue-300'
-                          : 'hover:bg-gray-50 border border-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">
-                          题目 {index + 1}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          {isFlagged && <Flag className="w-3 h-3 text-orange-500" />}
-                          {isAnswered ? (
-                            <CheckCircle className="w-3 h-3 text-green-500" />
-                          ) : (
-                            <div className="w-3 h-3 border border-gray-300 rounded-full" />
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {question.type} • {question.points}分
-                      </div>
+                <div className={styles.questionHeader}>
+                    <div className={styles.questionMeta}>
+                        <span>{currentQuestion.type.replace('_', ' ')}</span>
+                        <span>&bull;</span>
+                        <span>{currentQuestion.points} 分</span>
+                        <span>&bull;</span>
+                        <span>难度: {currentQuestion.difficulty}/10</span>
+                        <span>&bull;</span>
+                        <span>预计: {formatTimeWithUnits(currentQuestion.estimated_time)}</span>
+                    </div>
+                    <button onClick={() => toggleFlag(currentQuestion.id)} className={`${styles.flagButton} ${flaggedQuestions.has(currentQuestion.id) ? styles.flagged : ''}`}>
+                        <Flag size={18} />
+                        <span>{flaggedQuestions.has(currentQuestion.id) ? '已标记' : '标记题目'}</span>
                     </button>
-                  )
-                })}
-              </div>
-
-              {/* 统计信息 */}
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="text-center p-2 bg-green-50 rounded">
-                    <div className="font-semibold text-green-700">{answeredCount}</div>
-                    <div className="text-green-600">已答</div>
-                  </div>
-                  <div className="text-center p-2 bg-orange-50 rounded">
-                    <div className="font-semibold text-orange-700">{flaggedQuestions.size}</div>
-                    <div className="text-orange-600">标记</div>
-                  </div>
                 </div>
-              </div>
+
+                <QuestionRenderer
+                    question={currentQuestion}
+                    onAnswerChange={handleAnswerSubmit}
+                    answer={getCurrentAnswer()}
+                />
+
+                <div className={styles.questionFooter}>
+                     <div className={styles.confidenceSlider}>
+                        <label>答题置信度</label>
+                        <input type="range" min="1" max="5" defaultValue="3" />
+                    </div>
+                    <div className={styles.navigationButtons}>
+                        <button onClick={handlePreviousQuestion} disabled={session.current_question_index === 0}>
+                            <ChevronLeft size={20}/>
+                            上一题
+                        </button>
+                        <button onClick={handleNextQuestion} disabled={session.current_question_index === exam.questions.length - 1}>
+                            下一题
+                            <ChevronRight size={20}/>
+                        </button>
+                    </div>
+                </div>
             </motion.div>
-          )}
         </AnimatePresence>
       </div>
 
-      {/* 退出确认对话框 */}
-      <AnimatePresence>
-        {showExitConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-xl p-6 max-w-md mx-4"
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <AlertTriangle className="w-6 h-6 text-orange-500" />
-                <h3 className="text-lg font-semibold text-gray-800">确认退出考试</h3>
-              </div>
-              
-              <p className="text-gray-600 mb-6">
-                您确定要退出考试吗？当前的答题进度将会丢失，无法恢复。
-              </p>
-
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => setShowExitConfirm(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
-                >
-                  继续考试
-                </button>
-                <button
-                  onClick={onExit}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg"
-                >
-                  确认退出
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {showExitConfirm && (
+         <div className={styles.confirmOverlay}>
+            <div className={styles.confirmModal}>
+                <h3>确认退出</h3>
+                <p>退出后，本次考试进度将不会被保存。您确定要退出吗？</p>
+                <div className={styles.confirmActions}>
+                    <button onClick={() => setShowExitConfirm(false)}>继续答题</button>
+                    <button onClick={onExit}>毅然退出</button>
+                </div>
+            </div>
+         </div>
+      )}
     </div>
   )
 }

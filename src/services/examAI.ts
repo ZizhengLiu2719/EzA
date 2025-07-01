@@ -472,24 +472,47 @@ ${available_questions.map((q, index) =>
 
   private parseGeneratedExam(response: string, config: ExamConfiguration): GeneratedExam {
     try {
-      const parsed = JSON.parse(response)
-      return {
-        id: `exam_${Date.now()}`,
-        config,
-        questions: parsed.questions || [],
-        metadata: {
-          generated_at: new Date(),
-          total_questions: parsed.questions?.length || 0,
-          estimated_completion_time: config.duration,
-          difficulty_average: parsed.difficulty_average || 5,
-          cognitive_level_distribution: parsed.cognitive_level_distribution || {},
-          ai_confidence: parsed.ai_confidence || 0.8
-        },
-        instructions: parsed.instructions || '请仔细阅读每道题目，按要求作答。',
-        answer_key: parsed.answer_key || []
+      // Find the JSON part of the response, stripping markdown fences
+      const jsonMatch = response.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```|(\{[\s\S]*\})/);
+      if (!jsonMatch) {
+        throw new Error("No valid JSON object found in the AI response.");
       }
+
+      // The actual JSON string is in one of the capturing groups
+      const jsonString = jsonMatch[1] || jsonMatch[2];
+      const parsed = JSON.parse(jsonString);
+
+      // Robust check for questions array
+      if (!parsed.questions || !Array.isArray(parsed.questions) || parsed.questions.length === 0) {
+        throw new Error("AI response did not contain a valid 'questions' array.");
+      }
+
+      const exam: GeneratedExam = {
+        id: parsed.id || `exam_${Date.now()}`,
+        config: config,
+        questions: parsed.questions,
+        metadata: parsed.metadata || {
+          generated_at: new Date(),
+          total_questions: parsed.questions.length,
+          estimated_completion_time: config.duration,
+          difficulty_average: 5,
+          cognitive_level_distribution: {},
+          ai_confidence: 0.7
+        },
+        instructions: parsed.instructions || "Please review the questions carefully.",
+        answer_key: parsed.answer_key || parsed.questions.map((q: ExamQuestion) => ({
+          question_id: q.id,
+          correct_answer: q.correct_answer,
+          explanation: q.explanation || "No explanation provided.",
+          points: q.points
+        }))
+      };
+      return exam;
     } catch (error) {
-      return this.getFallbackExam([], config)
+      console.error("Failed to parse generated exam from AI response:", error);
+      console.error("Original AI Response:", response); // Log the original response for debugging
+      // Re-throw the error to be caught by the calling function, which will trigger the fallback.
+      throw error;
     }
   }
 
@@ -544,41 +567,43 @@ ${available_questions.map((q, index) =>
 
   // 回退方法
   private getFallbackExam(cards: FSRSCard[], config: ExamConfiguration): GeneratedExam {
-    const sampleQuestions: ExamQuestion[] = cards.slice(0, 5).map((card, index) => ({
-      id: `q_${index}`,
+    console.warn("AI exam generation failed. Using fallback exam.");
+    
+    // Create a basic exam structure from cards as a fallback
+    const fallbackQuestions: ExamQuestion[] = cards.slice(0, 10).map((card, index) => ({
+      id: `fallback_q_${index + 1}`,
       type: 'short_answer',
       question: card.question,
       correct_answer: card.answer,
       points: 10,
-      difficulty: card.difficulty,
-      estimated_time: 120,
-      cognitive_level: 'understand',
+      difficulty: card.difficulty || 5,
+      estimated_time: 60,
+      cognitive_level: 'remember',
       subject_area: config.subject,
-      topic: config.topics[0] || '通用',
-      hint: card.hint,
-      explanation: card.explanation
-    }))
+      topic: config.topics[0] || 'General',
+      explanation: card.answer,
+    }));
 
     return {
-      id: `exam_${Date.now()}`,
-      config,
-      questions: sampleQuestions,
+      id: `fallback_exam_${Date.now()}`,
+      config: config,
+      questions: fallbackQuestions, // Ensure questions is always an array
       metadata: {
         generated_at: new Date(),
-        total_questions: sampleQuestions.length,
-        estimated_completion_time: config.duration,
-        difficulty_average: 5,
-        cognitive_level_distribution: {},
-        ai_confidence: 0.6
+        total_questions: fallbackQuestions.length,
+        estimated_completion_time: fallbackQuestions.length * 60,
+        difficulty_average: fallbackQuestions.reduce((acc, q) => acc + q.difficulty, 0) / (fallbackQuestions.length || 1),
+        cognitive_level_distribution: { remember: fallbackQuestions.length },
+        ai_confidence: 0.1
       },
-      instructions: '请仔细阅读每道题目，按要求作答。',
-      answer_key: sampleQuestions.map(q => ({
+      instructions: "This is a fallback exam due to a generation error. It contains up to 10 questions based on your flashcards.",
+      answer_key: fallbackQuestions.map(q => ({
         question_id: q.id,
         correct_answer: q.correct_answer,
-        explanation: q.explanation || '参考答案解析',
+        explanation: q.explanation || "",
         points: q.points
       }))
-    }
+    };
   }
 
   private getFallbackExamResult(exam: GeneratedExam, responses: ExamResponse[]): ExamResult {

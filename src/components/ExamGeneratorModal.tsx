@@ -4,7 +4,7 @@
  */
 
 import { AlertCircle, BrainCircuit } from 'lucide-react'
-import React, { FormEvent, useCallback, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { CreateFlashcardSetData } from '../api/flashcards'
 import { examAI, ExamConfiguration, ExamQuestion, GeneratedExam } from '../services/examAI'
 import { FSRSCard } from '../types/SRSTypes'
@@ -235,8 +235,7 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
     []
   )
 
-  const handleObjectiveSubmit = (e: FormEvent) => {
-    e.preventDefault()
+  const handleObjectiveSubmit = () => {
     if (newObjective.trim() && !settings.learning_objectives.includes(newObjective.trim())) {
       updateSettings({
         learning_objectives: [...settings.learning_objectives, newObjective.trim()],
@@ -348,16 +347,22 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
                                 </div>
                                 ))}
                             </div>
-                            <form className={styles.tagInputWrapper} onSubmit={handleObjectiveSubmit}>
+                            <div className={styles.tagInputWrapper}>
                                 <input
                                 type="text"
                                 className={styles.tagInput}
                                 value={newObjective}
                                 onChange={e => setNewObjective(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleObjectiveSubmit();
+                                    }
+                                }}
                                 placeholder="添加一个学习目标..."
                                 />
-                                <button type="submit" className={styles.tagAddButton}>添加</button>
-                            </form>
+                                <button type="button" className={styles.tagAddButton} onClick={handleObjectiveSubmit}>添加</button>
+                            </div>
                         </div>
                     </div>
                 </div>
