@@ -169,6 +169,11 @@ export type CollegeModeId =
   | 'business_advisor'
   | 'creative_guide'
   | 'lab_mentor'
+  // Review模块专用AI模式
+  | 'flashcard_assistant'
+  | 'memory_palace_guide'
+  | 'exam_strategy_advisor'
+  | 'knowledge_connector'
 
 export type AIModeId = HighSchoolModeId | CollegeModeId
 
@@ -263,6 +268,150 @@ export interface UsageStats {
 
 // 重新导出增强AI类型
 export * from './ai-enhanced'
+
+// 考试系统类型
+export interface ExamQuestion {
+  id: string
+  type: 'multiple_choice' | 'true_false' | 'short_answer' | 'essay' | 'fill_blank' | 'matching'
+  question: string
+  options?: string[] // for multiple choice
+  correct_answer: string | string[]
+  points: number
+  difficulty: number // 1-10
+  estimated_time: number // 秒
+  cognitive_level: 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create'
+  subject_area: string
+  topic: string
+  hint?: string
+  explanation?: string
+  rubric?: {
+    excellent: string
+    good: string
+    satisfactory: string
+    needs_improvement: string
+  }
+}
+
+export interface ExamSession {
+  id: string
+  user_id: string
+  exam_id: string
+  status: 'not_started' | 'in_progress' | 'completed' | 'abandoned'
+  start_time?: Date
+  end_time?: Date
+  current_question_index: number
+  responses: ExamResponse[]
+  time_remaining: number // 秒
+  created_at: Date
+}
+
+export interface ExamResponse {
+  question_id: string
+  student_answer: string | string[]
+  response_time: number // 秒
+  confidence_level?: number // 1-5
+  flagged_for_review?: boolean
+  timestamp: Date
+}
+
+export interface ExamResult {
+  id: string
+  session_id: string
+  total_score: number
+  max_possible_score: number
+  percentage: number
+  grade: 'A' | 'B' | 'C' | 'D' | 'F'
+  time_taken: number // 秒
+  question_results: {
+    question_id: string
+    earned_points: number
+    max_points: number
+    is_correct: boolean
+    partial_credit?: number
+  }[]
+  strengths: string[]
+  weaknesses: string[]
+  recommendations: string[]
+  created_at: Date
+}
+
+// 游戏化系统类型
+export interface Achievement {
+  id: string
+  name: string
+  description: string
+  icon: string
+  category: 'study' | 'exam' | 'streak' | 'mastery' | 'social' | 'milestone'
+  tier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'legendary'
+  points: number
+  requirements: {
+    type: 'cards_studied' | 'exam_score' | 'study_streak' | 'time_spent' | 'perfect_score' | 'improvement'
+    target: number
+    timeframe?: number // 天数，如果有时间限制
+  }
+  unlocked_at?: Date
+  progress?: number // 0-1, 当前进度
+}
+
+export interface UserAchievement {
+  id: string
+  user_id: string
+  achievement_id: string
+  unlocked_at: Date
+  progress: number // 0-1
+}
+
+export interface StudyStreak {
+  id: string
+  user_id: string
+  current_streak: number // 连续天数
+  longest_streak: number
+  last_study_date: Date
+  streak_milestones: {
+    days: number
+    achieved_at: Date
+    reward_claimed: boolean
+  }[]
+}
+
+export interface XPSystem {
+  id: string
+  user_id: string
+  total_xp: number
+  level: number
+  xp_to_next_level: number
+  recent_gains: {
+    amount: number
+    source: 'study_session' | 'exam_completion' | 'achievement' | 'streak_bonus'
+    timestamp: Date
+    description: string
+  }[]
+}
+
+export interface LeaderboardEntry {
+  user_id: string
+  username: string
+  avatar?: string
+  total_xp: number
+  level: number
+  current_streak: number
+  achievements_count: number
+  weekly_xp: number
+  rank: number
+}
+
+export interface GameificationConfig {
+  xp_rates: {
+    card_correct: number
+    card_difficult: number
+    exam_completion: number
+    perfect_exam: number
+    daily_goal: number
+    streak_bonus: number
+  }
+  level_thresholds: number[] // XP required for each level
+  achievement_rewards: Record<string, number> // achievement_id -> xp_reward
+}
 
 export interface EnhancedAIConfig {
   // 智能模式设置
