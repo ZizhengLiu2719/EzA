@@ -7,6 +7,7 @@ import AIFlashcardGenerator from '../components/AIFlashcardGenerator'
 import BatchImportModal from '../components/BatchImportModal'
 import CreateFlashcardSetModal from '../components/CreateFlashcardSetModal'
 import FlashcardsList from '../components/FlashcardsList'
+import QuizBattle from '../components/QuizBattle'
 import StudyMode from '../components/StudyMode'
 import StudyResults from '../components/StudyResults'
 import { FSRSCard } from '../types/SRSTypes'
@@ -157,69 +158,6 @@ const Review = () => {
       dueForReview: totalDueCards
     }
   }, [flashcardSets, currentStreak])
-
-  const studyModes = [
-    {
-      id: 'flashcard',
-      name: 'Flashcard Review',
-      description: 'Classic spaced repetition with AI-optimized intervals',
-      icon: '🃏',
-      difficulty: 'Beginner' as const,
-      estimatedTime: '15-30 min',
-      features: ['Spaced repetition', 'Difficulty adjustment', 'Progress tracking'],
-      inspiration: 'Anki + Quizlet'
-    },
-    {
-      id: 'active-recall',
-      name: 'Active Recall',
-      description: 'Test yourself without seeing the answer first',
-      icon: '🧠',
-      difficulty: 'Intermediate' as const,
-      estimatedTime: '20-40 min',
-      features: ['Self-testing', 'Confidence tracking', 'Mistake analysis'],
-      inspiration: 'RemNote + Obsidian'
-    },
-    {
-      id: 'ai-tutor',
-      name: 'AI Tutor Mode',
-      description: 'Personalized explanations and adaptive questioning',
-      icon: '🤖',
-      difficulty: 'Advanced' as const,
-      estimatedTime: '25-45 min',
-      features: ['AI explanations', 'Adaptive difficulty', 'Socratic method'],
-      inspiration: 'Khan Academy + Socratic'
-    },
-    {
-      id: 'speed-drill',
-      name: 'Speed Drill',
-      description: 'Rapid-fire questions to build automaticity',
-      icon: '⚡',
-      difficulty: 'Intermediate' as const,
-      estimatedTime: '10-20 min',
-      features: ['Time pressure', 'Quick recall', 'Fluency building'],
-      inspiration: 'Duolingo + Memrise'
-    },
-    {
-      id: 'deep-study',
-      name: 'Deep Study Session',
-      description: 'Thorough review with detailed explanations',
-      icon: '📚',
-      difficulty: 'Advanced' as const,
-      estimatedTime: '45-90 min',
-      features: ['Detailed feedback', 'Concept mapping', 'Cross-connections'],
-      inspiration: 'Notion + Roam Research'
-    },
-    {
-      id: 'memory-palace',
-      name: 'Memory Palace',
-      description: 'Spatial memory techniques for better retention',
-      icon: '🏰',
-      difficulty: 'Advanced' as const,
-      estimatedTime: '30-60 min',
-      features: ['Spatial learning', 'Visual associations', 'Location method'],
-      inspiration: 'Memrise + Ancient techniques'
-    }
-  ];
 
   const examTypes: ExamType[] = useMemo(() => [
     {
@@ -584,12 +522,12 @@ const Review = () => {
           >
             <span className={styles.tabIcon}>
               {tab === 'flashcards' && '🃏'}
-              {tab === 'study' && '📚'}
+              {tab === 'study' && '🕹️'}
               {tab === 'exams' && '📝'}
               {tab === 'analytics' && '📊'}
             </span>
             <span className={styles.tabLabel}>
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'study' ? 'Quiz Battle' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </span>
             {/* Notification badges */}
             {tab === 'flashcards' && studyStats.dueForReview > 0 && (
@@ -827,143 +765,7 @@ const Review = () => {
         {/* Study Tab - Redesigned with Cyberpunk Aesthetic */}
         {activeTab === 'study' && (
           <div className={styles.studyTab}>
-            {/* Tab Header */}
-            <div className={styles.modernTabHeader}>
-              <div className={styles.headerLeft}>
-                <h2 className={styles.modernTabTitle}>
-                  <span className={styles.titleIcon}>🚀</span>
-                  Study Modes
-                </h2>
-                <p className={styles.modernTabSubtitle}>
-                  Choose your learning style - powered by AI and educational science
-                </p>
-              </div>
-              <div className={styles.headerActions}>
-                <div className={styles.studyStreakDisplay}>
-                  <span className={styles.streakIcon}>🔥</span>
-                  <span className={styles.streakText}>{studyStats.streak} day streak</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Study Modes Grid - Enhanced Design */}
-            <div className={styles.modernStudyGrid}>
-              {studyModes.map((mode, index) => (
-                <div key={mode.id} className={`${styles.modernStudyCard} ${styles[`card${index + 1}`]}`}>
-                  <div className={styles.cardGlow}></div>
-                  
-                  <div className={styles.cardHeader}>
-                    <div className={styles.modeIconContainer}>
-                      <span className={styles.modernModeIcon}>{mode.icon}</span>
-                    </div>
-                    <div className={styles.difficultyBadge}>
-                      <span className={styles.difficultyLevel}>{mode.difficulty}</span>
-                    </div>
-                  </div>
-                  
-                  <div className={styles.cardContent}>
-                    <h3 className={styles.modernModeName}>{mode.name}</h3>
-                    <p className={styles.modernModeDescription}>{mode.description}</p>
-                    
-                    <div className={styles.modeMetrics}>
-                      {/* <div className={styles.metricItem}>
-                        <span className={styles.metricIcon}>⏱️</span>
-                        <span className={styles.metricValue}>{mode.estimatedTime}</span>
-                      </div> */}
-                      {/* <div className={styles.metricItem}>
-                        <span className={styles.metricIcon}>⚡</span>
-                        <span className={styles.metricValue}>{mode.inspiration}</span>
-                      </div> */}
-                    </div>
-                    
-                    <div className={styles.featuresList}>
-                      {mode.features.slice(0, 3).map(feature => (
-                        <div key={feature} className={styles.featureItem}>
-                          <span className={styles.featureCheck}>✓</span>
-                          <span className={styles.featureText}>{feature}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <button 
-                    className={styles.modernStartButton}
-                    onClick={() => {
-                      alert(`${mode.name} 学习模式正在开发中，请使用卡片集中的"开始学习"按钮`);
-                    }}
-                  >
-                    <span className={styles.buttonText}>Start Learning</span>
-                    <span className={styles.buttonArrow}>→</span>
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            {/* AI Recommendations Section - Enhanced */}
-            <div className={styles.aiRecommendationsSection}>
-              <div className={styles.sectionHeader}>
-                <h3 className={styles.sectionTitle}>
-                  <span className={styles.aiIcon}>🤖</span>
-                  AI-Powered Study Recommendations
-                </h3>
-                <div className={styles.aiStatus}>
-                  <span className={styles.statusDot}></span>
-                  <span className={styles.statusText}>AI Active</span>
-                </div>
-              </div>
-              
-              <div className={styles.recommendationsContainer}>
-                <div className={styles.recommendationCard}>
-                  <div className={styles.recHeader}>
-                    <span className={styles.recIcon}>📊</span>
-                    <h4 className={styles.recTitle}>Focus Areas</h4>
-                  </div>
-                  <div className={styles.recContent}>
-                    {/* <div className={styles.focusItem}>
-                      <span className={styles.focusSubject}>Organic Chemistry</span>
-                      <div className={styles.focusProgress}>
-                        <div className={styles.focusBar}>
-                          <div className={styles.focusFill} style={{ width: '65%' }}></div>
-                        </div>
-                        <span className={styles.focusPercent}>65%</span>
-                      </div>
-                      <span className={styles.focusTime}>30 min suggested</span>
-                    </div>
-                    <div className={styles.focusItem}>
-                      <span className={styles.focusSubject}>Calculus Integration</span>
-                      <div className={styles.focusProgress}>
-                        <div className={styles.focusBar}>
-                          <div className={styles.focusFill} style={{ width: '78%' }}></div>
-                        </div>
-                        <span className={styles.focusPercent}>78%</span>
-                      </div>
-                      <span className={styles.focusTime}>15 min review</span>
-                    </div> */}
-                  </div>
-                </div>
-                
-                <div className={styles.recommendationCard}>
-                  <div className={styles.recHeader}>
-                    <span className={styles.recIcon}>⏰</span>
-                    <h4 className={styles.recTitle}>Optimal Schedule</h4>
-                  </div>
-                  <div className={styles.recContent}>
-                    {/* <div className={styles.scheduleItem}>
-                      <span className={styles.scheduleTime}>9:00-11:00 AM</span>
-                      <span className={styles.scheduleDesc}>Peak focus hours</span>
-                    </div>
-                    <div className={styles.scheduleItem}>
-                      <span className={styles.scheduleTime}>25 min sessions</span>
-                      <span className={styles.scheduleDesc}>Pomodoro technique</span>
-                    </div>
-                    <div className={styles.scheduleItem}>
-                      <span className={styles.scheduleTime}>Before sleep</span>
-                      <span className={styles.scheduleDesc}>Memory consolidation</span>
-                    </div> */}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <QuizBattle />
           </div>
         )}
 

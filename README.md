@@ -45,6 +45,7 @@
   - 📊 **深度学习分析** - 记忆曲线、掌握度追踪、薄弱点检测
   - 💾 **企业级数据持久化** - PostgreSQL + FSRS-5 算法完整集成 **[COMPLETED!]**
   - 🔄 **实时数据同步** - 多设备学习进度同步，离线优先架构 **[COMPLETED!]**
+  - ⚔️ **Quiz Battle 模块** - Kahoot-style 实时抢答、PIN 加入、Guest 模式、错题自动流入 Review 队列 **[IN DEVELOPMENT]**
 - 📊 **实时学习分析** - 基于认知科学的个性化适应
 - 🎯 **预测性学习路径** - AI 驱动的个性化学习规划
 - 📝 **自适应测试系统** - Computer Adaptive Testing (CAT)
@@ -1034,5 +1035,21 @@ EzA 已经从概念验证发展为**功能完整的 AI 学习平台**，成功�
 这使得 EzA 成为**新一代智能学习平台的标杆**，为美国大学生提供世界级的学习体验。
 
 Made with ❤️ by the EzA Team
+
+## ⚔️ Quiz Battle 模块 (MVP)
+
+> **状态：IN DEVELOPMENT — 预计 2024.Q3 Alpha**
+>
+> Real-time Kahoot-style 竞速测验，与 EzA 的 AI 间隔复习闭环无缝衔接。
+
+### 关键特征
+
+- 6 位 PIN 加入，可匿名 Guest 参与，无需注册
+- 单选题 (Flashcard Set 自动生成) + 20 秒倒计时
+- Supabase Realtime 排行榜、分数按反应时间加权
+- 结束后错题一键写入 FSRS 队列，进入 Review 优先复习
+- 教师战报 CSV 导出；学生可选择绑定账号保存进度
+
+> 未来迭代：多题型、AI 生成干扰项、公共排行榜、分享卡片
 
 </div>
