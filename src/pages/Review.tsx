@@ -1,8 +1,11 @@
 import BackToDashboardButton from '@/components/BackToDashboardButton'
+import BatchImportModal from '@/components/BatchImportModal'
 import CreateFlashcardSetModal from '@/components/CreateFlashcardSetModal'
+import FlashcardsList from '@/components/FlashcardsList'
 import { useUser } from '@/context/UserContext'
 import { useAdvancedLearningAnalytics } from '@/hooks/useAdvancedLearningAnalytics'
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { createFlashcardSet, CreateFlashcardSetData } from '../api/flashcards'
 import styles from './Review.module.css'
 
@@ -47,6 +50,7 @@ interface ExamType {
 
 const Review = () => {
   const { user } = useUser()
+  const navigate = useNavigate()
   const { 
     comprehensive_analysis, 
     is_analyzing, 
@@ -62,6 +66,8 @@ const Review = () => {
   const [currentStreak, setCurrentStreak] = useState(7) // Example streak
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const [showManageModal, setShowManageModal] = useState(false)
+  const [showBatchImportModal, setShowBatchImportModal] = useState(false)
 
   // Mock data - 在实际环境中这些会从API获取
   const myFlashcardSets: FlashcardSet[] = useMemo(() => [
@@ -328,6 +334,17 @@ const Review = () => {
     }
   }
 
+  // 清理状态的辅助函数
+  const handleCloseManageModal = () => {
+    setShowManageModal(false);
+    setSelectedSet(null);
+  };
+
+  const handleCloseBatchImportModal = () => {
+    setShowBatchImportModal(false);
+    setSelectedSet(null);
+  };
+
   return (
     <div className={styles.review} style={{ position: 'relative' }}>
       <BackToDashboardButton />
@@ -500,10 +517,16 @@ const Review = () => {
                     </div>
 
                     {/* Card Actions */}
-                    <div className={styles.cardActions}>
+                    <div className={styles.setActions}>
                       <button 
                         className={`${styles.studyButton} ${set.dueForReview ? styles.reviewButton : ''}`}
-                        onClick={() => setSelectedSet(set)}
+                        onClick={() => {
+                          // 正确的Review Now功能：开始学习模式
+                          setSelectedSet(set);
+                          console.log('Starting study session for:', set.title);
+                          // TODO: 实现学习模式选择器或直接开始学习
+                          alert(`开始学习 "${set.title}"！\n学习模式功能正在开发中...`);
+                        }}
                       >
                         <span className={styles.buttonIcon}>
                           {set.dueForReview ? '🎯' : '📚'}
@@ -511,14 +534,41 @@ const Review = () => {
                         <span>{set.dueForReview ? 'Review Now' : 'Study'}</span>
                       </button>
                       
-                      <div className={styles.secondaryActions}>
-                        <button className={styles.iconButton} title="Edit">
-                          <span>✏️</span>
-                        </button>
-                        <button className={styles.iconButton} title="Share">
-                          <span>🔗</span>
-                        </button>
-                      </div>
+                      <button 
+                        className={styles.manageButton}
+                        onClick={() => {
+                          setSelectedSet(set);
+                          setShowManageModal(true);
+                        }}
+                        style={{ 
+                          background: 'rgba(0, 255, 255, 0.1)', 
+                          color: '#00ffff',
+                          border: '1px solid rgba(0, 255, 255, 0.3)',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          marginLeft: '8px'
+                        }}
+                      >
+                        📝 Manage Cards
+                      </button>
+                      
+                      <button 
+                        className={styles.importButton}
+                        onClick={() => {
+                          setSelectedSet(set);
+                          setShowBatchImportModal(true);
+                        }}
+                        style={{ 
+                          background: 'rgba(255, 107, 107, 0.1)', 
+                          color: '#ff6b6b',
+                          border: '1px solid rgba(255, 107, 107, 0.3)',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          marginLeft: '8px'
+                        }}
+                      >
+                        📤 Import
+                      </button>
                     </div>
 
                   </div>
@@ -956,6 +1006,14 @@ const Review = () => {
           <span className={styles.actionIcon}>💡</span>
           <span>Get AI Tips</span>
         </button>
+        <button 
+          className={styles.quickActionBtn}
+          onClick={() => navigate('/flashcard-test')}
+          style={{ backgroundColor: 'rgba(0, 255, 255, 0.1)', borderColor: 'rgba(0, 255, 255, 0.3)' }}
+        >
+          <span className={styles.actionIcon}>🧪</span>
+          <span>Test New Features</span>
+        </button>
       </div>
 
       {/* Create Flashcard Set Modal */}
@@ -965,6 +1023,44 @@ const Review = () => {
         onSubmit={handleCreateFlashcardSet}
         isLoading={isCreating}
       />
+
+      {/* Manage Cards Modal */}
+      {selectedSet && showManageModal && (
+        <div className={styles.modalOverlay} onClick={handleCloseManageModal}>
+          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <FlashcardsList 
+              setId={selectedSet.id}
+              setTitle={selectedSet.title}
+              onClose={handleCloseManageModal}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Batch Import Modal */}
+      {selectedSet && (
+        <BatchImportModal
+          isOpen={showBatchImportModal}
+          onClose={handleCloseBatchImportModal}
+          onImport={async (cards) => {
+            try {
+              console.log('Importing cards to set:', selectedSet.id, cards);
+              // TODO: 实现实际的导入逻辑
+              // const importedCards = await createFlashcards(cards);
+              
+              // 模拟导入成功
+              console.log('Mock import successful:', cards.length, 'cards');
+              alert(`✅ 成功导入 ${cards.length} 张卡片到 "${selectedSet.title}"！\n\n导入的卡片：\n${cards.slice(0, 3).map(card => `• ${card.question}`).join('\n')}${cards.length > 3 ? '\n...' : ''}`);
+              
+              handleCloseBatchImportModal();
+            } catch (error) {
+              console.error('Import failed:', error);
+              alert(`❌ 导入失败：${error instanceof Error ? error.message : '未知错误'}`);
+            }
+          }}
+          setId={selectedSet.id}
+        />
+      )}
     </div>
   )
 }
