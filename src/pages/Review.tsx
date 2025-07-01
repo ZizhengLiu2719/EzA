@@ -866,14 +866,14 @@ const Review = () => {
                     <p className={styles.modernModeDescription}>{mode.description}</p>
                     
                     <div className={styles.modeMetrics}>
-                      <div className={styles.metricItem}>
+                      {/* <div className={styles.metricItem}>
                         <span className={styles.metricIcon}>⏱️</span>
                         <span className={styles.metricValue}>{mode.estimatedTime}</span>
-                      </div>
-                      <div className={styles.metricItem}>
+                      </div> */}
+                      {/* <div className={styles.metricItem}>
                         <span className={styles.metricIcon}>⚡</span>
                         <span className={styles.metricValue}>{mode.inspiration}</span>
-                      </div>
+                      </div> */}
                     </div>
                     
                     <div className={styles.featuresList}>
@@ -919,7 +919,7 @@ const Review = () => {
                     <h4 className={styles.recTitle}>Focus Areas</h4>
                   </div>
                   <div className={styles.recContent}>
-                    <div className={styles.focusItem}>
+                    {/* <div className={styles.focusItem}>
                       <span className={styles.focusSubject}>Organic Chemistry</span>
                       <div className={styles.focusProgress}>
                         <div className={styles.focusBar}>
@@ -938,7 +938,7 @@ const Review = () => {
                         <span className={styles.focusPercent}>78%</span>
                       </div>
                       <span className={styles.focusTime}>15 min review</span>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
                 
@@ -948,7 +948,7 @@ const Review = () => {
                     <h4 className={styles.recTitle}>Optimal Schedule</h4>
                   </div>
                   <div className={styles.recContent}>
-                    <div className={styles.scheduleItem}>
+                    {/* <div className={styles.scheduleItem}>
                       <span className={styles.scheduleTime}>9:00-11:00 AM</span>
                       <span className={styles.scheduleDesc}>Peak focus hours</span>
                     </div>
@@ -959,7 +959,7 @@ const Review = () => {
                     <div className={styles.scheduleItem}>
                       <span className={styles.scheduleTime}>Before sleep</span>
                       <span className={styles.scheduleDesc}>Memory consolidation</span>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </div>

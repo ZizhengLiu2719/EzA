@@ -83,45 +83,9 @@
   text-align: center;
 }
 
-/* Focus Controls - Forest inspired */
+/* Hide Focus Controls to remove green UI under Return button */
 .focusControls {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: flex-end;
-}
-
-.focusBtn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  background: rgba(34, 197, 94, 0.2);
-  color: #10B981;
-  border: 1px solid rgba(34, 197, 94, 0.4);
-  border-radius: 25px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.focusBtn:hover {
-  background: rgba(34, 197, 94, 0.3);
-  transform: translateY(-2px);
-}
-
-.focusBtn.focusActive {
-  background: rgba(34, 197, 94, 0.4);
-  border-color: #10B981;
-  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
-}
-
-.focusIcon {
-  font-size: 1.2rem;
-}
-
-.focusTimer {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 600;
+  display: none !important;
 }
 
 /* Tab Navigation */
@@ -1063,18 +1027,21 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-left: 0;
 }
 
 .featureItem {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: block; /* 改为块级元素 */
+  text-indent: -23px; /* 负文本缩进创建悬挂效果 */
+  padding-left: 23px; /* 左内边距抵消负缩进 */
+  line-height: 1.4; /* 确保行高合适 */
 }
 
 .featureCheck {
   color: #10B981;
   font-weight: 700;
   font-size: 0.9rem;
+  margin-right: 8px; /* 复选标记和文本之间的间距 */
 }
 
 .featureText {

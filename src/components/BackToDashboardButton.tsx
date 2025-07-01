@@ -10,7 +10,6 @@ const BackToDashboardButton: React.FC = () => {
         <span className={styles.icon}>🏠</span>
       </div>
       <span className={styles.text}>Return to Main</span>
-      <div className={styles.glowEffect}></div>
     </button>
   );
 };
