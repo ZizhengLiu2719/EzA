@@ -1,0 +1,98 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modalContent {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.centeredMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  text-align: center;
+  min-height: 200px;
+}
+
+.errorMessageHeader {
+  font-size: 24px;
+  font-weight: 700;
+  color: #f87171; /* red-400 */
+  margin-bottom: 16px;
+}
+
+.errorMessageText {
+  font-size: 16px;
+  color: #d1d5db; /* gray-300 */
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.closeButtonAction {
+  padding: 10px 24px;
+  background: #4f46e5; /* indigo-600 */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.closeButtonAction:hover {
+  background: #4338ca; /* indigo-700 */
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 4px solid rgba(129, 140, 248, 0.3); /* indigo-300 */
+  border-top-color: #818cf8; /* indigo-400 */
+  animation: spin 1s linear infinite;
+  margin-bottom: 24px;
+}
+
+.loadingMessage {
+  font-size: 18px;
+  color: #d1d5db; /* gray-300 */
+  font-weight: 500;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fullScreenContainer {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #111827; /* gray-900 */
+  overscroll-behavior: contain;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+} 

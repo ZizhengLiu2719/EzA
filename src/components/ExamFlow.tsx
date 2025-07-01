@@ -4,12 +4,13 @@ import { ExamSession, ExamResult as TypesExamResult } from '@/types'
 import { FSRSCard } from '@/types/SRSTypes'
 import React, { useEffect, useState } from 'react'
 import ExamAnalytics from './ExamAnalytics'
-import ExamGenerator from './ExamGenerator'
+import styles from './ExamFlow.module.css'
+import ExamGeneratorModal from './ExamGeneratorModal'
 import ExamRunner from './ExamRunner'
 
 interface ExamFlowProps {
   isOpen: boolean
-  examType: any // 不直接依赖外部类型，保持灵活
+  examType: any
   onClose: () => void
 }
 
@@ -21,19 +22,33 @@ const ExamFlow: React.FC<ExamFlowProps> = ({ isOpen, examType: _examType, onClos
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // 加载所有闪卡
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) {
+      // Reset state when flow is closed, regardless of phase
+      setPhase('loading');
+      setCards([]);
+      setExam(null);
+      setSession(null);
+      setResult(null);
+      setError(null);
+      return;
+    }
 
+    setPhase('loading')
+    setError(null)
+    
     const loadCards = async () => {
       try {
-        setPhase('loading')
         const allCards = await getAllUserFlashcards()
+        if (allCards.length === 0) {
+          setError('您还没有任何闪卡可用于生成考试。')
+          return
+        }
         setCards(allCards)
         setPhase('generator')
       } catch (err) {
         console.error('Failed to load flashcards for exam:', err)
-        setError('无法加载闪卡，请稍后重试')
+        setError('无法加载闪卡数据，请稍后重试。')
       }
     }
 
@@ -55,86 +70,78 @@ const ExamFlow: React.FC<ExamFlowProps> = ({ isOpen, examType: _examType, onClos
       setPhase('analytics')
     } catch (err) {
       console.error('Score exam failed:', err)
-      setError('考试评分失败')
+      setError('考试评分失败，请检查网络连接或稍后重试。')
     }
   }
 
-  // 重新开始考试
   const handleRetake = () => {
-    setExam(null)
-    setSession(null)
-    setResult(null)
     setPhase('generator')
-  }
-
-  // 关闭并重置
-  const handleClose = () => {
     setExam(null)
     setSession(null)
     setResult(null)
-    onClose()
   }
 
   if (!isOpen) return null
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
-      style={{ overscrollBehavior: 'contain' }}
-    >
-      <div className="w-full h-full overflow-auto bg-white">
-        {/* 错误状态 */}
-        {error && (
-          <div className="flex flex-col items-center justify-center h-full p-10 text-center text-red-600">
-            <p className="mb-4 text-xl font-semibold">{error}</p>
-            <button
-              onClick={handleClose}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg"
-            >
-              关闭
-            </button>
+  // The 'generator' phase now uses its own self-contained modal component
+  if (phase === 'generator') {
+    return (
+      <ExamGeneratorModal
+        isOpen={true}
+        onClose={onClose}
+        cards={cards}
+        onExamGenerated={handleExamGenerated}
+      />
+    )
+  }
+
+  // Loading and Error states are also modals
+  if (phase === 'loading' || error) {
+    return (
+      <div className={styles.modalOverlay} onClick={error ? onClose : undefined}>
+        <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+          <div className={styles.centeredMessage}>
+            {error ? (
+              <>
+                <p className={styles.errorMessageHeader}>出错了</p>
+                <p className={styles.errorMessageText}>{error}</p>
+                <button onClick={onClose} className={styles.closeButtonAction}>
+                  关闭
+                </button>
+              </>
+            ) : (
+              <>
+                <div className={styles.spinner} />
+                <p className={styles.loadingMessage}>正在准备考试环境...</p>
+              </>
+            )}
           </div>
-        )}
+        </div>
+      </div>
+    )
+  }
 
-        {/* 加载状态 */}
-        {phase === 'loading' && !error && (
-          <div className="flex flex-col items-center justify-center h-full p-10 text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-6" />
-            <p className="text-gray-700">加载中，请稍候...</p>
-          </div>
+  // Runner and Analytics are full-screen
+  if (phase === 'runner' || phase === 'analytics') {
+    return (
+      <div className={styles.fullScreenContainer}>
+        {phase === 'runner' && exam && (
+          <ExamRunner exam={exam} onComplete={handleSessionComplete} onExit={onClose} />
         )}
-
-        {/* 考试生成 */}
-        {phase === 'generator' && !error && (
-          <ExamGenerator
-            cards={cards}
-            onExamGenerated={handleExamGenerated}
-            onCancel={handleClose}
-          />
-        )}
-
-        {/* 考试进行 */}
-        {phase === 'runner' && exam && !error && (
-          <ExamRunner
-            exam={exam}
-            onComplete={handleSessionComplete}
-            onExit={handleClose}
-          />
-        )}
-
-        {/* 分析 */}
-        {phase === 'analytics' && exam && session && result && !error && (
+        {phase === 'analytics' && exam && session && result && (
           <ExamAnalytics
             exam={exam}
             session={session}
             result={result as unknown as TypesExamResult}
             onRetake={handleRetake}
-            onContinueStudy={handleClose}
+            onContinueStudy={onClose}
           />
         )}
       </div>
-    </div>
-  )
+    )
+  }
+
+  return null
 }
 
 export default ExamFlow 
