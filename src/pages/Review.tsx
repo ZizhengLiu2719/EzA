@@ -333,6 +333,7 @@ const Review = () => {
       // Show success notification (you might want to add a toast system)
       alert('Flashcard set created successfully!')
       
+      return newSet // <== 关键: 返回新建的集合，供后续流程使用
     } catch (error) {
       console.error('Error creating flashcard set:', error)
       throw error // Re-throw to let the modal handle the error
@@ -407,50 +408,37 @@ const Review = () => {
     console.log('Selected method:', method, 'with data:', setData)
     
     try {
-      // 先创建基本的卡片集
-      await handleCreateFlashcardSet(setData)
+      // 先创建基本的卡片集，并获取其信息
+      const newSet = await handleCreateFlashcardSet(setData)
       
       // 保存设置数据以供后续使用
       setPendingSetData(setData)
       
+      // 构造包含真实ID的临时对象，供后续模态框使用
+      const tempSet: FlashcardSet = {
+        id: newSet.id, // 使用真实UUID，避免"temp-id"导致数据库错误
+        title: newSet.title,
+        description: newSet.description || '',
+        subject: newSet.subject || 'Other',
+        cardCount: 0,
+        difficulty: (setData.difficulty || 1) as 1 | 2 | 3 | 4 | 5,
+        isPublic: setData.is_public || false,
+        author: 'current-user',
+        masteryLevel: 0,
+        estimatedStudyTime: 0,
+        tags: setData.tags || [],
+        dueForReview: false
+      }
+      
       // 根据选择的方法打开相应的模态框
       if (method === 'import') {
-        // 设置一个临时的selectedSet来打开导入模态框
-        const tempSet: FlashcardSet = {
-          id: 'temp-id',
-          title: setData.title,
-          description: setData.description || '',
-          subject: setData.subject || 'Other',
-          cardCount: 0,
-          difficulty: setData.difficulty as 1 | 2 | 3 | 4 | 5,
-          isPublic: setData.is_public || false,
-          author: 'current-user',
-          masteryLevel: 0,
-          estimatedStudyTime: 0,
-          tags: setData.tags || [],
-          dueForReview: false
-        }
         setSelectedSet(tempSet)
         setShowBatchImportModal(true)
       } else if (method === 'ai-generate') {
-        const tempSet: FlashcardSet = {
-          id: 'temp-id',
-          title: setData.title,
-          description: setData.description || '',
-          subject: setData.subject || 'Other',
-          cardCount: 0,
-          difficulty: setData.difficulty as 1 | 2 | 3 | 4 | 5,
-          isPublic: setData.is_public || false,
-          author: 'current-user',
-          masteryLevel: 0,
-          estimatedStudyTime: 0,
-          tags: setData.tags || [],
-          dueForReview: false
-        }
         setSelectedSet(tempSet)
         setShowAIGenerator(true)
       }
-      // 对于manual方法，已经在handleCreateFlashcardSet中处理了
+      // manual 方法已在 handleCreateFlashcardSet 中处理
       
     } catch (error) {
       console.error('Error in method selection:', error)
@@ -1189,7 +1177,7 @@ const Review = () => {
       <CreateFlashcardSetModal 
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateFlashcardSet}
+        onSubmit={async (data) => { await handleCreateFlashcardSet(data); }}
         onMethodSelected={handleMethodSelected}
         isLoading={isCreating}
       />
@@ -1314,12 +1302,12 @@ const Review = () => {
                 }}
                 onMouseEnter={(e) => {
                   if (!isDeleting) {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.2)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isDeleting) {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.1)';
                   }
                 }}
               >
@@ -1343,14 +1331,16 @@ const Review = () => {
                 }}
                 onMouseEnter={(e) => {
                   if (!isDeleting) {
-                    e.target.style.background = '#dc2626';
-                    e.target.style.transform = 'translateY(-2px)';
+                    const btn = e.currentTarget as HTMLElement;
+                    btn.style.background = '#dc2626';
+                    btn.style.transform = 'translateY(-2px)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isDeleting) {
-                    e.target.style.background = '#ef4444';
-                    e.target.style.transform = 'translateY(0)';
+                    const btn = e.currentTarget as HTMLElement;
+                    btn.style.background = '#ef4444';
+                    btn.style.transform = 'translateY(0)';
                   }
                 }}
               >
