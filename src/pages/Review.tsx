@@ -1,7 +1,9 @@
 import BackToDashboardButton from '@/components/BackToDashboardButton'
+import CreateFlashcardSetModal from '@/components/CreateFlashcardSetModal'
 import { useUser } from '@/context/UserContext'
 import { useAdvancedLearningAnalytics } from '@/hooks/useAdvancedLearningAnalytics'
 import { useEffect, useMemo, useState } from 'react'
+import { createFlashcardSet, CreateFlashcardSetData } from '../api/flashcards'
 import styles from './Review.module.css'
 
 interface FlashcardSet {
@@ -59,6 +61,7 @@ const Review = () => {
   const [focusMode, setFocusMode] = useState(false)
   const [currentStreak, setCurrentStreak] = useState(7) // Example streak
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
 
   // Mock data - 在实际环境中这些会从API获取
   const myFlashcardSets: FlashcardSet[] = useMemo(() => [
@@ -303,6 +306,28 @@ const Review = () => {
     }
   }, [focusMode])
 
+  // Handle creating new flashcard set
+  const handleCreateFlashcardSet = async (data: CreateFlashcardSetData) => {
+    try {
+      setIsCreating(true)
+      const newSet = await createFlashcardSet(data)
+      
+      // TODO: Add the new set to the list or refresh the data
+      console.log('Created new flashcard set:', newSet)
+      
+      setShowCreateModal(false)
+      
+      // Show success notification (you might want to add a toast system)
+      alert('Flashcard set created successfully!')
+      
+    } catch (error) {
+      console.error('Error creating flashcard set:', error)
+      throw error // Re-throw to let the modal handle the error
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
   return (
     <div className={styles.review} style={{ position: 'relative' }}>
       <BackToDashboardButton />
@@ -400,7 +425,7 @@ const Review = () => {
                   <span className={styles.actionIcon}>📄</span>
                   <span>Import</span>
                 </button>
-                <button className={styles.actionBtn + ' ' + styles.primaryAction}>
+                <button className={styles.actionBtn + ' ' + styles.primaryAction} onClick={() => setShowCreateModal(true)}>
                   <span className={styles.actionIcon}>➕</span>
                   <span>Create New</span>
                 </button>
@@ -506,7 +531,7 @@ const Review = () => {
                   <div className={styles.emptyIcon}>🃏</div>
                   <h3>No Study Sets Yet</h3>
                   <p>Create your first flashcard set to start learning</p>
-                  <button className={styles.createFirstButton}>
+                  <button className={styles.createFirstButton} onClick={() => setShowCreateModal(true)}>
                     <span>➕</span>
                     Create Your First Set
                   </button>
@@ -932,6 +957,14 @@ const Review = () => {
           <span>Get AI Tips</span>
         </button>
       </div>
+
+      {/* Create Flashcard Set Modal */}
+      <CreateFlashcardSetModal 
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateFlashcardSet}
+        isLoading={isCreating}
+      />
     </div>
   )
 }

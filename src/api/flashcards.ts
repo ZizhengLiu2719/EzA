@@ -4,9 +4,9 @@
  * Integrates with FSRS-5 algorithm for spaced repetition
  */
 
-import { supabase } from '../config/supabase';
 import { FlashcardSet, FSRSCard, FSRSParameters, ReviewRating } from '../types/SRSTypes';
 import { FSRS } from '../utils/fsrsAlgorithm';
+import { supabase } from './supabase';
 
 // ============================================================================
 // Types for Database Operations

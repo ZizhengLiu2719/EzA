@@ -1,0 +1,422 @@
+/* BatchImportModal Component Styles */
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modalContent {
+  background: linear-gradient(135deg, 
+    rgba(20, 25, 40, 0.95) 0%,
+    rgba(25, 30, 50, 0.95) 100%);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 16px;
+  box-shadow: 
+    0 20px 40px rgba(0, 255, 255, 0.1),
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  max-width: 800px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  backdrop-filter: blur(20px);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px 16px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.modalTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #00ffff;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.modalHeader button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.modalHeader button:hover:not(:disabled) {
+  background: rgba(255, 71, 87, 0.2);
+  border-color: #ff4757;
+  color: #ff4757;
+}
+
+.modalBody {
+  padding: 32px;
+}
+
+.methodSelector {
+  margin-bottom: 32px;
+}
+
+.methodSelector h3 {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.methodOptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.methodOption {
+  background: rgba(15, 20, 35, 0.6);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 20px 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.methodOption:hover {
+  border-color: rgba(0, 255, 255, 0.4);
+  background: rgba(15, 20, 35, 0.8);
+}
+
+.methodOption.active {
+  border-color: #00ffff;
+  background: rgba(0, 255, 255, 0.1);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+}
+
+.methodIcon {
+  font-size: 32px;
+  display: block;
+}
+
+.methodOption div {
+  color: #ffffff;
+}
+
+.methodOption strong {
+  font-size: 14px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.methodOption p {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
+.inputSection {
+  margin-bottom: 24px;
+}
+
+.textInputSection,
+.fileInputSection {
+  background: rgba(15, 20, 35, 0.4);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.textInputSection h4,
+.fileInputSection h4 {
+  color: #00ffff;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.instructions {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.textArea {
+  width: 100%;
+  background: rgba(10, 15, 25, 0.8);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 200px;
+  margin-bottom: 16px;
+}
+
+.textArea:focus {
+  outline: none;
+  border-color: #00ffff;
+  box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.2);
+}
+
+.textArea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.parseButton {
+  background: linear-gradient(135deg, #00ffff 0%, #0099cc 100%);
+  color: #000000;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.parseButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #33ffff 0%, #00ccff 100%);
+  transform: translateY(-1px);
+}
+
+.parseButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.fileInput {
+  width: 100%;
+  background: rgba(10, 15, 25, 0.8);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.fileInput:hover:not(:disabled) {
+  border-color: #00ffff;
+}
+
+.fileName {
+  color: #00ffff;
+  font-size: 14px;
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+.processing {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  color: #00ffff;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(0, 255, 255, 0.3);
+  border-top: 2px solid #00ffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error {
+  background: rgba(255, 71, 87, 0.1);
+  border: 1px solid rgba(255, 71, 87, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+  color: #ff4757;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+.previewSection {
+  margin-bottom: 24px;
+}
+
+.previewSection h4 {
+  color: #00ffff;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.cardPreview {
+  background: rgba(10, 15, 25, 0.6);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.previewCard {
+  background: rgba(20, 25, 40, 0.6);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.previewCard:last-child {
+  margin-bottom: 0;
+}
+
+.previewQuestion {
+  color: #ffffff;
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.previewAnswer {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.previewHint {
+  color: #ffa502;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.moreCards {
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+  text-align: center;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.modalActions {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+  padding-top: 24px;
+  border-top: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.cancelButton,
+.importButton {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  min-width: 120px;
+}
+
+.cancelButton {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.cancelButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.importButton {
+  background: linear-gradient(135deg, #00ffff 0%, #0099cc 100%);
+  color: #000000;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 255, 255, 0.3);
+}
+
+.importButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #33ffff 0%, #00ccff 100%);
+  box-shadow: 0 6px 16px rgba(0, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.cancelButton:disabled,
+.importButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modalOverlay {
+    padding: 16px;
+  }
+  
+  .modalContent {
+    max-height: 90vh;
+  }
+  
+  .modalHeader {
+    padding: 20px 24px 12px;
+  }
+  
+  .modalTitle {
+    font-size: 20px;
+  }
+  
+  .modalBody {
+    padding: 24px;
+  }
+  
+  .methodOptions {
+    grid-template-columns: 1fr;
+  }
+  
+  .methodOption {
+    padding: 16px;
+  }
+  
+  .methodIcon {
+    font-size: 24px;
+  }
+  
+  .textInputSection,
+  .fileInputSection {
+    padding: 20px;
+  }
+  
+  .modalActions {
+    flex-direction: column-reverse;
+  }
+  
+  .cancelButton,
+  .importButton {
+    width: 100%;
+  }
+} 

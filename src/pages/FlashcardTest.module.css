@@ -1,0 +1,355 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  color: #e0e0e0;
+  padding: 20px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+}
+
+.header h1 {
+  color: #00ffff;
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+.header p {
+  color: #b0b0b0;
+  font-size: 1.1rem;
+}
+
+.error {
+  background: rgba(255, 50, 50, 0.1);
+  border: 1px solid rgba(255, 50, 50, 0.3);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.error p {
+  color: #ff6b6b;
+  margin: 0;
+}
+
+.error button {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.error button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  padding: 0 20px;
+}
+
+.tab {
+  flex: 1;
+  padding: 15px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 10px;
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.tab:hover {
+  background: rgba(0, 255, 255, 0.1);
+  border-color: rgba(0, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.tab.active {
+  background: rgba(0, 255, 255, 0.2);
+  border-color: #00ffff;
+  color: #00ffff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.content {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 30px;
+  margin-bottom: 30px;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  min-height: 500px;
+}
+
+/* Sets Tab */
+.setsTab {
+  width: 100%;
+}
+
+.actions {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.actions button {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #00ffff, #0080ff);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.actions button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 255, 255, 0.4);
+}
+
+.actions button:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: #666;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.setsList h3 {
+  color: #00ffff;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.setCard {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 15px;
+  transition: all 0.3s ease;
+}
+
+.setCard:hover {
+  border-color: rgba(0, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.setCard h4 {
+  color: #00ffff;
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+.setCard p {
+  color: #b0b0b0;
+  margin-bottom: 15px;
+}
+
+.setInfo {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+  color: #888;
+}
+
+.setCard button {
+  background: rgba(0, 255, 255, 0.1);
+  color: #00ffff;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.setCard button:hover {
+  background: rgba(0, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Editor Tab */
+.editorTab {
+  width: 100%;
+}
+
+.editorHeader {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.editorHeader h3 {
+  color: #00ffff;
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+
+.editorHeader p {
+  color: #b0b0b0;
+}
+
+.showEditorBtn {
+  display: block;
+  margin: 50px auto;
+  padding: 15px 30px;
+  background: linear-gradient(135deg, #00ffff, #0080ff);
+  color: #000;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.showEditorBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(0, 255, 255, 0.4);
+}
+
+/* List Tab */
+.listTab {
+  width: 100%;
+}
+
+.noSetSelected {
+  text-align: center;
+  padding: 50px;
+}
+
+.noSetSelected p {
+  color: #b0b0b0;
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+}
+
+.noSetSelected button {
+  padding: 12px 24px;
+  background: rgba(0, 255, 255, 0.1);
+  color: #00ffff;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.noSetSelected button:hover {
+  background: rgba(0, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Import Tab */
+.importTab {
+  width: 100%;
+}
+
+.importHeader {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.importHeader h3 {
+  color: #00ffff;
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+
+.importHeader p {
+  color: #b0b0b0;
+}
+
+.showImportBtn {
+  display: block;
+  margin: 50px auto;
+  padding: 15px 30px;
+  background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.showImportBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
+}
+
+/* Debug Info */
+.debugInfo {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.debugInfo h3 {
+  color: #00ffff;
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+}
+
+.debugInfo pre {
+  background: rgba(0, 0, 0, 0.5);
+  color: #b0b0b0;
+  padding: 15px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+  }
+  
+  .tabs {
+    flex-direction: column;
+    padding: 0;
+  }
+  
+  .tab {
+    margin-bottom: 10px;
+  }
+  
+  .content {
+    padding: 20px;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .setInfo {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .header h1 {
+    font-size: 2rem;
+  }
+} 
