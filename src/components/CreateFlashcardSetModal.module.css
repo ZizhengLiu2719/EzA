@@ -227,8 +227,7 @@
 }
 
 .fieldInput,
-.fieldTextarea,
-.fieldSelect {
+.fieldTextarea {
   width: 100%;
   padding: 12px 16px;
   background: rgba(255, 255, 255, 0.05);
@@ -239,8 +238,68 @@
   transition: all 0.2s;
 }
 
+/* 专门为select设置样式，修复选项可见性问题 */
+.fieldSelect {
+  width: 100%;
+  padding: 12px 40px 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 16px;
+  transition: all 0.2s;
+  /* 移除默认样式 */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* 添加自定义箭头 */
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+}
+
+.fieldSelect option {
+  background: #1a1a2e !important;
+  color: #ffffff !important;
+  padding: 8px 12px;
+  border: none;
+  font-size: 16px;
+}
+
+.fieldSelect option:hover {
+  background: #2d2d5f !important;
+  color: #ffffff !important;
+}
+
+.fieldSelect option:checked,
+.fieldSelect option:selected {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+/* 为了更好的兼容性，添加WebKit前缀 */
+.fieldSelect::-webkit-scrollbar {
+  width: 8px;
+}
+
+.fieldSelect::-webkit-scrollbar-track {
+  background: #1a1a2e;
+}
+
+.fieldSelect::-webkit-scrollbar-thumb {
+  background: #7c3aed;
+  border-radius: 4px;
+}
+
 .fieldInput:focus,
-.fieldTextarea:focus,
+.fieldTextarea:focus {
+  outline: none;
+  border-color: rgba(124, 58, 237, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
 .fieldSelect:focus {
   outline: none;
   border-color: rgba(124, 58, 237, 0.5);

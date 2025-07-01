@@ -540,4 +540,400 @@
   .generatingTips {
     padding: 1rem;
   }
+}
+
+/* ========== 错误和状态消息 ========== */
+.errorMessage {
+  background: rgba(255, 69, 58, 0.1);
+  border: 1px solid rgba(255, 69, 58, 0.3);
+  color: #ff453a;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ========== 焦点区域选择 ========== */
+.focusAreasGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.focusAreaButton {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 210, 255, 0.2);
+  color: #e0e0f0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.focusAreaButton:hover {
+  background: rgba(0, 210, 255, 0.1);
+  border-color: rgba(0, 210, 255, 0.4);
+}
+
+.focusAreaButton.selected {
+  background: rgba(0, 210, 255, 0.2);
+  border-color: #00d2ff;
+  color: #00d2ff;
+  font-weight: 600;
+}
+
+/* ========== 生成风格按钮 ========== */
+.styleButton {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #e0e0f0;
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.styleButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.styleButton.selected {
+  background: rgba(0, 210, 255, 0.2);
+  border-color: #00d2ff;
+  color: #00d2ff;
+  font-weight: 600;
+}
+
+.styleButton span:first-child {
+  font-size: 1.2rem;
+}
+
+.styleButton span:last-child {
+  font-size: 0.8rem;
+}
+
+/* ========== 进度统计 ========== */
+.progressStats {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #b0b0c0;
+  text-align: center;
+}
+
+/* ========== 预览增强 ========== */
+.previewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 210, 255, 0.2);
+}
+
+.previewActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.selectAllButton {
+  background: rgba(0, 210, 255, 0.1);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  color: #00d2ff;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.selectAllButton:hover {
+  background: rgba(0, 210, 255, 0.2);
+}
+
+.qualityIndicator {
+  font-size: 0.9rem;
+  color: #b0b0c0;
+  font-weight: 500;
+}
+
+/* ========== 卡片预览增强 ========== */
+.cardPreview.selected {
+  border-color: #00d2ff;
+  background: rgba(0, 210, 255, 0.05);
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cardConfidence {
+  font-size: 0.8rem;
+  color: #b0b0c0;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.cardControls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.selectButton {
+  background: rgba(0, 210, 255, 0.1);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  color: #00d2ff;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.selectButton:hover {
+  background: rgba(0, 210, 255, 0.2);
+}
+
+.selectButton.selected {
+  background: #00d2ff;
+  color: white;
+  font-weight: bold;
+}
+
+.regenerateButton {
+  background: rgba(255, 159, 10, 0.1);
+  border: 1px solid rgba(255, 159, 10, 0.3);
+  color: #ff9f0a;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.regenerateButton:hover {
+  background: rgba(255, 159, 10, 0.2);
+  transform: rotate(180deg);
+}
+
+.regenerateButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ========== 可编辑字段 ========== */
+.editableField {
+  margin-bottom: 1rem;
+}
+
+.editableField label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #e0e0f0;
+}
+
+.editableTextarea {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 210, 255, 0.2);
+  color: #e0e0f0;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 60px;
+  transition: all 0.3s ease;
+}
+
+.editableTextarea:focus {
+  outline: none;
+  border-color: #00d2ff;
+  box-shadow: 0 0 0 2px rgba(0, 210, 255, 0.2);
+}
+
+.editableInput {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 210, 255, 0.2);
+  color: #e0e0f0;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.editableInput:focus {
+  outline: none;
+  border-color: #00d2ff;
+  box-shadow: 0 0 0 2px rgba(0, 210, 255, 0.2);
+}
+
+/* ========== 标签编辑 ========== */
+.tagsSection {
+  margin-top: 1rem;
+}
+
+.tagsSection label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #e0e0f0;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.tag {
+  background: rgba(0, 210, 255, 0.2);
+  color: #00d2ff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.removeTag {
+  background: none;
+  border: none;
+  color: #00d2ff;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.removeTag:hover {
+  background: rgba(255, 69, 58, 0.2);
+  color: #ff453a;
+}
+
+.addTagInput {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 210, 255, 0.2);
+  color: #e0e0f0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  min-width: 120px;
+}
+
+.addTagInput:focus {
+  outline: none;
+  border-color: #00d2ff;
+}
+
+/* ========== 保存进度 ========== */
+.savingProgress {
+  margin-top: 1rem;
+}
+
+.progressDots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.progressDots span {
+  width: 8px;
+  height: 8px;
+  background: #00d2ff;
+  border-radius: 50%;
+  animation: bounce 1.4s ease-in-out infinite both;
+}
+
+.progressDots span:nth-child(1) { animation-delay: -0.32s; }
+.progressDots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+/* ========== 响应式优化 ========== */
+@media (max-width: 768px) {
+  .previewHeader {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .previewActions {
+    justify-content: space-between;
+  }
+
+  .focusAreasGrid {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+
+  .cardMeta {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .editableTextarea {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  .tags {
+    gap: 0.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .buttonGroup {
+    flex-direction: column;
+  }
+
+  .styleButton {
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .cardControls {
+    flex-direction: column;
+  }
 } 

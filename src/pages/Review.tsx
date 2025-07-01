@@ -2,7 +2,7 @@ import BackToDashboardButton from '@/components/BackToDashboardButton'
 import { useUser } from '@/context/UserContext'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createFlashcardSet, CreateFlashcardSetData } from '../api/flashcards'
+import { createFlashcardSet, CreateFlashcardSetData, deleteAllFlashcardSets, deleteFlashcardSet, FlashcardSetWithStats, getFlashcardSets } from '../api/flashcards'
 import AIFlashcardGenerator from '../components/AIFlashcardGenerator'
 import BatchImportModal from '../components/BatchImportModal'
 import CreateFlashcardSetModal from '../components/CreateFlashcardSetModal'
@@ -68,7 +68,22 @@ interface StudySession {
 const Review = () => {
   const { user } = useUser()
   const navigate = useNavigate()
-
+  
+  // 使用简单的状态管理代替复杂的React Query
+  const [flashcardSets, setFlashcardSets] = useState<FlashcardSetWithStats[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isCreating, setIsCreating] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
+    isOpen: boolean;
+    type: 'single' | 'all';
+    setId?: string;
+    setTitle?: string;
+  }>({
+    isOpen: false,
+    type: 'single'
+  })
   
   // State management
   const [activeTab, setActiveTab] = useState<'flashcards' | 'study' | 'exams' | 'analytics'>('flashcards')
@@ -77,7 +92,6 @@ const Review = () => {
   const [focusMode, setFocusMode] = useState(false)
   const [currentStreak, setCurrentStreak] = useState(7) // Example streak
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [isCreating, setIsCreating] = useState(false)
   const [showManageModal, setShowManageModal] = useState(false)
   const [showBatchImportModal, setShowBatchImportModal] = useState(false)
   const [showAIGenerator, setShowAIGenerator] = useState(false)
@@ -85,17 +99,65 @@ const Review = () => {
   const [studySession, setStudySession] = useState<StudySession | null>(null)
   const [pendingSetData, setPendingSetData] = useState<CreateFlashcardSetData | null>(null)
 
-  // 清空Mock data - 现在从空开始创建
-  const myFlashcardSets = useMemo(() => [], []);
+  // 加载flashcard sets
+  const loadFlashcardSets = async () => {
+    if (!user?.id) return
+    
+    try {
+      setIsLoading(true)
+      setError(null)
+      const sets = await getFlashcardSets()
+      setFlashcardSets(sets)
+    } catch (err) {
+      console.error('Error loading flashcard sets:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load flashcard sets')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 在组件挂载和用户变化时加载数据
+  useEffect(() => {
+    loadFlashcardSets()
+  }, [user?.id])
+
+  // 转换数据格式以匹配现有接口
+  const myFlashcardSets = useMemo(() => {
+    return flashcardSets.map((set: FlashcardSetWithStats) => ({
+      id: set.id,
+      title: set.title,
+      description: set.description || '',
+      subject: set.subject || 'General',
+      cardCount: set.card_count,
+      difficulty: set.difficulty as 1 | 2 | 3 | 4 | 5,
+      isPublic: set.is_public,
+      author: 'You',
+      lastStudied: set.last_studied ? new Date(set.last_studied) : undefined,
+      masteryLevel: Math.round(set.mastery_level * 100), // 转换为百分比
+      estimatedStudyTime: Math.max(5, Math.round(set.card_count * 0.5)), // 估算学习时间
+      tags: set.tags || [],
+      dueForReview: (set.due_cards_count || 0) > 0,
+      nextReview: undefined
+    }))
+  }, [flashcardSets])
   
-  // 空的统计数据
-  const studyStats = useMemo(() => ({
-    totalSets: 0,
-    totalCards: 0,
-    averageMastery: 0,
-    streak: 0,
-    dueForReview: 0
-  }), []);
+  // 计算统计数据
+  const studyStats = useMemo(() => {
+    const totalSets = flashcardSets.length
+    const totalCards = flashcardSets.reduce((sum, set) => sum + set.card_count, 0)
+    const totalDueCards = flashcardSets.reduce((sum, set) => sum + (set.due_cards_count || 0), 0)
+    const averageMastery = flashcardSets.length > 0 
+      ? flashcardSets.reduce((sum, set) => sum + set.mastery_level, 0) / flashcardSets.length 
+      : 0
+
+    return {
+      totalSets,
+      totalCards,
+      averageMastery: Math.round(averageMastery * 100),
+      streak: currentStreak,
+      dueForReview: totalDueCards
+    }
+  }, [flashcardSets, currentStreak])
 
   const studyModes = [
     {
@@ -259,10 +321,11 @@ const Review = () => {
   // Handle creating new flashcard set
   const handleCreateFlashcardSet = async (data: CreateFlashcardSetData) => {
     try {
-      setIsCreating(true)
       const newSet = await createFlashcardSet(data)
       
-      // TODO: Add the new set to the list or refresh the data
+      // 刷新数据以显示新创建的卡片集
+      await loadFlashcardSets()
+      
       console.log('Created new flashcard set:', newSet)
       
       setShowCreateModal(false)
@@ -273,9 +336,70 @@ const Review = () => {
     } catch (error) {
       console.error('Error creating flashcard set:', error)
       throw error // Re-throw to let the modal handle the error
-    } finally {
-      setIsCreating(false)
     }
+  }
+
+  // Handle deleting a single flashcard set
+  const handleDeleteSet = async (setId: string, setTitle: string) => {
+    setDeleteConfirmModal({
+      isOpen: true,
+      type: 'single',
+      setId,
+      setTitle
+    })
+  }
+
+  // Handle deleting all flashcard sets
+  const handleDeleteAllSets = () => {
+    if (flashcardSets.length === 0) {
+      alert('没有卡片集可以删除')
+      return
+    }
+    
+    setDeleteConfirmModal({
+      isOpen: true,
+      type: 'all'
+    })
+  }
+
+  // Confirm and execute deletion
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmModal.isOpen) return
+
+    try {
+      setIsDeleting(true)
+
+      if (deleteConfirmModal.type === 'single' && deleteConfirmModal.setId) {
+        await deleteFlashcardSet(deleteConfirmModal.setId)
+        alert(`✅ 成功删除卡片集"${deleteConfirmModal.setTitle}"`)
+      } else if (deleteConfirmModal.type === 'all') {
+        await deleteAllFlashcardSets()
+        alert('✅ 成功删除所有卡片集')
+      }
+
+      // 刷新数据
+      await loadFlashcardSets()
+      
+      // 关闭确认模态框
+      setDeleteConfirmModal({
+        isOpen: false,
+        type: 'single'
+      })
+
+    } catch (error) {
+      console.error('Error deleting flashcard set(s):', error)
+      alert(`❌ 删除失败：${error instanceof Error ? error.message : '未知错误'}`)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  // Cancel deletion
+  const handleCancelDelete = () => {
+    setDeleteConfirmModal({
+      isOpen: false,
+      type: 'single'
+    })
   }
 
   // 处理创建方法选择
@@ -506,6 +630,23 @@ const Review = () => {
                   <span className={styles.actionIcon}>➕</span>
                   <span>Create New</span>
                 </button>
+                
+                {myFlashcardSets.length > 0 && (
+                  <button 
+                    className={styles.actionBtn + ' ' + styles.dangerAction} 
+                    onClick={handleDeleteAllSets}
+                    style={{
+                      background: 'rgba(255, 0, 0, 0.1)',
+                      color: '#ff4444',
+                      border: '1px solid rgba(255, 0, 0, 0.3)',
+                      marginLeft: '12px'
+                    }}
+                    title="删除所有卡片集"
+                  >
+                    <span className={styles.actionIcon}>🗑️</span>
+                    <span>Delete All</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -604,6 +745,23 @@ const Review = () => {
                         }}
                       >
                         📝 Manage Cards
+                      </button>
+
+                      <button 
+                        className={styles.deleteButton}
+                        onClick={() => handleDeleteSet(set.id, set.title)}
+                        style={{ 
+                          background: 'rgba(255, 0, 0, 0.1)', 
+                          color: '#ff4444',
+                          border: '1px solid rgba(255, 0, 0, 0.3)',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          marginLeft: '8px',
+                          fontSize: '14px'
+                        }}
+                        title="删除此卡片集"
+                      >
+                        🗑️ Delete
                       </button>
                     </div>
 
@@ -1027,8 +1185,6 @@ const Review = () => {
         )}
       </div>
 
-
-
       {/* Create Flashcard Set Modal */}
       <CreateFlashcardSetModal 
         isOpen={showCreateModal}
@@ -1087,6 +1243,122 @@ const Review = () => {
             console.log('AI generated cards:', count);
           }}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmModal.isOpen && (
+        <div 
+          className={styles.modalOverlay} 
+          onClick={handleCancelDelete}
+          style={{ zIndex: 9999 }}
+        >
+          <div 
+            className={styles.deleteConfirmModal}
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              border: '1px solid rgba(255, 0, 0, 0.3)',
+              borderRadius: '16px',
+              padding: '32px',
+              textAlign: 'center',
+              maxWidth: '450px',
+              width: '90vw',
+              boxShadow: '0 25px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 0, 0, 0.2)',
+              animation: 'slideIn 0.3s ease-out'
+            }}
+          >
+            <div style={{ fontSize: '64px', marginBottom: '20px' }}>
+              ⚠️
+            </div>
+            
+            <h3 style={{ 
+              color: '#ffffff', 
+              marginBottom: '16px', 
+              fontSize: '24px',
+              fontWeight: '600' 
+            }}>
+              {deleteConfirmModal.type === 'single' ? '确认删除卡片集' : '确认删除所有卡片集'}
+            </h3>
+            
+            <p style={{ 
+              color: '#cccccc', 
+              marginBottom: '32px', 
+              lineHeight: '1.6',
+              fontSize: '16px'
+            }}>
+              {deleteConfirmModal.type === 'single' 
+                ? `你确定要删除卡片集 "${deleteConfirmModal.setTitle}" 吗？\n\n这个操作无法撤销，所有卡片和学习进度都将被永久删除。`
+                : `你确定要删除所有 ${flashcardSets.length} 个卡片集吗？\n\n这个操作无法撤销，所有卡片和学习进度都将被永久删除。`
+              }
+            </p>
+
+            <div style={{ 
+              display: 'flex', 
+              gap: '16px', 
+              justifyContent: 'center' 
+            }}>
+              <button
+                onClick={handleCancelDelete}
+                disabled={isDeleting}
+                style={{
+                  padding: '14px 28px',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '10px',
+                  cursor: isDeleting ? 'not-allowed' : 'pointer',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  transition: 'all 0.2s ease',
+                  opacity: isDeleting ? 0.6 : 1
+                }}
+                onMouseEnter={(e) => {
+                  if (!isDeleting) {
+                    e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isDeleting) {
+                    e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                  }
+                }}
+              >
+                取消
+              </button>
+              
+              <button
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                style={{
+                  padding: '14px 28px',
+                  background: isDeleting ? 'rgba(255, 0, 0, 0.3)' : '#ef4444',
+                  color: '#ffffff',
+                  border: '1px solid #dc2626',
+                  borderRadius: '10px',
+                  cursor: isDeleting ? 'not-allowed' : 'pointer',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  transition: 'all 0.2s ease',
+                  opacity: isDeleting ? 0.6 : 1
+                }}
+                onMouseEnter={(e) => {
+                  if (!isDeleting) {
+                    e.target.style.background = '#dc2626';
+                    e.target.style.transform = 'translateY(-2px)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isDeleting) {
+                    e.target.style.background = '#ef4444';
+                    e.target.style.transform = 'translateY(0)';
+                  }
+                }}
+              >
+                {isDeleting ? '删除中...' : '确认删除'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

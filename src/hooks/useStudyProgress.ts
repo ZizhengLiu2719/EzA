@@ -424,7 +424,7 @@ export const useStudyAnalytics = (timeframe: 'week' | 'month' | 'year' | 'all' =
     queryKey: ['study-analytics', timeframe],
     queryFn: () => getStudyAnalytics(timeframe),
     staleTime: 10 * 60 * 1000, // 10 minutes
-    cacheTime: 30 * 60 * 1000 // 30 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
   });
 
   // Weekly statistics
@@ -611,3 +611,4 @@ export const useStudyStreak = () => {
 export type {
     StudyAnalytics, StudyProgressSummary, StudySessionState, StudySessionWithDetails, WeeklyStudyStats
 };
+

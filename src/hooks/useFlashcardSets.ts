@@ -36,7 +36,7 @@ export const useFlashcardSets = () => {
     queryKey: ['flashcard-sets'],
     queryFn: getFlashcardSets,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
     onError: (error: Error) => {
       toast({
@@ -205,7 +205,7 @@ export const useFlashcardSet = (setId: string) => {
     queryFn: () => getFlashcardSet(setId),
     enabled: !!setId,
     staleTime: 2 * 60 * 1000, // 2 minutes
-    cacheTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
     onError: (error: Error) => {
       toast({
         title: 'Failed to load flashcard set',
@@ -524,3 +524,4 @@ export const useFlashcardSetOperations = () => {
 // ============================================================================
 
 export type { CreateFlashcardSetData, FlashcardSetWithStats, UpdateFlashcardSetData };
+

@@ -247,6 +247,37 @@ export const deleteFlashcardSet = async (setId: string): Promise<void> => {
 };
 
 /**
+ * Delete all flashcard sets for the current user
+ */
+export const deleteAllFlashcardSets = async (): Promise<void> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const { error } = await supabase
+    .from('flashcard_sets')
+    .delete()
+    .eq('user_id', user.id);
+
+  if (error) throw error;
+};
+
+/**
+ * Delete multiple flashcard sets by IDs
+ */
+export const deleteFlashcardSets = async (setIds: string[]): Promise<void> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const { error } = await supabase
+    .from('flashcard_sets')
+    .delete()
+    .in('id', setIds)
+    .eq('user_id', user.id);
+
+  if (error) throw error;
+};
+
+/**
  * Get public flashcard sets
  */
 export const getPublicFlashcardSets = async (
