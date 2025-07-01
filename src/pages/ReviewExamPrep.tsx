@@ -50,50 +50,8 @@ const ReviewExamPrep = () => {
   const [focusMode, setFocusMode] = useState(false)
   const [currentStreak, setCurrentStreak] = useState(0)
 
-  // Mock data - 在实际环境中这些会从API获取
-  const myFlashcardSets: FlashcardSet[] = useMemo(() => [
-    {
-      id: 'set-1',
-      title: 'Calculus BC - Derivatives',
-      description: 'Advanced derivative rules and applications',
-      subject: 'Mathematics',
-      cardCount: 45,
-      difficulty: 4,
-      isPublic: false,
-      author: 'You',
-      lastStudied: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      masteryLevel: 78,
-      estimatedStudyTime: 25,
-      tags: ['calculus', 'derivatives', 'ap-math']
-    },
-    {
-      id: 'set-2', 
-      title: 'Chemistry - Organic Reactions',
-      description: 'Major organic reaction mechanisms',
-      subject: 'Chemistry',
-      cardCount: 32,
-      difficulty: 5,
-      isPublic: false,
-      author: 'You',
-      lastStudied: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      masteryLevel: 65,
-      estimatedStudyTime: 40,
-      tags: ['chemistry', 'organic', 'reactions']
-    },
-    {
-      id: 'set-3',
-      title: 'US History - Civil War Era',
-      description: 'Key events, figures, and consequences 1850-1870',
-      subject: 'History',
-      cardCount: 28,
-      difficulty: 3,
-      isPublic: true,
-      author: 'You',
-      masteryLevel: 92,
-      estimatedStudyTime: 15,
-      tags: ['history', 'civil-war', 'american']
-    }
-  ], [])
+  // 清空Mock data - 现在从空开始创建
+  const myFlashcardSets: FlashcardSet[] = useMemo(() => [], [])
 
   const studyModes: StudyMode[] = useMemo(() => [
     {
@@ -194,7 +152,9 @@ const ReviewExamPrep = () => {
   // Calculate study statistics
   const studyStats = useMemo(() => {
     const totalCards = myFlashcardSets.reduce((sum, set) => sum + set.cardCount, 0)
-    const averageMastery = myFlashcardSets.reduce((sum, set) => sum + set.masteryLevel, 0) / myFlashcardSets.length
+    const averageMastery = myFlashcardSets.length > 0 
+      ? myFlashcardSets.reduce((sum, set) => sum + set.masteryLevel, 0) / myFlashcardSets.length
+      : 0
     const totalStudyTime = myFlashcardSets.reduce((sum, set) => sum + set.estimatedStudyTime, 0)
     
     return {

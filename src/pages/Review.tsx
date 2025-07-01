@@ -10,7 +10,7 @@ import FlashcardsList from '../components/FlashcardsList'
 import StudyMode from '../components/StudyMode'
 import StudyResults from '../components/StudyResults'
 import { FSRSCard } from '../types/SRSTypes'
-import { calculateMockStats, createDemoFlashcardSets, getMockDueCards } from '../utils/testData'
+import { getMockDueCards } from '../utils/testData'
 import styles from './Review.module.css'
 
 interface FlashcardSet {
@@ -85,10 +85,17 @@ const Review = () => {
   const [studySession, setStudySession] = useState<StudySession | null>(null)
   const [pendingSetData, setPendingSetData] = useState<CreateFlashcardSetData | null>(null)
 
-  // Mock data - 在实际环境中这些会从API获取
-  const myFlashcardSets = useMemo(() => createDemoFlashcardSets(), []);
+  // 清空Mock data - 现在从空开始创建
+  const myFlashcardSets = useMemo(() => [], []);
   
-  const studyStats = useMemo(() => calculateMockStats(), []);
+  // 空的统计数据
+  const studyStats = useMemo(() => ({
+    totalSets: 0,
+    totalCards: 0,
+    averageMastery: 0,
+    streak: 0,
+    dueForReview: 0
+  }), []);
 
   const studyModes = [
     {
