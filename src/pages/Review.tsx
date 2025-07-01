@@ -3,7 +3,7 @@ import { useUser } from '@/context/UserContext'
 import { useAdvancedLearningAnalytics } from '@/hooks/useAdvancedLearningAnalytics'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createFlashcardSet, CreateFlashcardSetData, getDueFlashcards } from '../api/flashcards'
+import { createFlashcardSet, CreateFlashcardSetData } from '../api/flashcards'
 import AIFlashcardGenerator from '../components/AIFlashcardGenerator'
 import BatchImportModal from '../components/BatchImportModal'
 import CreateFlashcardSetModal from '../components/CreateFlashcardSetModal'
@@ -11,6 +11,7 @@ import FlashcardsList from '../components/FlashcardsList'
 import StudyMode from '../components/StudyMode'
 import StudyResults from '../components/StudyResults'
 import { FSRSCard } from '../types/SRSTypes'
+import { calculateMockStats, createDemoFlashcardSets, getMockDueCards } from '../utils/testData'
 import styles from './Review.module.css'
 
 interface FlashcardSet {
@@ -90,134 +91,72 @@ const Review = () => {
   const [studySession, setStudySession] = useState<StudySession | null>(null)
 
   // Mock data - 在实际环境中这些会从API获取
-  const myFlashcardSets: FlashcardSet[] = useMemo(() => [
-    {
-      id: 'set-1',
-      title: 'Calculus BC - Derivatives & Integrals',
-      description: 'Advanced calculus concepts including derivative rules, integration techniques, and applications',
-      subject: 'Mathematics',
-      cardCount: 45,
-      difficulty: 4,
-      isPublic: false,
-      author: 'You',
-      lastStudied: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      masteryLevel: 78,
-      estimatedStudyTime: 25,
-      tags: ['calculus', 'derivatives', 'integrals', 'ap-math'],
-      dueForReview: true,
-      nextReview: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000)
-    },
-    {
-      id: 'set-2', 
-      title: 'Organic Chemistry - Reaction Mechanisms',
-      description: 'Major organic reaction mechanisms, stereochemistry, and synthetic pathways',
-      subject: 'Chemistry',
-      cardCount: 32,
-      difficulty: 5,
-      isPublic: false,
-      author: 'You',
-      lastStudied: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      masteryLevel: 65,
-      estimatedStudyTime: 40,
-      tags: ['chemistry', 'organic', 'reactions', 'mechanisms'],
-      dueForReview: true,
-      nextReview: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
-    },
-    {
-      id: 'set-3',
-      title: 'US History - Civil War Era (1850-1870)',
-      description: 'Key events, figures, causes, and consequences of the American Civil War period',
-      subject: 'History',
-      cardCount: 28,
-      difficulty: 3,
-      isPublic: true,
-      author: 'You',
-      masteryLevel: 92,
-      estimatedStudyTime: 15,
-      tags: ['history', 'civil-war', 'american', 'reconstruction'],
-      dueForReview: false,
-      nextReview: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-    },
-    {
-      id: 'set-4',
-      title: 'Spanish Vocabulary - Advanced Level',
-      description: 'Advanced Spanish vocabulary for academic and professional contexts',
-      subject: 'Foreign Language',
-      cardCount: 60,
-      difficulty: 4,
-      isPublic: false,
-      author: 'You',
-      lastStudied: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      masteryLevel: 83,
-      estimatedStudyTime: 30,
-      tags: ['spanish', 'vocabulary', 'advanced', 'academic'],
-      dueForReview: true,
-      nextReview: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000)
-    }
-  ], [])
+  const myFlashcardSets = useMemo(() => createDemoFlashcardSets(), []);
+  
+  const studyStats = useMemo(() => calculateMockStats(), []);
 
-  const studyModes: StudyMode[] = useMemo(() => [
+  const studyModes = [
     {
       id: 'flashcard',
-      name: 'Classic Flashcards',
-      description: 'Traditional card flipping with AI-powered hints and explanations',
+      name: 'Flashcard Review',
+      description: 'Classic spaced repetition with AI-optimized intervals',
       icon: '🃏',
-      difficulty: 'Beginner',
-      estimatedTime: '10-20 min',
-      features: ['Flip animation', 'Audio support', 'Progress tracking', 'AI hints', 'Spaced repetition'],
-      inspiration: 'Quizlet + Anki'
-    },
-    {
-      id: 'learn',
-      name: 'Adaptive Learn Mode',
-      description: 'Multiple question types with AI-powered difficulty adaptation',
-      icon: '🧠',
-      difficulty: 'Intermediate', 
+      difficulty: 'Beginner' as const,
       estimatedTime: '15-30 min',
-      features: ['Multiple choice', 'Type answers', 'True/False', 'AI adaptation', 'Confidence tracking'],
-      inspiration: 'Quizlet + Brainscape'
+      features: ['Spaced repetition', 'Difficulty adjustment', 'Progress tracking'],
+      inspiration: 'Anki + Quizlet'
     },
     {
-      id: 'test',
-      name: 'Comprehensive Test',
-      description: 'Full testing experience with detailed performance analytics',
-      icon: '📝',
-      difficulty: 'Advanced',
-      estimatedTime: '20-45 min',
-      features: ['Timed questions', 'Mixed formats', 'Performance analysis', 'Weak spot detection'],
-      inspiration: 'Khan Academy + Magoosh'
-    },
-    {
-      id: 'match',
-      name: 'Match Game',
-      description: 'Fast-paced drag-and-drop matching challenge',
-      icon: '🎯',
-      difficulty: 'Beginner',
-      estimatedTime: '5-10 min',
-      features: ['Drag & drop', 'Speed challenge', 'Leaderboards', 'Personal best tracking'],
-      inspiration: 'Quizlet Match'
-    },
-    {
-      id: 'gravity',
-      name: 'Gravity Challenge',
-      description: 'Type answers before terms fall from the sky',
-      icon: '🌪️',
-      difficulty: 'Intermediate',
-      estimatedTime: '5-15 min',
-      features: ['Typing speed', 'Progressive difficulty', 'Power-ups', 'High score system'],
-      inspiration: 'Quizlet Gravity'
+      id: 'active-recall',
+      name: 'Active Recall',
+      description: 'Test yourself without seeing the answer first',
+      icon: '🧠',
+      difficulty: 'Intermediate' as const,
+      estimatedTime: '20-40 min',
+      features: ['Self-testing', 'Confidence tracking', 'Mistake analysis'],
+      inspiration: 'RemNote + Obsidian'
     },
     {
       id: 'ai-tutor',
-      name: 'AI Tutor Session',
-      description: 'One-on-one AI tutoring with personalized explanations',
+      name: 'AI Tutor Mode',
+      description: 'Personalized explanations and adaptive questioning',
       icon: '🤖',
-      difficulty: 'Advanced',
-      estimatedTime: '15-25 min',
-      features: ['Conversational AI', 'Personalized explanations', 'Concept connections', 'Real-time feedback'],
-      inspiration: 'EzA Original + Khan Academy'
+      difficulty: 'Advanced' as const,
+      estimatedTime: '25-45 min',
+      features: ['AI explanations', 'Adaptive difficulty', 'Socratic method'],
+      inspiration: 'Khan Academy + Socratic'
+    },
+    {
+      id: 'speed-drill',
+      name: 'Speed Drill',
+      description: 'Rapid-fire questions to build automaticity',
+      icon: '⚡',
+      difficulty: 'Intermediate' as const,
+      estimatedTime: '10-20 min',
+      features: ['Time pressure', 'Quick recall', 'Fluency building'],
+      inspiration: 'Duolingo + Memrise'
+    },
+    {
+      id: 'deep-study',
+      name: 'Deep Study Session',
+      description: 'Thorough review with detailed explanations',
+      icon: '📚',
+      difficulty: 'Advanced' as const,
+      estimatedTime: '45-90 min',
+      features: ['Detailed feedback', 'Concept mapping', 'Cross-connections'],
+      inspiration: 'Notion + Roam Research'
+    },
+    {
+      id: 'memory-palace',
+      name: 'Memory Palace',
+      description: 'Spatial memory techniques for better retention',
+      icon: '🏰',
+      difficulty: 'Advanced' as const,
+      estimatedTime: '30-60 min',
+      features: ['Spatial learning', 'Visual associations', 'Location method'],
+      inspiration: 'Memrise + Ancient techniques'
     }
-  ], [])
+  ];
 
   const examTypes: ExamType[] = useMemo(() => [
     {
@@ -271,23 +210,6 @@ const Review = () => {
       format: ['Multiple Choice', 'True/False', 'Fill-in-blank']
     }
   ], [])
-
-  // Calculate study statistics
-  const studyStats = useMemo(() => {
-    const totalCards = myFlashcardSets.reduce((sum, set) => sum + set.cardCount, 0)
-    const averageMastery = myFlashcardSets.reduce((sum, set) => sum + set.masteryLevel, 0) / myFlashcardSets.length
-    const totalStudyTime = myFlashcardSets.reduce((sum, set) => sum + set.estimatedStudyTime, 0)
-    const dueForReview = myFlashcardSets.filter(set => set.dueForReview).length
-    
-    return {
-      totalSets: myFlashcardSets.length,
-      totalCards,
-      averageMastery: Math.round(averageMastery),
-      totalStudyTime,
-      streak: currentStreak,
-      dueForReview
-    }
-  }, [myFlashcardSets, currentStreak])
 
   const getDifficultyColor = (difficulty: number) => {
     switch (difficulty) {
@@ -368,13 +290,15 @@ const Review = () => {
   // 开始学习模式
   const handleStartStudy = async (set: FlashcardSet) => {
     try {
-      const dueCards = await getDueFlashcards(set.id);
+      // 使用演示数据进行测试
+      const dueCards = getMockDueCards(set.id);
       
       if (dueCards.length === 0) {
         alert('🎉 恭喜！当前没有需要复习的卡片。');
         return;
       }
 
+      console.log(`开始学习: ${set.title}，待复习卡片: ${dueCards.length}张`);
       setSelectedSet(set);
       setStudyCards(dueCards);
       setStudyMode('studying');
