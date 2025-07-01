@@ -1052,4 +1052,74 @@ Made with ❤️ by the EzA Team
 
 > 未来迭代：多题型、AI 生成干扰项、公共排行榜、分享卡片
 
-</div>
+## 🎮 Quiz Battle 模块 (MVP v1.0)
+
+> 让课堂/社群抢答的乐趣与 **EzA** 深度复习闭环无缝衔接 – 可当作 **Kahoot!** 的赛博朋克升级版。
+
+### ✨ 功能一览
+
+- **Host-Teacher 创建房间**：选择 Flashcard Set → 生成 6 位 `PIN` 并分享链接。
+- **Player 加入**：账号用户一键加入；游客 `Guest` 匿名 UID 立即加入。
+- **题型**：单选题 (4 选 1)，系统自动从闪卡生成。
+- **实时对战**：Supabase Realtime 频道 `quiz:session:{sessionId}` 广播 START / NEXT_Q / SCORE_UPDATE …
+- **结算**：排行榜、班级正确率、Top 错题；错题自动写入个人 FSRS 队列。
+- **游客导流**：赛后弹窗引导 `Google OAuth` 绑定账号，保留错题进度。
+
+### 🗄️ 数据库 (PostgreSQL + RLS)
+
+| Table               | 说明                                            |
+| ------------------- | ----------------------------------------------- |
+| `quiz_sessions`     | 房间 & 进度 (PIN、host、flashcard_set、status…) |
+| `quiz_participants` | 参赛者 (支持 `user_id=null` 表示游客)           |
+| `quiz_answers`      | 答题记录 (正确/错误、延迟、得分)                |
+
+`database/migrations/004_quiz_battle.sql` 已包含：
+
+1. 表结构 & 索引
+2. Row Level Security (Host/Participant 权限隔离)
+3. `increment_participant_score()` 存储过程
+
+### 🛰️ Edge Functions
+
+```
+supabase/functions/
+  ├─ create_quiz_session.ts  # Host 创建房间 & 随机抽题
+  ├─ join_quiz_session.ts    # Player 加入房间 & 返回 questions[]
+  └─ submit_answer.ts        # 写入答案、更新得分、Realtime 广播
+```
+
+全部函数已内置 **CORS 处理**，可直接被前端 `supabase.functions.invoke()` 调用。
+
+### 💻 前端组件树 `src/components/QuizBattle/`
+
+- `QuizHome` ：创建/加入 面板
+- `Lobby` ：等待室 + Realtime 人数
+- `QuestionView` ：倒计时环 + 选项按钮 (即将添加动画)
+- `PostGame` ：排行榜 & 错题导流
+- `useQuizStore` (Zustand) ：全局状态
+- `useRealtimeQuiz` ：Supabase Realtime Hook
+
+### ⚡ 本地开发
+
+```bash
+# 启动数据库 + Edge Functions 本地服务
+supabase start   # 或 supabase db reset
+supabase db push                       # 应用 Quiz Battle 迁移
+supabase functions serve               # 热重载 Edge Functions
+
+# 另开终端跑前端
+npm run dev
+```
+
+打开 `http://localhost:5173` → Review → Quiz Battle Tab 即可体验。
+
+### 🚀 部署到生产
+
+```bash
+supabase functions deploy \
+  create_quiz_session join_quiz_session submit_answer
+```
+
+数据库迁移在 CI/CD 或 Supabase SQL Editor 运行 `004_quiz_battle.sql`。
+
+> 后续 V2 规划：多题型、AI Distractor、WebSocket 扩容、公榜分享…
