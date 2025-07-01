@@ -439,7 +439,7 @@ export const updateFlashcardAfterReview = async (
       lapses: fsrsData.lapses,
       state: fsrsData.state,
       last_review: fsrsData.last_review.toISOString(),
-      total_time: fsrsData.total_time,
+      total_time: Math.round(fsrsData.total_time),
       success_rate: fsrsData.success_rate,
       updated_at: new Date().toISOString()
     })
@@ -522,8 +522,8 @@ export const submitCardReview = async (
     p_due: updatedCard.due.toISOString(),
     p_stability: updatedCard.stability,
     p_difficulty: updatedCard.difficulty,
-    p_elapsed_days: updatedCard.elapsed_days,
-    p_scheduled_days: updatedCard.scheduled_days,
+    p_elapsed_days: Math.round(updatedCard.elapsed_days),
+    p_scheduled_days: Math.round(updatedCard.scheduled_days),
     p_reps: updatedCard.reps,
     p_lapses: updatedCard.lapses,
     p_state: updatedCard.state,
@@ -537,13 +537,13 @@ export const submitCardReview = async (
     due: updatedCard.due,
     stability: updatedCard.stability,
     difficulty: updatedCard.difficulty,
-    elapsed_days: updatedCard.elapsed_days,
-    scheduled_days: updatedCard.scheduled_days,
+    elapsed_days: Math.round(updatedCard.elapsed_days),
+    scheduled_days: Math.round(updatedCard.scheduled_days),
     reps: updatedCard.reps,
     lapses: updatedCard.lapses,
     state: updatedCard.state,
     last_review: updatedCard.last_review || new Date(),
-    total_time: currentCard.total_time + (responseTime ? responseTime / 1000 : 0),
+    total_time: Math.round(currentCard.total_time + (responseTime ? responseTime / 1000 : 0)),
     success_rate: calculateSuccessRate(updatedCard.reps, updatedCard.lapses)
   });
 

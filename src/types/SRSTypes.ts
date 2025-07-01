@@ -73,6 +73,7 @@ export interface ReviewLog {
 // FSRS-5 卡片数据
 export interface FSRSCard {
   id: string;
+  set_id: string;
   question: string;
   answer: string;
   hint?: string;

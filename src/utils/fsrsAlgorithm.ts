@@ -121,24 +121,24 @@ export class FSRS {
    */
   private scheduleNewCard(card: FSRSCard, grade: ReviewRating): FSRSCard {
     const scheduledDays = grade === ReviewRating.EASY 
-      ? this.parameters.easyInterval 
-      : this.parameters.graduatingInterval
+      ? Math.round(this.parameters.easyInterval) 
+      : Math.round(this.parameters.graduatingInterval)
 
     const newCard: FSRSCard = {
       ...card,
       difficulty: this.initDifficulty(grade),
       stability: this.initStability(grade),
       due: new Date(Date.now() + scheduledDays * 24 * 60 * 60 * 1000),
-      scheduled_days: scheduledDays,
+      scheduled_days: Math.round(scheduledDays),
       elapsed_days: 0,
-      reps: card.reps + 1,
-      state: grade === ReviewRating.AGAIN ? FSRSState.LEARNING : FSRSState.REVIEW,
+      reps: Math.round(card.reps + 1),
+      state: Math.round(grade === ReviewRating.AGAIN ? FSRSState.LEARNING : FSRSState.REVIEW),
       last_review: new Date(),
       updated_at: new Date()
     }
 
     if (grade === ReviewRating.AGAIN) {
-      newCard.lapses = card.lapses + 1
+      newCard.lapses = Math.round(card.lapses + 1)
     }
 
     return newCard
@@ -149,18 +149,18 @@ export class FSRS {
    */
   private scheduleLearningCard(card: FSRSCard, grade: ReviewRating): FSRSCard {
     const learningSteps = this.parameters.learningSteps
-    const currentStep = Math.min(card.reps, learningSteps.length - 1)
+    const currentStep = Math.min(Math.round(card.reps), learningSteps.length - 1)
 
     if (grade === ReviewRating.AGAIN) {
       // 重新开始学习
       return {
         ...card,
         due: new Date(Date.now() + learningSteps[0] * 60 * 1000),
-        scheduled_days: learningSteps[0] / (24 * 60),
+        scheduled_days: Math.round(learningSteps[0] / (24 * 60)),
         elapsed_days: 0,
         reps: 1,
-        lapses: card.lapses + 1,
-        state: FSRSState.LEARNING,
+        lapses: Math.round(card.lapses + 1),
+        state: Math.round(FSRSState.LEARNING),
         last_review: new Date(),
         updated_at: new Date()
       }
@@ -174,10 +174,10 @@ export class FSRS {
         difficulty: this.initDifficulty(grade),
         stability,
         due: new Date(Date.now() + interval * 24 * 60 * 60 * 1000),
-        scheduled_days: interval,
+        scheduled_days: Math.round(interval),
         elapsed_days: 0,
-        reps: card.reps + 1,
-        state: FSRSState.REVIEW,
+        reps: Math.round(card.reps + 1),
+        state: Math.round(FSRSState.REVIEW),
         last_review: new Date(),
         updated_at: new Date()
       }
@@ -189,10 +189,10 @@ export class FSRS {
       return {
         ...card,
         due: new Date(Date.now() + nextStep * 60 * 1000),
-        scheduled_days: nextStep / (24 * 60),
+        scheduled_days: Math.round(nextStep / (24 * 60)),
         elapsed_days: 0,
-        reps: card.reps + 1,
-        state: FSRSState.LEARNING,
+        reps: Math.round(card.reps + 1),
+        state: Math.round(FSRSState.LEARNING),
         last_review: new Date(),
         updated_at: new Date()
       }
@@ -203,7 +203,7 @@ export class FSRS {
    * 处理复习卡片的复习
    */
   private scheduleReviewCard(card: FSRSCard, grade: ReviewRating): FSRSCard {
-    const elapsed_days = card.elapsed_days > 0 ? card.elapsed_days : 1
+    const elapsed_days = Math.round(card.elapsed_days > 0 ? card.elapsed_days : 1)
     const retrievability = this.forgettingCurve(elapsed_days, card.stability)
     
     const new_difficulty = this.nextDifficulty(card.difficulty, grade)
@@ -224,11 +224,11 @@ export class FSRS {
         difficulty: new_difficulty,
         stability: new_stability,
         due: new Date(Date.now() + relearningSteps[0] * 60 * 1000),
-        scheduled_days: relearningSteps[0] / (24 * 60),
+        scheduled_days: Math.round(relearningSteps[0] / (24 * 60)),
         elapsed_days: 0,
-        reps: card.reps + 1,
-        lapses: card.lapses + 1,
-        state: FSRSState.RELEARNING,
+        reps: Math.round(card.reps + 1),
+        lapses: Math.round(card.lapses + 1),
+        state: Math.round(FSRSState.RELEARNING),
         last_review: new Date(),
         updated_at: new Date()
       }
@@ -241,10 +241,10 @@ export class FSRS {
         difficulty: new_difficulty,
         stability: new_stability,
         due: new Date(Date.now() + interval * 24 * 60 * 60 * 1000),
-        scheduled_days: interval,
+        scheduled_days: Math.round(interval),
         elapsed_days: 0,
-        reps: card.reps + 1,
-        state: FSRSState.REVIEW,
+        reps: Math.round(card.reps + 1),
+        state: Math.round(FSRSState.REVIEW),
         last_review: new Date(),
         updated_at: new Date()
       }
@@ -256,46 +256,35 @@ export class FSRS {
    */
   private scheduleRelearningCard(card: FSRSCard, grade: ReviewRating): FSRSCard {
     const relearningSteps = this.parameters.relearningSteps
-    const currentStep = Math.min(card.reps - card.lapses, relearningSteps.length - 1)
+    const currentStep = Math.min(Math.round(card.reps), relearningSteps.length - 1)
 
     if (grade === ReviewRating.AGAIN) {
       // 重新开始重新学习
       return {
         ...card,
         due: new Date(Date.now() + relearningSteps[0] * 60 * 1000),
-        scheduled_days: relearningSteps[0] / (24 * 60),
+        scheduled_days: Math.round(relearningSteps[0] / (24 * 60)),
         elapsed_days: 0,
-        reps: card.reps + 1,
-        lapses: card.lapses + 1,
-        state: FSRSState.RELEARNING,
+        reps: 1,
+        lapses: Math.round(card.lapses + 1),
+        state: Math.round(FSRSState.RELEARNING),
         last_review: new Date(),
         updated_at: new Date()
       }
     } else if (currentStep >= relearningSteps.length - 1 && grade >= ReviewRating.GOOD) {
-      // 重新毕业到复习状态
-      const elapsed_days = card.elapsed_days > 0 ? card.elapsed_days : 1
-      const retrievability = this.forgettingCurve(elapsed_days, card.stability)
-      
-      const new_difficulty = this.nextDifficulty(card.difficulty, grade)
-      const new_stability = this.nextStability(
-        card.difficulty,
-        card.stability,
-        retrievability,
-        grade,
-        elapsed_days
-      )
-      
-      const interval = this.calculateInterval(new_stability)
+      // 毕业到复习状态
+      const stability = this.initStability(grade)
+      const interval = this.calculateInterval(stability)
       
       return {
         ...card,
-        difficulty: new_difficulty,
-        stability: new_stability,
+        difficulty: this.initDifficulty(grade),
+        stability,
         due: new Date(Date.now() + interval * 24 * 60 * 60 * 1000),
-        scheduled_days: interval,
+        scheduled_days: Math.round(interval),
         elapsed_days: 0,
-        reps: card.reps + 1,
-        state: FSRSState.REVIEW,
+        reps: Math.round(card.reps + 1),
+        state: Math.round(FSRSState.REVIEW),
         last_review: new Date(),
         updated_at: new Date()
       }
@@ -307,10 +296,10 @@ export class FSRS {
       return {
         ...card,
         due: new Date(Date.now() + nextStep * 60 * 1000),
-        scheduled_days: nextStep / (24 * 60),
+        scheduled_days: Math.round(nextStep / (24 * 60)),
         elapsed_days: 0,
-        reps: card.reps + 1,
-        state: FSRSState.RELEARNING,
+        reps: Math.round(card.reps + 1),
+        state: Math.round(FSRSState.RELEARNING),
         last_review: new Date(),
         updated_at: new Date()
       }
@@ -458,6 +447,7 @@ export function isCardDue(card: FSRSCard): boolean {
  */
 export function createNewCard(
   id: string,
+  set_id: string,
   question: string,
   answer: string,
   hint?: string,
@@ -467,15 +457,16 @@ export function createNewCard(
   
   return {
     id,
+    set_id,
     question,
     answer,
     hint,
     explanation,
     due: now,
-    stability: 0,
-    difficulty: 0,
+    stability: 2.0,
+    difficulty: 5.0,
     elapsed_days: 0,
-    scheduled_days: 0,
+    scheduled_days: 1,
     reps: 0,
     lapses: 0,
     state: FSRSState.NEW,

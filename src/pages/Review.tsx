@@ -2,7 +2,7 @@ import BackToDashboardButton from '@/components/BackToDashboardButton'
 import { useUser } from '@/context/UserContext'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createFlashcardSet, CreateFlashcardSetData, deleteAllFlashcardSets, deleteFlashcardSet, FlashcardSetWithStats, getFlashcardSets } from '../api/flashcards'
+import { createFlashcardSet, CreateFlashcardSetData, deleteAllFlashcardSets, deleteFlashcardSet, FlashcardSetWithStats, getDueFlashcards, getFlashcardSets } from '../api/flashcards'
 import AIFlashcardGenerator from '../components/AIFlashcardGenerator'
 import BatchImportModal from '../components/BatchImportModal'
 import CreateFlashcardSetModal from '../components/CreateFlashcardSetModal'
@@ -10,7 +10,6 @@ import FlashcardsList from '../components/FlashcardsList'
 import StudyMode from '../components/StudyMode'
 import StudyResults from '../components/StudyResults'
 import { FSRSCard } from '../types/SRSTypes'
-import { getMockDueCards } from '../utils/testData'
 import styles from './Review.module.css'
 
 interface FlashcardSet {
@@ -460,23 +459,23 @@ const Review = () => {
   // 开始学习模式
   const handleStartStudy = async (set: FlashcardSet) => {
     try {
-      // 使用演示数据进行测试
-      const dueCards = getMockDueCards(set.id);
+      // 从数据库获取实际的待复习卡片
+      const dueCards = await getDueFlashcards(set.id)
       
       if (dueCards.length === 0) {
-        alert('🎉 恭喜！当前没有需要复习的卡片。');
-        return;
+        alert('🎉 恭喜！当前没有需要复习的卡片。')
+        return
       }
 
-      console.log(`开始学习: ${set.title}，待复习卡片: ${dueCards.length}张`);
-      setSelectedSet(set);
-      setStudyCards(dueCards);
-      setStudyMode('studying');
+      console.log(`开始学习: ${set.title}，待复习卡片: ${dueCards.length}张`)
+      setSelectedSet(set)
+      setStudyCards(dueCards)
+      setStudyMode('studying')
     } catch (error) {
-      console.error('获取待复习卡片失败:', error);
-      alert('无法加载复习卡片，请重试');
+      console.error('获取待复习卡片失败:', error)
+      alert('无法加载复习卡片，请重试')
     }
-  };
+  }
 
   // 学习完成
   const handleStudyComplete = (session: StudySession) => {
