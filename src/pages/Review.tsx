@@ -602,170 +602,221 @@ const Review = () => {
       {/* Main Content Area */}
       <div className={styles.mainContent}>
         
-        {/* Flashcards Tab - Redesigned Clean Version */}
+        {/* Flashcards Tab - Redesigned to Match Modern Style */}
         {activeTab === 'flashcards' && (
           <div className={styles.flashcardsTab}>
             
-            {/* Quick Actions Header */}
-            <div className={styles.actionsHeader}>
+            {/* Modern Tab Header */}
+            <div className={styles.modernTabHeader}>
               <div className={styles.headerLeft}>
-                <h2 className={styles.tabTitle}>My Study Sets</h2>
-                <p className={styles.tabSubtitle}>Manage and study your flashcard collections</p>
+                <h2 className={styles.modernTabTitle}>
+                  <span className={styles.titleIcon}>🃏</span>
+                  My Study Sets
+                </h2>
+                <p className={styles.modernTabSubtitle}>
+                  Manage and study your flashcard collections with AI-powered spaced repetition
+                </p>
               </div>
-              <div className={styles.quickActions}>
-                <button className={styles.actionBtn + ' ' + styles.primaryAction} onClick={() => setShowCreateModal(true)}>
-                  <span className={styles.actionIcon}>➕</span>
-                  <span>Create New</span>
-                </button>
-                
-                {myFlashcardSets.length > 0 && (
-                  <button 
-                    className={styles.actionBtn + ' ' + styles.dangerAction} 
-                    onClick={handleDeleteAllSets}
-                    style={{
-                      background: 'rgba(255, 0, 0, 0.1)',
-                      color: '#ff4444',
-                      border: '1px solid rgba(255, 0, 0, 0.3)',
-                      marginLeft: '12px'
-                    }}
-                    title="删除所有卡片集"
-                  >
-                    <span className={styles.actionIcon}>🗑️</span>
-                    <span>Delete All</span>
-                  </button>
-                )}
+              <div className={styles.headerActions}>
+                <div className={styles.flashcardStats}>
+                  <div className={styles.flashcardStatItem}>
+                    <span className={styles.statNumber}>{myFlashcardSets.length}</span>
+                    <span className={styles.statLabel}>Study Sets</span>
+                  </div>
+                  <div className={styles.flashcardStatItem}>
+                    <span className={styles.statNumber}>{studyStats.totalCards}</span>
+                    <span className={styles.statLabel}>Total Cards</span>
+                  </div>
+                  {studyStats.dueForReview > 0 && (
+                    <div className={styles.flashcardStatItem}>
+                      <span className={styles.statNumber + ' ' + styles.dueNumber}>{studyStats.dueForReview}</span>
+                      <span className={styles.statLabel}>Due Now</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Priority Review Banner - Only show if has due cards */}
+            {/* Quick Actions Section */}
+            <div className={styles.quickActionsSection}>
+              <div className={styles.quickActionsCard}>
+                <div className={styles.quickActionsHeader}>
+                  <span className={styles.quickIcon}>⚡</span>
+                  <h3>Quick Actions</h3>
+                </div>
+                <div className={styles.quickActionsGrid}>
+                  <button 
+                    className={styles.modernActionBtn + ' ' + styles.primaryAction} 
+                    onClick={() => setShowCreateModal(true)}
+                  >
+                    <span className={styles.actionIcon}>➕</span>
+                    <span className={styles.actionText}>Create New Set</span>
+                  </button>
+                  
+                  {studyStats.dueForReview > 0 && (
+                    <button className={styles.modernActionBtn + ' ' + styles.reviewAction}>
+                      <span className={styles.actionIcon}>⏰</span>
+                      <span className={styles.actionText}>Review All Due</span>
+                    </button>
+                  )}
+                  
+                  {myFlashcardSets.length > 0 && (
+                    <button 
+                      className={styles.modernActionBtn + ' ' + styles.dangerAction} 
+                      onClick={handleDeleteAllSets}
+                    >
+                      <span className={styles.actionIcon}>🗑️</span>
+                      <span className={styles.actionText}>Delete All</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Priority Review Section */}
             {studyStats.dueForReview > 0 && (
-              <div className={styles.reviewBanner}>
-                <div className={styles.bannerContent}>
-                  <div className={styles.bannerIcon}>⏰</div>
-                  <div className={styles.bannerText}>
-                    <h3>Ready for Review</h3>
-                    <p>{studyStats.dueForReview} sets are due for spaced repetition review</p>
+              <div className={styles.priorityReviewSection}>
+                <div className={styles.priorityReviewCard}>
+                  <div className={styles.priorityHeader}>
+                    <div className={styles.priorityIcon}>🔥</div>
+                    <div className={styles.priorityContent}>
+                      <h3 className={styles.priorityTitle}>Ready for Review</h3>
+                      <p className={styles.priorityDesc}>
+                        {studyStats.dueForReview} sets are due for spaced repetition review
+                      </p>
+                    </div>
+                    <div className={styles.priorityBadge}>
+                      <span className={styles.priorityCount}>{studyStats.dueForReview}</span>
+                    </div>
                   </div>
-                  <button className={styles.bannerAction}>Review All</button>
+                  <button className={styles.priorityActionBtn}>
+                    <span>Review All Now</span>
+                    <span className={styles.priorityArrow}>→</span>
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* Study Sets - Clean Grid Layout */}
-            <div className={styles.setsContainer}>
-              <div className={styles.setsGrid}>
-                {myFlashcardSets.map(set => (
-                  <div key={set.id} className={`${styles.setCard} ${set.dueForReview ? styles.needsReview : ''}`}>
+            {/* Study Sets Grid - Modern Design */}
+            <div className={styles.modernSetsContainer}>
+              <div className={styles.modernSetsGrid}>
+                {myFlashcardSets.map((set, index) => (
+                  <div key={set.id} className={`${styles.modernSetCard} ${set.dueForReview ? styles.dueCard : ''}`}>
+                    <div className={styles.setCardGlow}></div>
                     
                     {/* Card Header */}
-                    <div className={styles.cardHeader}>
-                      <div className={styles.cardTitle}>
-                        <h3>{set.title}</h3>
-                        <span className={styles.cardCount}>{set.cardCount} cards</span>
-                      </div>
-                      {set.dueForReview && (
-                        <div className={styles.dueIndicator}>
-                          <span className={styles.dueIcon}>🔔</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Subject Badge */}
-                    <div className={styles.subjectBadge}>
-                      <span className={styles.subjectIcon}>
+                    <div className={styles.modernCardHeader}>
+                      <div className={styles.setSubjectIcon}>
                         {set.subject === 'Mathematics' && '📐'}
                         {set.subject === 'Chemistry' && '🧪'}
                         {set.subject === 'History' && '📜'}
                         {set.subject === 'Foreign Language' && '🌍'}
-                      </span>
-                      <span>{set.subject}</span>
+                        {!['Mathematics', 'Chemistry', 'History', 'Foreign Language'].includes(set.subject) && '📚'}
+                      </div>
+                      {set.dueForReview && (
+                        <div className={styles.modernDueIndicator}>
+                          <span className={styles.dueNotification}>DUE</span>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Progress Section */}
-                    <div className={styles.progressSection}>
-                      <div className={styles.progressHeader}>
-                        <span className={styles.masteryText}>Mastery</span>
-                        <span className={styles.masteryPercent}>{set.masteryLevel}%</span>
+                    {/* Card Content */}
+                    <div className={styles.modernCardContent}>
+                      <div className={styles.setTitleSection}>
+                        <h3 className={styles.modernSetTitle}>{set.title}</h3>
+                        <div className={styles.setMeta}>
+                          <span className={styles.setCardCount}>{set.cardCount} cards</span>
+                          <span className={styles.setSubject}>{set.subject}</span>
+                        </div>
                       </div>
-                      <div className={styles.progressBar}>
-                        <div 
-                          className={styles.progressFill}
-                          style={{ 
-                            width: `${set.masteryLevel}%`,
-                            background: getMasteryColor(set.masteryLevel)
-                          }}
-                        />
-                      </div>
-                      <div className={styles.progressMeta}>
-                        <span className={styles.difficulty}>
-                          {'★'.repeat(set.difficulty)}
-                        </span>
-                        <span className={styles.studyTime}>~{set.estimatedStudyTime}min</span>
+
+                      {/* Mastery Progress */}
+                      <div className={styles.modernProgressSection}>
+                        <div className={styles.progressHeader}>
+                          <span className={styles.progressLabel}>Mastery Level</span>
+                          <span className={styles.progressValue}>{set.masteryLevel}%</span>
+                        </div>
+                        <div className={styles.progressTrack}>
+                          <div 
+                            className={styles.progressBar}
+                            style={{ 
+                              width: `${set.masteryLevel}%`,
+                              background: getMasteryColor(set.masteryLevel)
+                            }}
+                          ></div>
+                        </div>
+                        <div className={styles.progressDetails}>
+                          <div className={styles.difficultyStars}>
+                            {[...Array(5)].map((_, i) => (
+                              <span 
+                                key={i} 
+                                className={`${styles.star} ${i < set.difficulty ? styles.active : ''}`}
+                              >
+                                ★
+                              </span>
+                            ))}
+                          </div>
+                          <span className={styles.estimatedTime}>~{set.estimatedStudyTime}min</span>
+                        </div>
                       </div>
                     </div>
 
                     {/* Card Actions */}
-                    <div className={styles.setActions}>
+                    <div className={styles.modernCardActions}>
                       <button 
-                        className={`${styles.studyButton} ${set.dueForReview ? styles.reviewButton : ''}`}
+                        className={`${styles.modernStudyBtn} ${set.dueForReview ? styles.reviewBtn : ''}`}
                         onClick={() => handleStartStudy(set)}
                       >
-                        <span className={styles.buttonIcon}>
+                        <span className={styles.btnIcon}>
                           {set.dueForReview ? '🎯' : '📚'}
                         </span>
-                        <span>{set.dueForReview ? 'Review Now' : 'Study'}</span>
+                        <span className={styles.btnText}>
+                          {set.dueForReview ? 'Review Now' : 'Study'}
+                        </span>
                       </button>
                       
-                      <button 
-                        className={styles.manageButton}
-                        onClick={() => {
-                          setSelectedSet(set);
-                          setShowManageModal(true);
-                        }}
-                        style={{ 
-                          background: 'rgba(0, 255, 255, 0.1)', 
-                          color: '#00ffff',
-                          border: '1px solid rgba(0, 255, 255, 0.3)',
-                          padding: '8px 16px',
-                          borderRadius: '6px',
-                          marginLeft: '8px'
-                        }}
-                      >
-                        📝 Manage Cards
-                      </button>
-
-                      <button 
-                        className={styles.deleteButton}
-                        onClick={() => handleDeleteSet(set.id, set.title)}
-                        style={{ 
-                          background: 'rgba(255, 0, 0, 0.1)', 
-                          color: '#ff4444',
-                          border: '1px solid rgba(255, 0, 0, 0.3)',
-                          padding: '8px 16px',
-                          borderRadius: '6px',
-                          marginLeft: '8px',
-                          fontSize: '14px'
-                        }}
-                        title="删除此卡片集"
-                      >
-                        🗑️ Delete
-                      </button>
+                      <div className={styles.secondaryActions}>
+                        <button 
+                          className={styles.modernSecondaryBtn}
+                          onClick={() => {
+                            setSelectedSet(set);
+                            setShowManageModal(true);
+                          }}
+                          title="Manage Cards"
+                        >
+                          <span className={styles.secondaryIcon}>📝</span>
+                        </button>
+                        
+                        <button 
+                          className={styles.modernSecondaryBtn + ' ' + styles.deleteBtn}
+                          onClick={() => handleDeleteSet(set.id, set.title)}
+                          title="Delete Set"
+                        >
+                          <span className={styles.secondaryIcon}>🗑️</span>
+                        </button>
+                      </div>
                     </div>
-
                   </div>
                 ))}
               </div>
 
               {/* Empty State */}
               {myFlashcardSets.length === 0 && (
-                <div className={styles.emptyState}>
-                  <div className={styles.emptyIcon}>🃏</div>
-                  <h3>No Study Sets Yet</h3>
-                  <p>Create your first flashcard set to start learning</p>
-                  <button className={styles.createFirstButton} onClick={() => setShowCreateModal(true)}>
-                    <span>➕</span>
-                    Create Your First Set
-                  </button>
+                <div className={styles.modernEmptyState}>
+                  <div className={styles.emptyStateCard}>
+                    <div className={styles.emptyIcon}>🃏</div>
+                    <h3 className={styles.emptyTitle}>No Study Sets Yet</h3>
+                    <p className={styles.emptyDesc}>
+                      Create your first flashcard set to start your learning journey
+                    </p>
+                    <button 
+                      className={styles.emptyActionBtn} 
+                      onClick={() => setShowCreateModal(true)}
+                    >
+                      <span className={styles.actionIcon}>➕</span>
+                      <span>Create Your First Set</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -773,401 +824,610 @@ const Review = () => {
           </div>
         )}
 
-        {/* Study Tab - Multiple App Inspirations */}
+        {/* Study Tab - Redesigned with Cyberpunk Aesthetic */}
         {activeTab === 'study' && (
           <div className={styles.studyTab}>
-            <div className={styles.tabHeader}>
-              <h2>Study Modes</h2>
-              <p>Choose your learning style - inspired by the best educational apps</p>
+            {/* Tab Header */}
+            <div className={styles.modernTabHeader}>
+              <div className={styles.headerLeft}>
+                <h2 className={styles.modernTabTitle}>
+                  <span className={styles.titleIcon}>🚀</span>
+                  Study Modes
+                </h2>
+                <p className={styles.modernTabSubtitle}>
+                  Choose your learning style - powered by AI and educational science
+                </p>
+              </div>
+              <div className={styles.headerActions}>
+                <div className={styles.studyStreakDisplay}>
+                  <span className={styles.streakIcon}>🔥</span>
+                  <span className={styles.streakText}>{studyStats.streak} day streak</span>
+                </div>
+              </div>
             </div>
 
-            <div className={styles.studyModesGrid}>
-              {studyModes.map(mode => (
-                <div key={mode.id} className={styles.studyModeCard}>
-                  <div className={styles.modeHeader}>
-                    <span className={styles.modeIcon}>{mode.icon}</span>
-                    <div className={styles.modeTitle}>
-                      <h3 className={styles.modeName}>{mode.name}</h3>
-                      <span className={styles.modeInspiration}>Inspired by {mode.inspiration}</span>
+            {/* Study Modes Grid - Enhanced Design */}
+            <div className={styles.modernStudyGrid}>
+              {studyModes.map((mode, index) => (
+                <div key={mode.id} className={`${styles.modernStudyCard} ${styles[`card${index + 1}`]}`}>
+                  <div className={styles.cardGlow}></div>
+                  
+                  <div className={styles.cardHeader}>
+                    <div className={styles.modeIconContainer}>
+                      <span className={styles.modernModeIcon}>{mode.icon}</span>
                     </div>
-                    <span className={styles.modeDifficulty}>{mode.difficulty}</span>
+                    <div className={styles.difficultyBadge}>
+                      <span className={styles.difficultyLevel}>{mode.difficulty}</span>
+                    </div>
                   </div>
                   
-                  <p className={styles.modeDescription}>{mode.description}</p>
-                  
-                  <div className={styles.modeInfo}>
-                    <span className={styles.estimatedTime}>⏱️ {mode.estimatedTime}</span>
-                  </div>
-                  
-                  <div className={styles.modeFeatures}>
-                    {mode.features.map(feature => (
-                      <span key={feature} className={styles.feature}>✓ {feature}</span>
-                    ))}
+                  <div className={styles.cardContent}>
+                    <h3 className={styles.modernModeName}>{mode.name}</h3>
+                    <p className={styles.modernModeDescription}>{mode.description}</p>
+                    
+                    <div className={styles.modeMetrics}>
+                      <div className={styles.metricItem}>
+                        <span className={styles.metricIcon}>⏱️</span>
+                        <span className={styles.metricValue}>{mode.estimatedTime}</span>
+                      </div>
+                      <div className={styles.metricItem}>
+                        <span className={styles.metricIcon}>⚡</span>
+                        <span className={styles.metricValue}>{mode.inspiration}</span>
+                      </div>
+                    </div>
+                    
+                    <div className={styles.featuresList}>
+                      {mode.features.slice(0, 3).map(feature => (
+                        <div key={feature} className={styles.featureItem}>
+                          <span className={styles.featureCheck}>✓</span>
+                          <span className={styles.featureText}>{feature}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   
                   <button 
-                    className={styles.startStudyBtn}
+                    className={styles.modernStartButton}
                     onClick={() => {
-                      // TODO: 整合新的学习模式逻辑
                       alert(`${mode.name} 学习模式正在开发中，请使用卡片集中的"开始学习"按钮`);
                     }}
                   >
-                    Start {mode.name}
+                    <span className={styles.buttonText}>Start Learning</span>
+                    <span className={styles.buttonArrow}>→</span>
                   </button>
                 </div>
               ))}
             </div>
 
-            {/* AI Study Recommendations - Khan Academy inspired */}
-            <div className={styles.aiRecommendations}>
-              <h3>🤖 AI Study Recommendations</h3>
-              <div className={styles.recommendationsGrid}>
-                <div className={styles.recommendationCard}>
-                  <h4>📊 Recommended Focus Areas</h4>
-                  <ul>
-                    <li>Organic Chemistry reactions (65% mastery) - Study for 30 min</li>
-                    <li>Calculus integration techniques (78% mastery) - Quick review</li>
-                    <li>Spanish advanced vocabulary - 15 min spaced repetition</li>
-                  </ul>
+            {/* AI Recommendations Section - Enhanced */}
+            <div className={styles.aiRecommendationsSection}>
+              <div className={styles.sectionHeader}>
+                <h3 className={styles.sectionTitle}>
+                  <span className={styles.aiIcon}>🤖</span>
+                  AI-Powered Study Recommendations
+                </h3>
+                <div className={styles.aiStatus}>
+                  <span className={styles.statusDot}></span>
+                  <span className={styles.statusText}>AI Active</span>
                 </div>
+              </div>
+              
+              <div className={styles.recommendationsContainer}>
                 <div className={styles.recommendationCard}>
-                  <h4>⏰ Optimal Study Schedule</h4>
-                  <ul>
-                    <li>Best time: 9:00-11:00 AM (your peak focus hours)</li>
-                    <li>Break every 25 minutes (Pomodoro technique)</li>
-                    <li>Review before sleep for better retention</li>
-                  </ul>
+                  <div className={styles.recHeader}>
+                    <span className={styles.recIcon}>📊</span>
+                    <h4 className={styles.recTitle}>Focus Areas</h4>
+                  </div>
+                  <div className={styles.recContent}>
+                    <div className={styles.focusItem}>
+                      <span className={styles.focusSubject}>Organic Chemistry</span>
+                      <div className={styles.focusProgress}>
+                        <div className={styles.focusBar}>
+                          <div className={styles.focusFill} style={{ width: '65%' }}></div>
+                        </div>
+                        <span className={styles.focusPercent}>65%</span>
+                      </div>
+                      <span className={styles.focusTime}>30 min suggested</span>
+                    </div>
+                    <div className={styles.focusItem}>
+                      <span className={styles.focusSubject}>Calculus Integration</span>
+                      <div className={styles.focusProgress}>
+                        <div className={styles.focusBar}>
+                          <div className={styles.focusFill} style={{ width: '78%' }}></div>
+                        </div>
+                        <span className={styles.focusPercent}>78%</span>
+                      </div>
+                      <span className={styles.focusTime}>15 min review</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className={styles.recommendationCard}>
+                  <div className={styles.recHeader}>
+                    <span className={styles.recIcon}>⏰</span>
+                    <h4 className={styles.recTitle}>Optimal Schedule</h4>
+                  </div>
+                  <div className={styles.recContent}>
+                    <div className={styles.scheduleItem}>
+                      <span className={styles.scheduleTime}>9:00-11:00 AM</span>
+                      <span className={styles.scheduleDesc}>Peak focus hours</span>
+                    </div>
+                    <div className={styles.scheduleItem}>
+                      <span className={styles.scheduleTime}>25 min sessions</span>
+                      <span className={styles.scheduleDesc}>Pomodoro technique</span>
+                    </div>
+                    <div className={styles.scheduleItem}>
+                      <span className={styles.scheduleTime}>Before sleep</span>
+                      <span className={styles.scheduleDesc}>Memory consolidation</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Exams Tab - Course-focused */}
+        {/* Exams Tab - Completely Redesigned */}
         {activeTab === 'exams' && (
           <div className={styles.examsTab}>
-            <div className={styles.tabHeader}>
-              <h2>Course Exam Simulation</h2>
-              <p>Practice with realistic high school and college course exams</p>
-            </div>
-
-            <div className={styles.examTypesGrid}>
-              {examTypes.map(examType => (
-                <div key={examType.id} className={styles.examTypeCard}>
-                  <h3 className={styles.examTypeName}>{examType.name}</h3>
-                  <p className={styles.examTypeDescription}>{examType.description}</p>
-                  
-                  <div className={styles.examTypeInfo}>
-                    <div className={styles.examInfo}>
-                      <span className={styles.infoLabel}>Duration:</span>
-                      <span className={styles.infoValue}>{examType.duration} minutes</span>
-                    </div>
-                    <div className={styles.examInfo}>
-                      <span className={styles.infoLabel}>Questions:</span>
-                      <span className={styles.infoValue}>{examType.questionCount}</span>
-                    </div>
-                    <div className={styles.examInfo}>
-                      <span className={styles.infoLabel}>Difficulty:</span>
-                      <span className={styles.infoValue}>{examType.difficulty}</span>
-                    </div>
+            {/* Enhanced Header */}
+            <div className={styles.modernTabHeader}>
+              <div className={styles.headerLeft}>
+                <h2 className={styles.modernTabTitle}>
+                  <span className={styles.titleIcon}>📝</span>
+                  Exam Preparation Hub
+                </h2>
+                <p className={styles.modernTabSubtitle}>
+                  AI-generated exams and realistic course simulations
+                </p>
+              </div>
+              <div className={styles.headerActions}>
+                <div className={styles.examStats}>
+                  <div className={styles.examStatItem}>
+                    <span className={styles.statNumber}>12</span>
+                    <span className={styles.statLabel}>Exams Taken</span>
                   </div>
-                  
-                  <div className={styles.examFormats}>
-                    <span className={styles.formatsLabel}>Question Types:</span>
-                    <div className={styles.formatTags}>
-                      {examType.format.map(format => (
-                        <span key={format} className={styles.formatTag}>{format}</span>
-                      ))}
-                    </div>
+                  <div className={styles.examStatItem}>
+                    <span className={styles.statNumber}>87%</span>
+                    <span className={styles.statLabel}>Avg Score</span>
                   </div>
-                  
-                  <div className={styles.examSubjects}>
-                    <span className={styles.subjectsLabel}>Subjects:</span>
-                    <div className={styles.subjectTags}>
-                      {examType.subjects.map(subject => (
-                        <span key={subject} className={styles.subjectTag}>{subject}</span>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <button className={styles.startExamBtn}>
-                    <span className={styles.actionIcon}>🚀</span>
-                    Start {examType.name}
-                  </button>
                 </div>
-              ))}
+              </div>
             </div>
 
-            {/* AI Exam Generator */}
-            <div className={styles.aiExamGenerator}>
-              <h3>🤖 AI Exam Generator</h3>
-              <p>Create personalized exams based on your study materials and weak spots</p>
-              
-              <div className={styles.examGeneratorForm}>
-                <div className={styles.formRow}>
-                  <div className={styles.formGroup}>
-                    <label>Subject Area:</label>
-                    <select className={styles.formSelect}>
+            {/* Quick Exam Generator */}
+            <div className={styles.quickExamSection}>
+              <div className={styles.quickExamCard}>
+                <div className={styles.quickExamHeader}>
+                  <span className={styles.quickIcon}>⚡</span>
+                  <h3>Quick Exam Generator</h3>
+                </div>
+                <div className={styles.quickExamForm}>
+                  <div className={styles.formRow}>
+                    <select className={styles.modernSelect}>
+                      <option>Select Subject</option>
                       <option>Mathematics</option>
                       <option>Chemistry</option>
                       <option>Physics</option>
                       <option>History</option>
-                      <option>English Literature</option>
-                      <option>Foreign Languages</option>
-                      <option>Biology</option>
-                      <option>Psychology</option>
                     </select>
-                  </div>
-                  
-                  <div className={styles.formGroup}>
-                    <label>Exam Type:</label>
-                    <select className={styles.formSelect}>
-                      <option>Unit Test</option>
-                      <option>Chapter Exam</option>
-                      <option>Midterm</option>
-                      <option>Final Exam</option>
-                      <option>Pop Quiz</option>
-                      <option>Custom Mix</option>
+                    <select className={styles.modernSelect}>
+                      <option>Difficulty</option>
+                      <option>Easy</option>
+                      <option>Medium</option>
+                      <option>Hard</option>
                     </select>
+                    <input 
+                      type="number" 
+                      className={styles.modernInput} 
+                      placeholder="Questions" 
+                      defaultValue={25} 
+                    />
+                    <button className={styles.generateBtn}>
+                      <span>Generate</span>
+                      <span className={styles.sparkles}>✨</span>
+                    </button>
                   </div>
                 </div>
-                
-                <div className={styles.formRow}>
-                  <div className={styles.formGroup}>
-                    <label>Duration (minutes):</label>
-                    <input type="number" className={styles.formInput} defaultValue={50} min={10} max={180} />
-                  </div>
-                  
-                  <div className={styles.formGroup}>
-                    <label>Question Count:</label>
-                    <input type="number" className={styles.formInput} defaultValue={25} min={5} max={100} />
-                  </div>
-                </div>
-                
-                <div className={styles.formGroup}>
-                  <label>Focus on Weak Areas:</label>
-                  <div className={styles.checkboxGroup}>
-                    <label className={styles.checkbox}>
-                      <input type="checkbox" defaultChecked />
-                      Include low-mastery topics
-                    </label>
-                    <label className={styles.checkbox}>
-                      <input type="checkbox" defaultChecked />
-                      Weight recent material higher
-                    </label>
-                    <label className={styles.checkbox}>
-                      <input type="checkbox" />
-                      Include cumulative review
-                    </label>
-                  </div>
-                </div>
-                
-                <button className={styles.generateExamBtn}>
-                  <span className={styles.actionIcon}>✨</span>
-                  Generate Personalized Exam
-                </button>
               </div>
+            </div>
+
+            {/* Exam Types Grid - Modern Design */}
+            <div className={styles.modernExamGrid}>
+              {examTypes.map((examType, index) => (
+                <div key={examType.id} className={`${styles.modernExamCard} ${styles[`examCard${index + 1}`]}`}>
+                  <div className={styles.examCardGlow}></div>
+                  
+                  <div className={styles.examCardHeader}>
+                    <div className={styles.examTypeIcon}>
+                      {examType.name.includes('SAT') ? '🎓' : 
+                       examType.name.includes('AP') ? '📚' : 
+                       examType.name.includes('Final') ? '📊' : '📝'}
+                    </div>
+                    <div className={styles.examDifficulty}>
+                      <div className={styles.difficultyDots}>
+                        {[1,2,3,4,5].map(dot => (
+                          <div 
+                            key={dot} 
+                            className={`${styles.difficultyDot} ${
+                              dot <= (examType.difficulty === 'Easy' ? 2 : 
+                                     examType.difficulty === 'Medium' ? 3 : 
+                                     examType.difficulty === 'Hard' ? 4 : 5) 
+                              ? styles.active : ''
+                            }`}
+                          ></div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.examCardContent}>
+                    <h3 className={styles.examTypeName}>{examType.name}</h3>
+                    <p className={styles.examTypeDesc}>{examType.description}</p>
+                    
+                    <div className={styles.examDetails}>
+                      <div className={styles.examDetail}>
+                        <span className={styles.detailIcon}>⏱️</span>
+                        <span className={styles.detailText}>{examType.duration} min</span>
+                      </div>
+                      <div className={styles.examDetail}>
+                        <span className={styles.detailIcon}>❓</span>
+                        <span className={styles.detailText}>{examType.questionCount} questions</span>
+                      </div>
+                    </div>
+                    
+                    <div className={styles.examSubjects}>
+                      {examType.subjects.slice(0, 3).map(subject => (
+                        <span key={subject} className={styles.subjectChip}>{subject}</span>
+                      ))}
+                      {examType.subjects.length > 3 && (
+                        <span className={styles.moreSubjects}>+{examType.subjects.length - 3}</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <button className={styles.modernExamButton}>
+                    <span className={styles.buttonText}>Start Exam</span>
+                    <span className={styles.buttonIcon}>🚀</span>
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Analytics Tab - Learning Insights Integration */}
+        {/* Analytics Tab - Completely Redesigned */}
         {activeTab === 'analytics' && (
           <div className={styles.analyticsTab}>
-            <div className={styles.tabHeader}>
-              <h2>Learning Analytics & Performance</h2>
-              <p>Detailed insights into your study patterns and academic performance</p>
+            {/* Enhanced Header */}
+            <div className={styles.modernTabHeader}>
+              <div className={styles.headerLeft}>
+                <h2 className={styles.modernTabTitle}>
+                  <span className={styles.titleIcon}>📊</span>
+                  Learning Analytics
+                </h2>
+                <p className={styles.modernTabSubtitle}>
+                  AI-powered insights into your study patterns and performance
+                </p>
+              </div>
+              <div className={styles.headerActions}>
+                <div className={styles.timeRangeSelector}>
+                  <button className={styles.timeRange + ' ' + styles.active}>Week</button>
+                  <button className={styles.timeRange}>Month</button>
+                  <button className={styles.timeRange}>Year</button>
+                </div>
+              </div>
             </div>
 
-            <div className={styles.analyticsGrid}>
+            {/* Analytics Dashboard Grid */}
+            <div className={styles.modernAnalyticsGrid}>
               
-              {/* Performance Overview Card */}
-              <div className={styles.analyticsCard}>
-                <h3>📈 Study Performance Overview</h3>
-                <div className={styles.performanceMetrics}>
-                  <div className={styles.metric}>
-                    <span className={styles.metricValue}>
-                      85%
-                    </span>
+              {/* Performance Overview - Hero Card */}
+              <div className={styles.heroAnalyticsCard}>
+                <div className={styles.heroCardHeader}>
+                  <h3 className={styles.heroTitle}>Performance Overview</h3>
+                  <div className={styles.heroTrend}>
+                    <span className={styles.trendIcon}>↗️</span>
+                    <span className={styles.trendText}>+12% this week</span>
+                  </div>
+                </div>
+                
+                <div className={styles.heroMetrics}>
+                  <div className={styles.heroMetric}>
+                    <div className={styles.metricCircle}>
+                      <svg className={styles.progressRing} viewBox="0 0 100 100">
+                        <circle 
+                          cx="50" cy="50" r="45" 
+                          fill="none" 
+                          stroke="rgba(79, 70, 229, 0.2)" 
+                          strokeWidth="8"
+                        />
+                        <circle 
+                          cx="50" cy="50" r="45" 
+                          fill="none" 
+                          stroke="url(#gradient1)" 
+                          strokeWidth="8"
+                          strokeDasharray="283"
+                          strokeDashoffset="85"
+                          transform="rotate(-90 50 50)"
+                        />
+                      </svg>
+                      <div className={styles.metricValue}>85%</div>
+                    </div>
                     <span className={styles.metricLabel}>Study Efficiency</span>
-                    <span className={styles.metricTrend}>↗️ +5% this week</span>
                   </div>
-                  <div className={styles.metric}>
-                    <span className={styles.metricValue}>
-                      76%
-                    </span>
+                  
+                  <div className={styles.heroMetric}>
+                    <div className={styles.metricCircle}>
+                      <svg className={styles.progressRing} viewBox="0 0 100 100">
+                        <circle 
+                          cx="50" cy="50" r="45" 
+                          fill="none" 
+                          stroke="rgba(6, 182, 212, 0.2)" 
+                          strokeWidth="8"
+                        />
+                        <circle 
+                          cx="50" cy="50" r="45" 
+                          fill="none" 
+                          stroke="url(#gradient2)" 
+                          strokeWidth="8"
+                          strokeDasharray="283"
+                          strokeDashoffset="68"
+                          transform="rotate(-90 50 50)"
+                        />
+                      </svg>
+                      <div className={styles.metricValue}>76%</div>
+                    </div>
                     <span className={styles.metricLabel}>Learning Velocity</span>
-                    <span className={styles.metricTrend}>↗️ +3% this week</span>
                   </div>
-                  <div className={styles.metric}>
-                    <span className={styles.metricValue}>
-                      {studyStats.averageMastery}%
-                    </span>
+                  
+                  <div className={styles.heroMetric}>
+                    <div className={styles.metricCircle}>
+                      <svg className={styles.progressRing} viewBox="0 0 100 100">
+                        <circle 
+                          cx="50" cy="50" r="45" 
+                          fill="none" 
+                          stroke="rgba(0, 212, 255, 0.2)" 
+                          strokeWidth="8"
+                        />
+                        <circle 
+                          cx="50" cy="50" r="45" 
+                          fill="none" 
+                          stroke="url(#gradient3)" 
+                          strokeWidth="8"
+                          strokeDasharray="283"
+                          strokeDashoffset="28"
+                          transform="rotate(-90 50 50)"
+                        />
+                      </svg>
+                      <div className={styles.metricValue}>{studyStats.averageMastery}%</div>
+                    </div>
                     <span className={styles.metricLabel}>Average Mastery</span>
-                    <span className={styles.metricTrend}>↗️ +8% this month</span>
+                  </div>
+                </div>
+                
+                <div className={styles.heroFooter}>
+                  <div className={styles.heroStat}>
+                    <span className={styles.heroStatValue}>4h 32m</span>
+                    <span className={styles.heroStatLabel}>This week</span>
+                  </div>
+                  <div className={styles.heroStat}>
+                    <span className={styles.heroStatValue}>38 min</span>
+                    <span className={styles.heroStatLabel}>Avg session</span>
+                  </div>
+                  <div className={styles.heroStat}>
+                    <span className={styles.heroStatValue}>{studyStats.streak} days</span>
+                    <span className={styles.heroStatLabel}>Current streak</span>
                   </div>
                 </div>
               </div>
 
-              {/* Memory Retention Analysis - Anki inspired */}
-              <div className={styles.analyticsCard}>
-                <h3>🧠 Memory Retention Analysis</h3>
-                <div className={styles.retentionChart}>
-                  <div className={styles.retentionItem}>
-                    <span className={styles.retentionLabel}>Immediate (24h)</span>
-                    <div className={styles.retentionBar}>
-                      <div className={styles.retentionFill} style={{ width: '94%' }}></div>
-                    </div>
-                    <span className={styles.retentionValue}>94%</span>
-                  </div>
-                  <div className={styles.retentionItem}>
-                    <span className={styles.retentionLabel}>Short-term (1 week)</span>
-                    <div className={styles.retentionBar}>
-                      <div className={styles.retentionFill} style={{ width: '82%' }}></div>
-                    </div>
-                    <span className={styles.retentionValue}>82%</span>
-                  </div>
-                  <div className={styles.retentionItem}>
-                    <span className={styles.retentionLabel}>Medium-term (1 month)</span>
-                    <div className={styles.retentionBar}>
-                      <div className={styles.retentionFill} style={{ width: '71%' }}></div>
-                    </div>
-                    <span className={styles.retentionValue}>71%</span>
-                  </div>
-                  <div className={styles.retentionItem}>
-                    <span className={styles.retentionLabel}>Long-term (3 months)</span>
-                    <div className={styles.retentionBar}>
-                      <div className={styles.retentionFill} style={{ width: '63%' }}></div>
-                    </div>
-                    <span className={styles.retentionValue}>63%</span>
-                  </div>
+              {/* Memory Retention Analysis */}
+              <div className={styles.modernAnalyticsCard}>
+                <div className={styles.cardHeader}>
+                  <h3 className={styles.cardTitle}>
+                    <span className={styles.cardIcon}>🧠</span>
+                    Memory Retention
+                  </h3>
+                  <div className={styles.cardBadge}>FSRS-5</div>
                 </div>
-              </div>
-
-              {/* Subject Breakdown */}
-              <div className={styles.analyticsCard}>
-                <h3>📚 Subject Mastery Breakdown</h3>
-                <div className={styles.subjectBreakdown}>
-                  {myFlashcardSets.map(set => (
-                    <div key={set.id} className={styles.subjectItem}>
-                      <div className={styles.subjectHeader}>
-                        <span className={styles.subjectName}>{set.subject}</span>
-                        <span className={styles.subjectMastery}>{set.masteryLevel}%</span>
+                
+                <div className={styles.retentionViz}>
+                  {[
+                    { label: '24h', value: 94, color: '#00D4FF' },
+                    { label: '1 week', value: 82, color: '#06B6D4' },
+                    { label: '1 month', value: 71, color: '#4F46E5' },
+                    { label: '3 months', value: 63, color: '#7C3AED' }
+                  ].map((item, index) => (
+                    <div key={item.label} className={styles.retentionItem}>
+                      <div className={styles.retentionHeader}>
+                        <span className={styles.retentionLabel}>{item.label}</span>
+                        <span className={styles.retentionPercent}>{item.value}%</span>
                       </div>
-                      <div className={styles.subjectProgress}>
+                      <div className={styles.retentionBarContainer}>
                         <div 
-                          className={styles.subjectFill}
+                          className={styles.retentionBar}
                           style={{ 
-                            width: `${set.masteryLevel}%`,
-                            backgroundColor: getMasteryColor(set.masteryLevel)
+                            width: `${item.value}%`,
+                            background: `linear-gradient(90deg, ${item.color}40, ${item.color})`
                           }}
                         ></div>
                       </div>
-                      <span className={styles.subjectCards}>{set.cardCount} cards</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* AI Study Recommendations */}
-              <div className={styles.analyticsCard}>
-                <h3>💡 AI-Powered Recommendations</h3>
-                <div className={styles.aiRecommendationsList}>
-                  <div className={styles.recommendation}>
-                    <span className={styles.recommendationIcon}>🎯</span>
-                    <div className={styles.recommendationContent}>
-                      <span className={styles.recommendationTitle}>Focus Priority</span>
-                      <span className={styles.recommendationText}>
-                        Organic Chemistry needs attention - 35% improvement potential
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.recommendation}>
-                    <span className={styles.recommendationIcon}>⏰</span>
-                    <div className={styles.recommendationContent}>
-                      <span className={styles.recommendationTitle}>Optimal Timing</span>
-                      <span className={styles.recommendationText}>
-                        Your peak performance is 9-11 AM. Schedule difficult topics then.
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.recommendation}>
-                    <span className={styles.recommendationIcon}>🔄</span>
-                    <div className={styles.recommendationContent}>
-                      <span className={styles.recommendationTitle}>Spaced Review</span>
-                      <span className={styles.recommendationText}>
-                        Review Spanish vocabulary in 2 days for optimal retention
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.recommendation}>
-                    <span className={styles.recommendationIcon}>🎮</span>
-                    <div className={styles.recommendationContent}>
-                      <span className={styles.recommendationTitle}>Study Method</span>
-                      <span className={styles.recommendationText}>
-                        Try Match Game for Calculus - suits your learning style
-                      </span>
-                    </div>
-                  </div>
+              {/* Weekly Study Heatmap */}
+              <div className={styles.modernAnalyticsCard}>
+                <div className={styles.cardHeader}>
+                  <h3 className={styles.cardTitle}>
+                    <span className={styles.cardIcon}>📅</span>
+                    Study Heatmap
+                  </h3>
                 </div>
-              </div>
-
-              {/* Weekly Progress Chart */}
-              <div className={styles.analyticsCard}>
-                <h3>📊 Weekly Study Progress</h3>
-                <div className={styles.weeklyProgress}>
-                  <div className={styles.progressChart}>
-                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
-                      <div key={day} className={styles.dayProgress}>
-                        <div className={styles.dayBar}>
+                
+                <div className={styles.heatmapContainer}>
+                  <div className={styles.heatmapGrid}>
+                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
+                      const intensity = [60, 80, 45, 90, 70, 30, 40][index];
+                      return (
+                        <div key={day} className={styles.heatmapDay}>
+                          <div className={styles.dayLabel}>{day}</div>
                           <div 
-                            className={styles.dayFill}
-                            style={{ height: `${[60, 80, 45, 90, 70, 30, 40][index]}%` }}
+                            className={styles.heatmapCell}
+                            style={{ 
+                              background: `rgba(79, 70, 229, ${intensity / 100})`,
+                              height: `${intensity}%`
+                            }}
+                            title={`${Math.round(intensity * 1.5)} minutes`}
                           ></div>
                         </div>
-                        <span className={styles.dayLabel}>{day}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
-                  <div className={styles.progressStats}>
-                    <span>Total study time this week: 4h 32m</span>
-                    <span>Average session: 38 minutes</span>
-                    <span>Best day: Thursday (1h 15m)</span>
+                  <div className={styles.heatmapLegend}>
+                    <span>Less</span>
+                    <div className={styles.legendScale}>
+                      {[0.2, 0.4, 0.6, 0.8, 1.0].map(opacity => (
+                        <div 
+                          key={opacity}
+                          className={styles.legendCell}
+                          style={{ background: `rgba(79, 70, 229, ${opacity})` }}
+                        ></div>
+                      ))}
+                    </div>
+                    <span>More</span>
                   </div>
                 </div>
               </div>
 
-              {/* Streak & Achievements */}
-              <div className={styles.analyticsCard}>
-                <h3>🏆 Achievements & Streaks</h3>
-                <div className={styles.achievements}>
-                  <div className={styles.streakCard}>
-                    <span className={styles.streakNumber}>{studyStats.streak}</span>
-                    <span className={styles.streakLabel}>Day Study Streak 🔥</span>
-                    <span className={styles.streakMotivation}>Keep it up! Goal: 30 days</span>
+              {/* Subject Performance Radar */}
+              <div className={styles.modernAnalyticsCard}>
+                <div className={styles.cardHeader}>
+                  <h3 className={styles.cardTitle}>
+                    <span className={styles.cardIcon}>📚</span>
+                    Subject Mastery
+                  </h3>
+                </div>
+                
+                <div className={styles.subjectList}>
+                  {myFlashcardSets.slice(0, 5).map(set => (
+                    <div key={set.id} className={styles.subjectRow}>
+                      <div className={styles.subjectInfo}>
+                        <span className={styles.subjectName}>{set.subject}</span>
+                        <span className={styles.subjectCards}>{set.cardCount} cards</span>
+                      </div>
+                      <div className={styles.subjectProgress}>
+                        <div className={styles.progressTrack}>
+                          <div 
+                            className={styles.progressThumb}
+                            style={{ 
+                              width: `${set.masteryLevel}%`,
+                              background: getMasteryColor(set.masteryLevel)
+                            }}
+                          ></div>
+                        </div>
+                        <span className={styles.progressValue}>{set.masteryLevel}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* AI Insights */}
+              <div className={styles.modernAnalyticsCard}>
+                <div className={styles.cardHeader}>
+                  <h3 className={styles.cardTitle}>
+                    <span className={styles.cardIcon}>🤖</span>
+                    AI Insights
+                  </h3>
+                  <div className={styles.cardBadge}>Live</div>
+                </div>
+                
+                <div className={styles.insightsList}>
+                  {[
+                    { icon: '🎯', text: 'Focus on Organic Chemistry - 35% improvement potential', type: 'priority' },
+                    { icon: '⏰', text: 'Your peak performance is 9-11 AM', type: 'timing' },
+                    { icon: '🔄', text: 'Review Spanish vocabulary in 2 days', type: 'schedule' },
+                    { icon: '🎮', text: 'Try Match Game for Calculus concepts', type: 'method' }
+                  ].map((insight, index) => (
+                    <div key={index} className={styles.insightItem}>
+                      <span className={styles.insightIcon}>{insight.icon}</span>
+                      <span className={styles.insightText}>{insight.text}</span>
+                      <div className={styles.insightType}>{insight.type}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Achievements Showcase */}
+              <div className={styles.modernAnalyticsCard}>
+                <div className={styles.cardHeader}>
+                  <h3 className={styles.cardTitle}>
+                    <span className={styles.cardIcon}>🏆</span>
+                    Achievements
+                  </h3>
+                </div>
+                
+                <div className={styles.achievementsGrid}>
+                  <div className={styles.achievementBadge}>
+                    <div className={styles.badgeIcon}>🎯</div>
+                    <div className={styles.badgeInfo}>
+                      <span className={styles.badgeName}>Sharp Shooter</span>
+                      <span className={styles.badgeDesc}>90%+ accuracy</span>
+                    </div>
+                    <div className={styles.badgeRarity}>Rare</div>
                   </div>
                   
-                  <div className={styles.badgesGrid}>
-                    <div className={styles.badge}>
-                      <span className={styles.badgeIcon}>🎯</span>
-                      <span className={styles.badgeName}>Sharp Shooter</span>
-                      <span className={styles.badgeDesc}>90%+ accuracy on tests</span>
-                    </div>
-                    <div className={styles.badge}>
-                      <span className={styles.badgeIcon}>⚡</span>
+                  <div className={styles.achievementBadge}>
+                    <div className={styles.badgeIcon}>⚡</div>
+                    <div className={styles.badgeInfo}>
                       <span className={styles.badgeName}>Speed Demon</span>
-                      <span className={styles.badgeDesc}>Fast match game times</span>
+                      <span className={styles.badgeDesc}>Fast responses</span>
                     </div>
-                    <div className={styles.badge}>
-                      <span className={styles.badgeIcon}>📚</span>
+                    <div className={`${styles.badgeRarity} ${styles.epic}`}>Epic</div>
+                  </div>
+                  
+                  <div className={styles.achievementBadge}>
+                    <div className={styles.badgeIcon}>📚</div>
+                    <div className={styles.badgeInfo}>
                       <span className={styles.badgeName}>Scholar</span>
-                      <span className={styles.badgeDesc}>Mastered 3 subjects</span>
+                      <span className={styles.badgeDesc}>3 subjects mastered</span>
+                    </div>
+                    <div className={`${styles.badgeRarity} ${styles.legendary}`}>Legendary</div>
+                  </div>
+                </div>
+                
+                <div className={styles.nextAchievement}>
+                  <span className={styles.nextText}>Next: </span>
+                  <span className={styles.nextName}>Perfect Week (6/7 days)</span>
+                  <div className={styles.nextProgress}>
+                    <div className={styles.nextBar}>
+                      <div className={styles.nextFill} style={{ width: '86%' }}></div>
                     </div>
                   </div>
                 </div>
               </div>
-
             </div>
+
+            {/* SVG Gradients for circular progress */}
+            <svg width="0" height="0">
+              <defs>
+                <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#4F46E5" />
+                  <stop offset="100%" stopColor="#06B6D4" />
+                </linearGradient>
+                <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#06B6D4" />
+                  <stop offset="100%" stopColor="#00D4FF" />
+                </linearGradient>
+                <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#00D4FF" />
+                  <stop offset="100%" stopColor="#4F46E5" />
+                </linearGradient>
+              </defs>
+            </svg>
           </div>
         )}
       </div>
