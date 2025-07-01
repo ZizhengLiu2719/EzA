@@ -381,120 +381,139 @@ const Review = () => {
       {/* Main Content Area */}
       <div className={styles.mainContent}>
         
-        {/* Flashcards Tab - Quizlet + Anki Inspired */}
+        {/* Flashcards Tab - Redesigned Clean Version */}
         {activeTab === 'flashcards' && (
           <div className={styles.flashcardsTab}>
-            <div className={styles.tabHeader}>
-              <h2>My Study Sets</h2>
-              <div className={styles.tabActions}>
+            
+            {/* Quick Actions Header */}
+            <div className={styles.actionsHeader}>
+              <div className={styles.headerLeft}>
+                <h2 className={styles.tabTitle}>My Study Sets</h2>
+                <p className={styles.tabSubtitle}>Manage and study your flashcard collections</p>
+              </div>
+              <div className={styles.quickActions}>
                 <button className={styles.actionBtn}>
                   <span className={styles.actionIcon}>📷</span>
-                  Photo to Cards
+                  <span>Photo Scan</span>
                 </button>
                 <button className={styles.actionBtn}>
                   <span className={styles.actionIcon}>📄</span>
-                  Import Document
-                </button>
-                <button className={styles.actionBtn}>
-                  <span className={styles.actionIcon}>🤖</span>
-                  AI Generate
+                  <span>Import</span>
                 </button>
                 <button className={styles.actionBtn + ' ' + styles.primaryAction}>
                   <span className={styles.actionIcon}>➕</span>
-                  Create New Set
+                  <span>Create New</span>
                 </button>
               </div>
             </div>
 
-            {/* Priority Review Section - Anki inspired */}
+            {/* Priority Review Banner - Only show if has due cards */}
             {studyStats.dueForReview > 0 && (
-              <div className={styles.priorityReview}>
-                <h3>📅 Due for Review ({studyStats.dueForReview} sets)</h3>
-                <p>Based on spaced repetition algorithm - optimal time to review for maximum retention</p>
-                <div className={styles.dueCards}>
-                  {myFlashcardSets.filter(set => set.dueForReview).map(set => (
-                    <div key={set.id} className={styles.dueCard}>
-                      <span className={styles.dueTitle}>{set.title}</span>
-                      <span className={styles.dueTime}>Due now</span>
-                      <button className={styles.reviewNowBtn}>Review Now</button>
-                    </div>
-                  ))}
+              <div className={styles.reviewBanner}>
+                <div className={styles.bannerContent}>
+                  <div className={styles.bannerIcon}>⏰</div>
+                  <div className={styles.bannerText}>
+                    <h3>Ready for Review</h3>
+                    <p>{studyStats.dueForReview} sets are due for spaced repetition review</p>
+                  </div>
+                  <button className={styles.bannerAction}>Review All</button>
                 </div>
               </div>
             )}
 
-            {/* Study Sets Grid */}
-            <div className={styles.setsGrid}>
-              {myFlashcardSets.map(set => (
-                <div key={set.id} className={`${styles.setCard} ${set.dueForReview ? styles.dueCard : ''}`}>
-                  <div className={styles.setHeader}>
-                    <h3 className={styles.setTitle}>{set.title}</h3>
-                    <div className={styles.setMeta}>
-                      <span className={styles.cardCount}>{set.cardCount} cards</span>
-                      <div 
-                        className={styles.difficultyBadge}
-                        style={{ backgroundColor: getDifficultyColor(set.difficulty) }}
-                        title={`Difficulty: ${set.difficulty}/5`}
-                      >
-                        {'★'.repeat(set.difficulty)}
+            {/* Study Sets - Clean Grid Layout */}
+            <div className={styles.setsContainer}>
+              <div className={styles.setsGrid}>
+                {myFlashcardSets.map(set => (
+                  <div key={set.id} className={`${styles.setCard} ${set.dueForReview ? styles.needsReview : ''}`}>
+                    
+                    {/* Card Header */}
+                    <div className={styles.cardHeader}>
+                      <div className={styles.cardTitle}>
+                        <h3>{set.title}</h3>
+                        <span className={styles.cardCount}>{set.cardCount} cards</span>
+                      </div>
+                      {set.dueForReview && (
+                        <div className={styles.dueIndicator}>
+                          <span className={styles.dueIcon}>🔔</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Subject Badge */}
+                    <div className={styles.subjectBadge}>
+                      <span className={styles.subjectIcon}>
+                        {set.subject === 'Mathematics' && '📐'}
+                        {set.subject === 'Chemistry' && '🧪'}
+                        {set.subject === 'History' && '📜'}
+                        {set.subject === 'Foreign Language' && '🌍'}
+                      </span>
+                      <span>{set.subject}</span>
+                    </div>
+
+                    {/* Progress Section */}
+                    <div className={styles.progressSection}>
+                      <div className={styles.progressHeader}>
+                        <span className={styles.masteryText}>Mastery</span>
+                        <span className={styles.masteryPercent}>{set.masteryLevel}%</span>
+                      </div>
+                      <div className={styles.progressBar}>
+                        <div 
+                          className={styles.progressFill}
+                          style={{ 
+                            width: `${set.masteryLevel}%`,
+                            background: getMasteryColor(set.masteryLevel)
+                          }}
+                        />
+                      </div>
+                      <div className={styles.progressMeta}>
+                        <span className={styles.difficulty}>
+                          {'★'.repeat(set.difficulty)}
+                        </span>
+                        <span className={styles.studyTime}>~{set.estimatedStudyTime}min</span>
                       </div>
                     </div>
-                  </div>
-                  
-                  <p className={styles.setDescription}>{set.description}</p>
-                  
-                  {/* Mastery Progress - Khan Academy inspired */}
-                  <div className={styles.masterySection}>
-                    <div className={styles.masteryHeader}>
-                      <span className={styles.masteryLabel}>
-                        {getMasteryLabel(set.masteryLevel)}: {set.masteryLevel}%
-                      </span>
-                      <span className={styles.studyTime}>~{set.estimatedStudyTime} min</span>
-                    </div>
-                    <div className={styles.masteryProgress}>
-                      <div 
-                        className={styles.masteryFill}
-                        style={{ 
-                          width: `${set.masteryLevel}%`,
-                          backgroundColor: getMasteryColor(set.masteryLevel)
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                  
-                  <div className={styles.setInfo}>
-                    <span className={styles.subject}>{set.subject}</span>
-                    {set.dueForReview && (
-                      <span className={styles.dueIndicator}>📅 Due for review</span>
-                    )}
-                  </div>
 
-                  <div className={styles.setTags}>
-                    {set.tags.map(tag => (
-                      <span key={tag} className={styles.tag}>#{tag}</span>
-                    ))}
-                  </div>
+                    {/* Card Actions */}
+                    <div className={styles.cardActions}>
+                      <button 
+                        className={`${styles.studyButton} ${set.dueForReview ? styles.reviewButton : ''}`}
+                        onClick={() => setSelectedSet(set)}
+                      >
+                        <span className={styles.buttonIcon}>
+                          {set.dueForReview ? '🎯' : '📚'}
+                        </span>
+                        <span>{set.dueForReview ? 'Review Now' : 'Study'}</span>
+                      </button>
+                      
+                      <div className={styles.secondaryActions}>
+                        <button className={styles.iconButton} title="Edit">
+                          <span>✏️</span>
+                        </button>
+                        <button className={styles.iconButton} title="Share">
+                          <span>🔗</span>
+                        </button>
+                      </div>
+                    </div>
 
-                  <div className={styles.setActions}>
-                    <button 
-                      className={`${styles.studyBtn} ${set.dueForReview ? styles.urgent : ''}`}
-                      onClick={() => setSelectedSet(set)}
-                    >
-                      <span className={styles.actionIcon}>🎯</span>
-                      {set.dueForReview ? 'Review Now' : 'Study'}
-                    </button>
-                    <button className={styles.editBtn}>
-                      <span className={styles.actionIcon}>✏️</span>
-                      Edit
-                    </button>
-                    <button className={styles.shareBtn}>
-                      <span className={styles.actionIcon}>🔗</span>
-                      Share
-                    </button>
                   </div>
+                ))}
+              </div>
+
+              {/* Empty State */}
+              {myFlashcardSets.length === 0 && (
+                <div className={styles.emptyState}>
+                  <div className={styles.emptyIcon}>🃏</div>
+                  <h3>No Study Sets Yet</h3>
+                  <p>Create your first flashcard set to start learning</p>
+                  <button className={styles.createFirstButton}>
+                    <span>➕</span>
+                    Create Your First Set
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
+
           </div>
         )}
 
