@@ -12,558 +12,534 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 1rem;
-  animation: fadeIn 0.3s ease-out;
+  padding: 20px;
 }
 
 .modalContent {
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(100, 116, 139, 0.3);
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   border-radius: 20px;
-  backdrop-filter: blur(20px);
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
   width: 100%;
-  max-width: 600px;
+  max-width: 900px;
   max-height: 90vh;
-  overflow: hidden;
-  animation: slideInUp 0.4s ease-out;
+  overflow-y: auto;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  position: relative;
 }
 
 /* Modal Header */
 .modalHeader {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
-  padding: 2rem 2rem 1rem 2rem;
-  border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+  padding: 24px 32px;
+  border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
 }
 
 .headerContent {
-  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.backButton {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #e5e7eb;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.backButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(124, 58, 237, 0.5);
 }
 
 .modalTitle {
-  font-size: 1.5rem;
+  font-size: 24px;
   font-weight: 700;
-  background: linear-gradient(135deg, #60a5fa, #3b82f6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin: 0 0 0.5rem 0;
-  letter-spacing: -0.025em;
+  color: #ffffff;
+  margin: 0;
 }
 
 .modalSubtitle {
-  font-size: 0.875rem;
-  color: rgba(148, 163, 184, 0.8);
-  margin: 0;
-  line-height: 1.4;
+  font-size: 14px;
+  color: #9ca3af;
+  margin: 4px 0 0 0;
 }
 
 .closeButton {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: rgba(51, 65, 85, 0.6);
-  border: 1px solid rgba(100, 116, 139, 0.2);
-  border-radius: 8px;
-  color: #94a3b8;
+  color: #f87171;
+  font-size: 18px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 1rem;
-  flex-shrink: 0;
-  margin-left: 1rem;
+  transition: all 0.2s;
 }
 
-.closeButton:hover:not(:disabled) {
-  background: rgba(71, 85, 105, 0.8);
-  border-color: rgba(100, 116, 139, 0.4);
-  color: #e2e8f0;
-  transform: scale(1.05);
+.closeButton:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
-.closeButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+/* Method Selection (Step 1) */
+.methodSelection {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-/* Modal Form */
+.methodCard {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.methodCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.methodCard:hover {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+  border-color: rgba(124, 58, 237, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.2);
+}
+
+.methodCard:hover::before {
+  left: 100%;
+}
+
+.methodIcon {
+  font-size: 48px;
+  min-width: 80px;
+  text-align: center;
+}
+
+.methodContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.methodTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+}
+
+.methodDescription {
+  font-size: 14px;
+  color: #9ca3af;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.methodFeatures {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.methodFeature {
+  padding: 4px 8px;
+  background: rgba(124, 58, 237, 0.2);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  border-radius: 6px;
+  font-size: 12px;
+  color: #c084fc;
+}
+
+.methodArrow {
+  font-size: 24px;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.methodCard:hover .methodArrow {
+  color: #a855f7;
+  transform: translateX(4px);
+}
+
+/* Selected Method Banner */
+.selectedMethodBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.methodIconSmall {
+  font-size: 20px;
+}
+
+/* Form Styles */
 .modalForm {
-  padding: 1.5rem 2rem 2rem 2rem;
-  max-height: calc(90vh - 140px);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  padding: 32px;
+  padding-top: 0;
 }
 
-/* Field Groups */
 .fieldGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  margin-bottom: 24px;
 }
 
 .fieldLabel {
-  font-size: 0.875rem;
+  display: block;
+  font-size: 14px;
   font-weight: 600;
-  color: #f1f5f9;
-  margin-bottom: 0.25rem;
+  color: #f3f4f6;
+  margin-bottom: 8px;
 }
 
-/* Form Inputs */
 .fieldInput,
-.fieldSelect,
-.fieldTextarea {
+.fieldTextarea,
+.fieldSelect {
   width: 100%;
-  padding: 0.75rem 1rem;
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid rgba(100, 116, 139, 0.3);
-  border-radius: 10px;
-  color: #f1f5f9;
-  font-size: 0.875rem;
-  font-family: inherit;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(8px);
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 16px;
+  transition: all 0.2s;
 }
 
 .fieldInput:focus,
-.fieldSelect:focus,
-.fieldTextarea:focus {
+.fieldTextarea:focus,
+.fieldSelect:focus {
   outline: none;
-  border-color: rgba(59, 130, 246, 0.6);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(124, 58, 237, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 
 .fieldInput::placeholder,
 .fieldTextarea::placeholder {
-  color: rgba(148, 163, 184, 0.6);
+  color: #9ca3af;
 }
 
-.fieldSelect {
-  cursor: pointer;
-}
-
-.fieldSelect option {
-  background: rgba(15, 23, 42, 0.95);
-  color: #f1f5f9;
-  padding: 0.5rem;
-}
-
-.fieldTextarea {
-  resize: vertical;
-  min-height: 80px;
-  font-family: inherit;
-  line-height: 1.5;
-}
-
-/* Error States */
 .fieldError {
-  border-color: rgba(239, 68, 68, 0.6) !important;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
 }
 
 .errorMessage {
-  font-size: 0.75rem;
-  color: #fca5a5;
-  margin-top: 0.25rem;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
+  display: block;
+  color: #f87171;
+  font-size: 12px;
+  margin-top: 6px;
 }
 
-.errorMessage::before {
-  content: "⚠️";
-  font-size: 0.75rem;
-}
-
-/* Character Count */
-.characterCount {
-  font-size: 0.75rem;
-  color: rgba(148, 163, 184, 0.6);
-  text-align: right;
-  margin-top: 0.25rem;
-}
-
-/* Difficulty Selector */
-.difficultySelector {
+/* Difficulty Grid */
+.difficultyGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 0.75rem;
-  margin-top: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
 }
 
 .difficultyOption {
-  padding: 1rem 0.75rem;
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid rgba(100, 116, 139, 0.3);
-  border-radius: 10px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: center;
+  transition: all 0.2s;
+  text-align: left;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 4px;
 }
 
 .difficultyOption:hover {
-  border-color: rgba(100, 116, 139, 0.5);
-  background: rgba(51, 65, 85, 0.6);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(124, 58, 237, 0.3);
 }
 
-.difficultyOption.selected {
-  border-color: rgba(59, 130, 246, 0.6);
-  background: rgba(59, 130, 246, 0.1);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-.difficultyStars {
-  color: #fbbf24;
-  font-size: 1rem;
-  font-weight: 500;
+.difficultySelected {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
+  border-color: rgba(124, 58, 237, 0.5);
 }
 
 .difficultyLabel {
-  font-size: 0.8rem;
   font-weight: 600;
-  color: #f1f5f9;
+  color: #ffffff;
+  font-size: 14px;
 }
 
 .difficultyDescription {
-  font-size: 0.7rem;
-  color: rgba(148, 163, 184, 0.7);
-  line-height: 1.3;
+  color: #9ca3af;
+  font-size: 12px;
 }
 
-/* Tag Input */
-.tagInput {
+/* Tags */
+.tagContainer {
   display: flex;
-  gap: 0.5rem;
-  align-items: flex-end;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.tagInput .fieldInput {
+.tagInputWrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.tagInput {
   flex: 1;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
 }
 
-.addTagButton {
-  padding: 0.75rem 1rem;
-  background: rgba(51, 65, 85, 0.6);
-  border: 1px solid rgba(100, 116, 139, 0.3);
+.tagAddButton {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.8) 0%, rgba(59, 130, 246, 0.8) 100%);
+  border: none;
   border-radius: 8px;
-  color: #e2e8f0;
-  font-size: 0.8rem;
+  color: #ffffff;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  flex-shrink: 0;
+  transition: all 0.2s;
 }
 
-.addTagButton:hover:not(:disabled) {
-  background: rgba(71, 85, 105, 0.8);
-  border-color: rgba(100, 116, 139, 0.5);
+.tagAddButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
 }
 
-.addTagButton:disabled {
+.tagAddButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* Tag List */
-.tagList {
+.tagsList {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
+  gap: 8px;
 }
 
 .tag {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: rgba(59, 130, 246, 0.2);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 6px;
-  color: #93c5fd;
-  font-size: 0.75rem;
-  font-weight: 500;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(124, 58, 237, 0.2);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  border-radius: 20px;
+  color: #c084fc;
+  font-size: 12px;
 }
 
-.removeTagButton {
-  background: none;
+.tagRemove {
+  background: rgba(239, 68, 68, 0.2);
   border: none;
-  color: rgba(148, 163, 184, 0.7);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f87171;
+  font-size: 10px;
   cursor: pointer;
-  padding: 0;
-  font-size: 0.75rem;
-  transition: color 0.2s ease;
+  transition: all 0.2s;
 }
 
-.removeTagButton:hover:not(:disabled) {
-  color: #fca5a5;
+.tagRemove:hover {
+  background: rgba(239, 68, 68, 0.4);
 }
 
 /* Visibility Options */
 .visibilityOptions {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
+  gap: 12px;
 }
 
-.radioOption {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  cursor: pointer;
-  padding: 1rem;
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid rgba(100, 116, 139, 0.3);
-  border-radius: 10px;
-  transition: all 0.2s ease;
-}
-
-.radioOption:hover {
-  border-color: rgba(100, 116, 139, 0.5);
-  background: rgba(51, 65, 85, 0.6);
-}
-
-.radioOption input[type="radio"] {
-  accent-color: #3b82f6;
-  margin: 0;
-  flex-shrink: 0;
-}
-
-.radioLabel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  flex: 1;
-}
-
-.radioIcon {
-  font-size: 1rem;
-  margin-right: 0.5rem;
-}
-
-.radioLabel > span:nth-child(2) {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #f1f5f9;
-}
-
-.radioDescription {
-  font-size: 0.75rem;
-  color: rgba(148, 163, 184, 0.7);
-  line-height: 1.3;
-}
-
-/* Submit Error */
-.submitError {
-  padding: 0.75rem 1rem;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 8px;
-  color: #fca5a5;
-  font-size: 0.875rem;
+.visibilityOption {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.submitError::before {
-  content: "❌";
-  font-size: 1rem;
+.visibilityOption:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(124, 58, 237, 0.3);
 }
 
-/* Modal Footer */
-.modalFooter {
+.visibilityOption input[type="radio"] {
+  accent-color: #7c3aed;
+}
+
+.visibilityLabel {
+  font-size: 14px;
+  color: #f3f4f6;
+}
+
+/* Modal Actions */
+.modalActions {
   display: flex;
-  gap: 1rem;
+  gap: 16px;
   justify-content: flex-end;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(100, 116, 139, 0.2);
-}
-
-.cancelButton,
-.submitButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
-  border-radius: 10px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid;
-  min-width: 120px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .cancelButton {
-  background: rgba(51, 65, 85, 0.6);
-  border-color: rgba(100, 116, 139, 0.3);
-  color: #e2e8f0;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: #e5e7eb;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .cancelButton:hover:not(:disabled) {
-  background: rgba(71, 85, 105, 0.8);
-  border-color: rgba(100, 116, 139, 0.5);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .submitButton {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  border-color: rgba(59, 130, 246, 0.5);
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%);
+  border: none;
+  border-radius: 12px;
   color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.submitButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
 }
 
 .submitButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2563eb, #1e40af);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
 }
 
-.cancelButton:disabled,
+.submitButton:hover:not(:disabled)::before {
+  left: 100%;
+}
+
 .submitButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
+  transform: none !important;
 }
 
-.buttonIcon {
-  font-size: 1rem;
-}
-
-/* Loading Spinner */
-.loadingSpinner {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid #ffffff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-/* Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+.submitError {
+  color: #f87171;
+  font-size: 14px;
+  text-align: center;
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .modalOverlay {
-    padding: 0.5rem;
-  }
-  
   .modalContent {
-    max-height: 95vh;
-    border-radius: 16px;
+    margin: 10px;
+    max-height: calc(100vh - 20px);
   }
-  
+
   .modalHeader {
-    padding: 1.5rem 1.5rem 1rem 1.5rem;
+    padding: 20px;
   }
-  
+
   .modalForm {
-    padding: 1rem 1.5rem 1.5rem 1.5rem;
+    padding: 20px;
   }
-  
-  .modalTitle {
-    font-size: 1.25rem;
+
+  .methodSelection {
+    padding: 20px;
   }
-  
-  .difficultySelector {
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 0.5rem;
-  }
-  
-  .difficultyOption {
-    padding: 0.75rem 0.5rem;
-  }
-  
-  .tagInput {
+
+  .methodCard {
     flex-direction: column;
-    gap: 0.75rem;
+    text-align: center;
+    gap: 16px;
   }
-  
-  .addTagButton {
-    align-self: flex-start;
+
+  .methodIcon {
+    font-size: 36px;
   }
-  
-  .modalFooter {
-    flex-direction: column-reverse;
+
+  .methodTitle {
+    font-size: 18px;
   }
-  
+
+  .difficultyGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .modalActions {
+    flex-direction: column;
+  }
+
   .cancelButton,
   .submitButton {
     width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .modalHeader {
-    padding: 1.25rem;
-  }
-  
-  .modalForm {
-    padding: 1rem 1.25rem;
-    gap: 1.25rem;
-  }
-  
-  .difficultyOption {
-    padding: 0.5rem;
-  }
-  
-  .difficultyLabel {
-    font-size: 0.75rem;
-  }
-  
-  .difficultyDescription {
-    font-size: 0.65rem;
-  }
-  
-  .visibilityOptions {
-    gap: 0.5rem;
-  }
-  
-  .radioOption {
-    padding: 0.75rem;
   }
 } 

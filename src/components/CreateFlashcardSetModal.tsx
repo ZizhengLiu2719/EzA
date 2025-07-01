@@ -1,6 +1,6 @@
 /**
- * Create Flashcard Set Modal Component
- * 创建新闪卡集合的模态框组件
+ * Unified Create Flashcard Set Modal Component
+ * 统一的闪卡集创建模态框 - 支持多种创建方式
  */
 
 import React, { useState } from 'react'
@@ -11,12 +11,40 @@ interface CreateFlashcardSetModalProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: (data: CreateFlashcardSetData) => Promise<void>
+  onMethodSelected?: (method: CreationMethod, setData: CreateFlashcardSetData) => void
   isLoading?: boolean
 }
 
+// 创建方式枚举
+type CreationMethod = 'manual' | 'import' | 'ai-generate'
+
+const CREATION_METHODS = [
+  {
+    id: 'manual' as CreationMethod,
+    title: '🖊️ Manual Creation',
+    description: 'Create flashcards manually with full control',
+    icon: '🖊️',
+    features: ['Custom design', 'Flexible content', 'Step by step']
+  },
+  {
+    id: 'import' as CreationMethod,
+    title: '📤 Batch Import',
+    description: 'Import from CSV, text, images, or JSON',
+    icon: '📤',
+    features: ['CSV files', 'OCR from images', 'Text parsing', 'JSON import']
+  },
+  {
+    id: 'ai-generate' as CreationMethod,
+    title: '🤖 AI Generation',
+    description: 'Let AI generate flashcards from topics',
+    icon: '🤖',
+    features: ['Topic-based', 'Multiple types', 'Instant creation', 'Smart content']
+  }
+]
+
 const SUBJECTS = [
   'Mathematics',
-  'Science',
+  'Science', 
   'History',
   'English',
   'Foreign Language',
@@ -43,8 +71,12 @@ const CreateFlashcardSetModal: React.FC<CreateFlashcardSetModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
+  onMethodSelected,
   isLoading = false
 }) => {
+  const [currentStep, setCurrentStep] = useState<'method' | 'details'>('method')
+  const [selectedMethod, setSelectedMethod] = useState<CreationMethod>('manual')
+  
   const [formData, setFormData] = useState<CreateFlashcardSetData>({
     title: '',
     description: '',
@@ -60,7 +92,7 @@ const CreateFlashcardSetModal: React.FC<CreateFlashcardSetModalProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [tagInput, setTagInput] = useState('')
 
-  // 表单验证
+  // 验证表单
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
 
@@ -68,24 +100,24 @@ const CreateFlashcardSetModal: React.FC<CreateFlashcardSetModalProps> = ({
       newErrors.title = 'Title is required'
     } else if (formData.title.length < 3) {
       newErrors.title = 'Title must be at least 3 characters'
-    } else if (formData.title.length > 100) {
-      newErrors.title = 'Title must be less than 100 characters'
     }
 
     if (!formData.subject) {
       newErrors.subject = 'Subject is required'
     }
 
-    if (formData.description && formData.description.length > 500) {
-      newErrors.description = 'Description must be less than 500 characters'
-    }
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  // 处理表单提交
-  const handleSubmit = async (e: React.FormEvent) => {
+  // 处理方式选择
+  const handleMethodSelect = (method: CreationMethod) => {
+    setSelectedMethod(method)
+    setCurrentStep('details')
+  }
+
+  // 处理基本信息提交
+  const handleDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!validateForm()) {
@@ -93,8 +125,15 @@ const CreateFlashcardSetModal: React.FC<CreateFlashcardSetModalProps> = ({
     }
 
     try {
-      await onSubmit(formData)
-      handleClose()
+      if (selectedMethod === 'manual') {
+        // 手动创建直接提交表单数据
+        await onSubmit(formData)
+        handleClose()
+      } else {
+        // 对于导入和AI生成，通知父组件选择的方法和数据
+        onMethodSelected?.(selectedMethod, formData)
+        handleClose()
+      }
     } catch (error) {
       console.error('Error creating flashcard set:', error)
       setErrors({ submit: 'Failed to create flashcard set. Please try again.' })
@@ -103,6 +142,8 @@ const CreateFlashcardSetModal: React.FC<CreateFlashcardSetModalProps> = ({
 
   // 处理关闭
   const handleClose = () => {
+    setCurrentStep('method')
+    setSelectedMethod('manual')
     setFormData({
       title: '',
       description: '',
@@ -153,241 +194,268 @@ const CreateFlashcardSetModal: React.FC<CreateFlashcardSetModalProps> = ({
     <div className={styles.modalOverlay} onClick={handleClose}>
       <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
         
-        {/* Modal Header */}
-        <div className={styles.modalHeader}>
-          <div className={styles.headerContent}>
-            <h2 className={styles.modalTitle}>Create New Study Set</h2>
-            <p className={styles.modalSubtitle}>Build your personalized flashcard collection</p>
-          </div>
-          <button 
-            className={styles.closeButton}
-            onClick={handleClose}
-            disabled={isLoading}
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Modal Body */}
-        <form onSubmit={handleSubmit} className={styles.modalForm}>
-          
-          {/* Title Field */}
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>
-              Study Set Title *
-            </label>
-            <input
-              type="text"
-              className={`${styles.fieldInput} ${errors.title ? styles.fieldError : ''}`}
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="e.g., Spanish Vocabulary - Advanced Level"
-              disabled={isLoading}
-              maxLength={100}
-            />
-            {errors.title && (
-              <span className={styles.errorMessage}>{errors.title}</span>
-            )}
-          </div>
-
-          {/* Subject Field */}
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>
-              Subject *
-            </label>
-            <select
-              className={`${styles.fieldSelect} ${errors.subject ? styles.fieldError : ''}`}
-              value={formData.subject}
-              onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-              disabled={isLoading}
-            >
-              <option value="">Select a subject</option>
-              {SUBJECTS.map(subject => (
-                <option key={subject} value={subject}>{subject}</option>
-              ))}
-            </select>
-            {errors.subject && (
-              <span className={styles.errorMessage}>{errors.subject}</span>
-            )}
-          </div>
-
-          {/* Description Field */}
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>
-              Description
-            </label>
-            <textarea
-              className={`${styles.fieldTextarea} ${errors.description ? styles.fieldError : ''}`}
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Describe what this study set covers..."
-              disabled={isLoading}
-              rows={3}
-              maxLength={500}
-            />
-            <div className={styles.characterCount}>
-              {formData.description?.length || 0}/500
-            </div>
-            {errors.description && (
-              <span className={styles.errorMessage}>{errors.description}</span>
-            )}
-          </div>
-
-          {/* Difficulty Level */}
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>
-              Difficulty Level
-            </label>
-            <div className={styles.difficultySelector}>
-              {DIFFICULTY_LEVELS.map(level => (
-                <button
-                  key={level.value}
-                  type="button"
-                  className={`${styles.difficultyOption} ${
-                    formData.difficulty === level.value ? styles.selected : ''
-                  }`}
-                  onClick={() => setFormData(prev => ({ ...prev, difficulty: level.value }))}
-                  disabled={isLoading}
-                >
-                  <div className={styles.difficultyStars}>
-                    {'★'.repeat(level.value)}
-                  </div>
-                  <div className={styles.difficultyLabel}>{level.label}</div>
-                  <div className={styles.difficultyDescription}>{level.description}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Tags Field */}
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>
-              Tags
-            </label>
-            <div className={styles.tagInput}>
-              <input
-                type="text"
-                className={styles.fieldInput}
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyPress={handleTagKeyPress}
-                placeholder="Add tags to organize your set..."
-                disabled={isLoading}
-              />
-              <button
-                type="button"
-                onClick={handleAddTag}
-                className={styles.addTagButton}
-                disabled={isLoading || !tagInput.trim()}
-              >
-                Add
+        {/* Step 1: 选择创建方式 */}
+        {currentStep === 'method' && (
+          <>
+            <div className={styles.modalHeader}>
+              <div className={styles.headerContent}>
+                <h2 className={styles.modalTitle}>Create New Study Set</h2>
+                <p className={styles.modalSubtitle}>Choose how you'd like to create your flashcards</p>
+              </div>
+              <button className={styles.closeButton} onClick={handleClose}>
+                ✕
               </button>
             </div>
-            
-            {formData.tags && formData.tags.length > 0 && (
-              <div className={styles.tagList}>
-                {formData.tags.map(tag => (
-                  <span key={tag} className={styles.tag}>
-                    #{tag}
+
+            <div className={styles.methodSelection}>
+              {CREATION_METHODS.map(method => (
+                <div
+                  key={method.id}
+                  className={styles.methodCard}
+                  onClick={() => handleMethodSelect(method.id)}
+                >
+                  <div className={styles.methodIcon}>{method.icon}</div>
+                  <div className={styles.methodContent}>
+                    <h3 className={styles.methodTitle}>{method.title}</h3>
+                    <p className={styles.methodDescription}>{method.description}</p>
+                    <div className={styles.methodFeatures}>
+                      {method.features.map(feature => (
+                        <span key={feature} className={styles.methodFeature}>
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className={styles.methodArrow}>→</div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Step 2: 输入基本信息 */}
+        {currentStep === 'details' && (
+          <>
+            <div className={styles.modalHeader}>
+              <div className={styles.headerContent}>
+                <button 
+                  className={styles.backButton}
+                  onClick={() => setCurrentStep('method')}
+                >
+                  ← Back
+                </button>
+                <div>
+                  <h2 className={styles.modalTitle}>Study Set Details</h2>
+                  <p className={styles.modalSubtitle}>
+                    Setup basic information for your {selectedMethod === 'manual' ? 'manual' : selectedMethod === 'import' ? 'imported' : 'AI-generated'} study set
+                  </p>
+                </div>
+              </div>
+              <button className={styles.closeButton} onClick={handleClose}>
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleDetailsSubmit} className={styles.modalForm}>
+              
+              {/* Selected Method Indicator */}
+              <div className={styles.selectedMethodBanner}>
+                <span className={styles.methodIconSmall}>
+                  {CREATION_METHODS.find(m => m.id === selectedMethod)?.icon}
+                </span>
+                <span>
+                  {CREATION_METHODS.find(m => m.id === selectedMethod)?.title}
+                </span>
+              </div>
+
+              {/* Title Field */}
+              <div className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>Study Set Title *</label>
+                <input
+                  type="text"
+                  className={`${styles.fieldInput} ${errors.title ? styles.fieldError : ''}`}
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="e.g., Spanish Vocabulary - Advanced Level"
+                  disabled={isLoading}
+                  maxLength={100}
+                />
+                {errors.title && (
+                  <span className={styles.errorMessage}>{errors.title}</span>
+                )}
+              </div>
+
+              {/* Subject Field */}
+              <div className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>Subject *</label>
+                <select
+                  className={`${styles.fieldSelect} ${errors.subject ? styles.fieldError : ''}`}
+                  value={formData.subject}
+                  onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                  disabled={isLoading}
+                >
+                  <option value="">Select a subject</option>
+                  {SUBJECTS.map(subject => (
+                    <option key={subject} value={subject}>{subject}</option>
+                  ))}
+                </select>
+                {errors.subject && (
+                  <span className={styles.errorMessage}>{errors.subject}</span>
+                )}
+              </div>
+
+              {/* Description Field */}
+              <div className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>Description (Optional)</label>
+                <textarea
+                  className={`${styles.fieldTextarea} ${errors.description ? styles.fieldError : ''}`}
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Brief description of your study set..."
+                  disabled={isLoading}
+                  maxLength={500}
+                  rows={3}
+                />
+                {errors.description && (
+                  <span className={styles.errorMessage}>{errors.description}</span>
+                )}
+              </div>
+
+              {/* Difficulty Level */}
+              <div className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>Difficulty Level</label>
+                <div className={styles.difficultyGrid}>
+                  {DIFFICULTY_LEVELS.map(level => (
                     <button
+                      key={level.value}
                       type="button"
-                      onClick={() => handleRemoveTag(tag)}
-                      className={styles.removeTagButton}
+                      className={`${styles.difficultyOption} ${
+                        formData.difficulty === level.value ? styles.difficultySelected : ''
+                      }`}
+                      onClick={() => setFormData(prev => ({ ...prev, difficulty: level.value }))}
                       disabled={isLoading}
                     >
-                      ✕
+                      <span className={styles.difficultyLabel}>{level.label}</span>
+                      <span className={styles.difficultyDescription}>{level.description}</span>
                     </button>
-                  </span>
-                ))}
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
 
-          {/* Visibility Settings */}
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>
-              Visibility
-            </label>
-            <div className={styles.visibilityOptions}>
-              <label className={styles.radioOption}>
-                <input
-                  type="radio"
-                  name="visibility"
-                  value="private"
-                  checked={formData.visibility === 'private'}
-                  onChange={(e) => setFormData(prev => ({ 
-                    ...prev, 
-                    visibility: e.target.value as 'private' | 'public' | 'shared',
-                    is_public: e.target.value === 'public'
-                  }))}
+              {/* Tags */}
+              <div className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>Tags (Optional)</label>
+                <div className={styles.tagContainer}>
+                  <div className={styles.tagInputWrapper}>
+                    <input
+                      type="text"
+                      className={styles.tagInput}
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyPress={handleTagKeyPress}
+                      placeholder="Add tags..."
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      className={styles.tagAddButton}
+                      onClick={handleAddTag}
+                      disabled={!tagInput.trim() || isLoading}
+                    >
+                      Add
+                    </button>
+                  </div>
+                  
+                  {formData.tags && formData.tags.length > 0 && (
+                    <div className={styles.tagsList}>
+                      {formData.tags.map(tag => (
+                        <span key={tag} className={styles.tag}>
+                          {tag}
+                          <button
+                            type="button"
+                            className={styles.tagRemove}
+                            onClick={() => handleRemoveTag(tag)}
+                            disabled={isLoading}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Visibility */}
+              <div className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>Visibility</label>
+                <div className={styles.visibilityOptions}>
+                  <label className={styles.visibilityOption}>
+                    <input
+                      type="radio"
+                      name="visibility"
+                      value="private"
+                      checked={formData.visibility === 'private'}
+                      onChange={(e) => setFormData(prev => ({ 
+                        ...prev, 
+                        visibility: e.target.value as 'private' | 'public' | 'shared',
+                        is_public: false
+                      }))}
+                      disabled={isLoading}
+                    />
+                    <span className={styles.visibilityLabel}>
+                      🔒 Private - Only you can access
+                    </span>
+                  </label>
+                  <label className={styles.visibilityOption}>
+                    <input
+                      type="radio"
+                      name="visibility"
+                      value="public"
+                      checked={formData.visibility === 'public'}
+                      onChange={(e) => setFormData(prev => ({ 
+                        ...prev, 
+                        visibility: e.target.value as 'private' | 'public' | 'shared',
+                        is_public: true
+                      }))}
+                      disabled={isLoading}
+                    />
+                    <span className={styles.visibilityLabel}>
+                      🌍 Public - Anyone can discover and study
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className={styles.modalActions}>
+                <button
+                  type="button"
+                  className={styles.cancelButton}
+                  onClick={() => setCurrentStep('method')}
                   disabled={isLoading}
-                />
-                <span className={styles.radioLabel}>
-                  <span className={styles.radioIcon}>🔒</span>
-                  <span>Private</span>
-                  <span className={styles.radioDescription}>Only you can see this set</span>
-                </span>
-              </label>
-              
-              <label className={styles.radioOption}>
-                <input
-                  type="radio"
-                  name="visibility"
-                  value="public"
-                  checked={formData.visibility === 'public'}
-                  onChange={(e) => setFormData(prev => ({ 
-                    ...prev, 
-                    visibility: e.target.value as 'private' | 'public' | 'shared',
-                    is_public: e.target.value === 'public'
-                  }))}
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  className={styles.submitButton}
                   disabled={isLoading}
-                />
-                <span className={styles.radioLabel}>
-                  <span className={styles.radioIcon}>🌍</span>
-                  <span>Public</span>
-                  <span className={styles.radioDescription}>Anyone can find and study this set</span>
-                </span>
-              </label>
-            </div>
-          </div>
+                >
+                  {isLoading ? 'Creating...' : 
+                   selectedMethod === 'manual' ? 'Create Study Set' :
+                   selectedMethod === 'import' ? 'Create & Import' :
+                   'Create & Generate'}
+                </button>
+              </div>
 
-          {/* Error Display */}
-          {errors.submit && (
-            <div className={styles.submitError}>
-              {errors.submit}
-            </div>
-          )}
-
-          {/* Modal Footer */}
-          <div className={styles.modalFooter}>
-            <button
-              type="button"
-              onClick={handleClose}
-              className={styles.cancelButton}
-              disabled={isLoading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className={styles.submitButton}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <span className={styles.loadingSpinner}>
-                  <span className={styles.spinner}></span>
-                  Creating...
-                </span>
-              ) : (
-                <span>
-                  <span className={styles.buttonIcon}>✨</span>
-                  Create Study Set
-                </span>
+              {errors.submit && (
+                <div className={styles.submitError}>{errors.submit}</div>
               )}
-            </button>
-          </div>
+            </form>
+          </>
+        )}
 
-        </form>
       </div>
     </div>
   )

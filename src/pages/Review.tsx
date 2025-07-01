@@ -1,6 +1,5 @@
 import BackToDashboardButton from '@/components/BackToDashboardButton'
 import { useUser } from '@/context/UserContext'
-import { useAdvancedLearningAnalytics } from '@/hooks/useAdvancedLearningAnalytics'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createFlashcardSet, CreateFlashcardSetData } from '../api/flashcards'
@@ -69,12 +68,7 @@ interface StudySession {
 const Review = () => {
   const { user } = useUser()
   const navigate = useNavigate()
-  const { 
-    comprehensive_analysis, 
-    is_analyzing, 
-    triggerAnalysis,
-    analytics 
-  } = useAdvancedLearningAnalytics(user?.id || '')
+
   
   // State management
   const [activeTab, setActiveTab] = useState<'flashcards' | 'study' | 'exams' | 'analytics'>('flashcards')
@@ -89,6 +83,7 @@ const Review = () => {
   const [showAIGenerator, setShowAIGenerator] = useState(false)
   const [studyCards, setStudyCards] = useState<FSRSCard[]>([])
   const [studySession, setStudySession] = useState<StudySession | null>(null)
+  const [pendingSetData, setPendingSetData] = useState<CreateFlashcardSetData | null>(null)
 
   // Mock data - 在实际环境中这些会从API获取
   const myFlashcardSets = useMemo(() => createDemoFlashcardSets(), []);
@@ -276,6 +271,61 @@ const Review = () => {
     }
   }
 
+  // 处理创建方法选择
+  const handleMethodSelected = async (method: 'manual' | 'import' | 'ai-generate', setData: CreateFlashcardSetData) => {
+    console.log('Selected method:', method, 'with data:', setData)
+    
+    try {
+      // 先创建基本的卡片集
+      await handleCreateFlashcardSet(setData)
+      
+      // 保存设置数据以供后续使用
+      setPendingSetData(setData)
+      
+      // 根据选择的方法打开相应的模态框
+      if (method === 'import') {
+        // 设置一个临时的selectedSet来打开导入模态框
+        const tempSet: FlashcardSet = {
+          id: 'temp-id',
+          title: setData.title,
+          description: setData.description || '',
+          subject: setData.subject || 'Other',
+          cardCount: 0,
+          difficulty: setData.difficulty as 1 | 2 | 3 | 4 | 5,
+          isPublic: setData.is_public || false,
+          author: 'current-user',
+          masteryLevel: 0,
+          estimatedStudyTime: 0,
+          tags: setData.tags || [],
+          dueForReview: false
+        }
+        setSelectedSet(tempSet)
+        setShowBatchImportModal(true)
+      } else if (method === 'ai-generate') {
+        const tempSet: FlashcardSet = {
+          id: 'temp-id',
+          title: setData.title,
+          description: setData.description || '',
+          subject: setData.subject || 'Other',
+          cardCount: 0,
+          difficulty: setData.difficulty as 1 | 2 | 3 | 4 | 5,
+          isPublic: setData.is_public || false,
+          author: 'current-user',
+          masteryLevel: 0,
+          estimatedStudyTime: 0,
+          tags: setData.tags || [],
+          dueForReview: false
+        }
+        setSelectedSet(tempSet)
+        setShowAIGenerator(true)
+      }
+      // 对于manual方法，已经在handleCreateFlashcardSet中处理了
+      
+    } catch (error) {
+      console.error('Error in method selection:', error)
+    }
+  }
+
   // 清理状态的辅助函数
   const handleCloseManageModal = () => {
     setShowManageModal(false);
@@ -285,6 +335,7 @@ const Review = () => {
   const handleCloseBatchImportModal = () => {
     setShowBatchImportModal(false);
     setSelectedSet(null);
+    setPendingSetData(null);
   };
 
   // 开始学习模式
@@ -444,14 +495,6 @@ const Review = () => {
                 <p className={styles.tabSubtitle}>Manage and study your flashcard collections</p>
               </div>
               <div className={styles.quickActions}>
-                <button className={styles.actionBtn}>
-                  <span className={styles.actionIcon}>📷</span>
-                  <span>Photo Scan</span>
-                </button>
-                <button className={styles.actionBtn}>
-                  <span className={styles.actionIcon}>📄</span>
-                  <span>Import</span>
-                </button>
                 <button className={styles.actionBtn + ' ' + styles.primaryAction} onClick={() => setShowCreateModal(true)}>
                   <span className={styles.actionIcon}>➕</span>
                   <span>Create New</span>
@@ -554,42 +597,6 @@ const Review = () => {
                         }}
                       >
                         📝 Manage Cards
-                      </button>
-                      
-                      <button 
-                        className={styles.importButton}
-                        onClick={() => {
-                          setSelectedSet(set);
-                          setShowBatchImportModal(true);
-                        }}
-                        style={{ 
-                          background: 'rgba(255, 107, 107, 0.1)', 
-                          color: '#ff6b6b',
-                          border: '1px solid rgba(255, 107, 107, 0.3)',
-                          padding: '8px 16px',
-                          borderRadius: '6px',
-                          marginLeft: '8px'
-                        }}
-                      >
-                        📤 Import
-                      </button>
-                      
-                      <button 
-                        className={styles.aiGenerateButton}
-                        onClick={() => {
-                          setSelectedSet(set);
-                          setShowAIGenerator(true);
-                        }}
-                        style={{ 
-                          background: 'rgba(0, 210, 255, 0.1)', 
-                          color: '#00d2ff',
-                          border: '1px solid rgba(0, 210, 255, 0.3)',
-                          padding: '8px 16px',
-                          borderRadius: '6px',
-                          marginLeft: '8px'
-                        }}
-                      >
-                        🤖 AI Generate
                       </button>
                     </div>
 
@@ -828,14 +835,14 @@ const Review = () => {
                 <div className={styles.performanceMetrics}>
                   <div className={styles.metric}>
                     <span className={styles.metricValue}>
-                      {comprehensive_analysis?.efficiency_score || 85}%
+                      85%
                     </span>
                     <span className={styles.metricLabel}>Study Efficiency</span>
                     <span className={styles.metricTrend}>↗️ +5% this week</span>
                   </div>
                   <div className={styles.metric}>
                     <span className={styles.metricValue}>
-                      {comprehensive_analysis?.learning_velocity || 76}%
+                      76%
                     </span>
                     <span className={styles.metricLabel}>Learning Velocity</span>
                     <span className={styles.metricTrend}>↗️ +3% this week</span>
@@ -1013,39 +1020,14 @@ const Review = () => {
         )}
       </div>
 
-      {/* Quick Action Floating Panel */}
-      <div className={styles.quickActions}>
-        <button className={styles.quickActionBtn} onClick={() => triggerAnalysis()}>
-          <span className={styles.actionIcon}>🔄</span>
-          <span>Refresh Analytics</span>
-        </button>
-        <button className={styles.quickActionBtn}>
-          <span className={styles.actionIcon}>📊</span>
-          <span>Export Progress</span>
-        </button>
-        <button className={styles.quickActionBtn}>
-          <span className={styles.actionIcon}>🎯</span>
-          <span>Set Study Goals</span>
-        </button>
-        <button className={styles.quickActionBtn}>
-          <span className={styles.actionIcon}>💡</span>
-          <span>Get AI Tips</span>
-        </button>
-        <button 
-          className={styles.quickActionBtn}
-          onClick={() => navigate('/flashcard-test')}
-          style={{ backgroundColor: 'rgba(0, 255, 255, 0.1)', borderColor: 'rgba(0, 255, 255, 0.3)' }}
-        >
-          <span className={styles.actionIcon}>🧪</span>
-          <span>Test New Features</span>
-        </button>
-      </div>
+
 
       {/* Create Flashcard Set Modal */}
       <CreateFlashcardSetModal 
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSubmit={handleCreateFlashcardSet}
+        onMethodSelected={handleMethodSelected}
         isLoading={isCreating}
       />
 
