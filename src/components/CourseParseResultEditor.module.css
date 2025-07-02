@@ -127,50 +127,45 @@
   width: 100%;
 }
 
-.taskRow {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr) 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-  grid-template-columns: 
-    minmax(150px, 3fr) /* Title */
-    minmax(100px, 1.2fr) /* Type */
-    minmax(120px, 1.2fr) /* Due Date */
-    minmax(100px, 1fr) /* Priority */
-    minmax(60px, 0.8fr) /* Hours */
-    minmax(150px, 3fr) /* Description */
-    minmax(50px, 0.8fr); /* Actions */
-  gap: 0.75rem;
-  align-items: center;
-  padding: 0.5rem 0;
+.taskItem {
+  padding: 0.75rem 0;
   border-bottom: 1px solid #303c55;
 }
 
-
-.taskRow > * {
-   /* This will apply to all direct children of taskRow */
-   grid-column: span 1; /* Default span */
-}
-
-/* This is a better way to handle multi-column spans in a reusable way */
-.taskRow > [style*="grid-column: span 3"] {
-    grid-column: span 3;
-}
-
-
 .taskHeader {
-  color: #8892b0;
-  font-weight: bold;
-  font-size: 0.85rem;
-  text-transform: uppercase;
   border-bottom: 2px solid #00c6ff;
   padding-bottom: 0.75rem;
   margin-bottom: 0.5rem;
 }
-.taskHeader > div {
-    padding: 0 0.5rem;
+
+.taskHeader .taskRow,
+.taskHeader .taskDetailRow {
+  color: #8892b0;
+  font-weight: bold;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  margin-top: 0;
+  padding: 0 0.5rem;
+}
+
+.taskRow {
+  display: grid;
+  grid-template-columns: 3fr 1.5fr 1.5fr 1.2fr 1fr; /* Title, Type, Date, Prio, Hours */
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.taskDetailRow {
+  display: grid;
+  grid-template-columns: 1fr auto; /* Description, Actions */
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.5rem;
 }
 
 .taskRow input,
-.taskRow select {
+.taskRow select,
+.taskDetailRow input {
   width: 100%;
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid #303c55;
@@ -182,19 +177,22 @@
 }
 
 .taskRow input:focus,
-.taskRow select:focus {
+.taskRow select:focus,
+.taskDetailRow input:focus {
   outline: none;
   border-color: #0072ff;
   background: rgba(0, 20, 40, 0.5);
 }
 
-.addTaskRow {
+.addTaskItem {
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px dashed #303c55;
+  border-bottom: none;
 }
 
-.deleteButton, .addButton {
+.deleteButton,
+.addButton {
   background: none;
   border: none;
   cursor: pointer;

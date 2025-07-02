@@ -111,19 +111,51 @@ const CourseParseResultEditor: React.FC<Props> = ({ initialData, onSave, onCance
 
         <h3 className={styles.cardSubtitle}><List size={22} /> Task List</h3>
         <div className={styles.taskTable}>
-          <div className={`${styles.taskRow} ${styles.taskHeader}`}>
-            <div style={{gridColumn: 'span 3'}}>Task Title</div>
-            <div>Type</div>
-            <div>Due Date</div>
-            <div>Priority</div>
-            <div>Hours</div>
-            <div style={{gridColumn: 'span 3'}}>Description</div>
-            <div>Actions</div>
+          <div className={`${styles.taskItem} ${styles.taskHeader}`}>
+            <div className={styles.taskRow}>
+              <div>Task Title</div>
+              <div>Type</div>
+              <div>Due Date</div>
+              <div>Priority</div>
+              <div>Est. Hours</div>
+            </div>
+            <div className={styles.taskDetailRow}>
+              <div>Description</div>
+            </div>
           </div>
+
           {data.tasks.map((task, idx) => (
-            <div key={idx} className={styles.taskRow}>
-              <input style={{gridColumn: 'span 3'}} value={task.title ?? ''} onChange={e => handleTaskChange(idx, 'title', e.target.value)} placeholder="Task title" />
-              <select value={task.type ?? ''} onChange={e => handleTaskChange(idx, 'type', e.target.value as any)}>
+            <div key={idx} className={styles.taskItem}>
+              <div className={styles.taskRow}>
+                <input value={task.title ?? ''} onChange={e => handleTaskChange(idx, 'title', e.target.value)} placeholder="Task title" />
+                <select value={task.type ?? 'assignment'} onChange={e => handleTaskChange(idx, 'type', e.target.value as any)}>
+                  <option value="assignment">Assignment</option>
+                  <option value="reading">Reading</option>
+                  <option value="writing">Writing</option>
+                  <option value="exam">Exam</option>
+                  <option value="quiz">Quiz</option>
+                  <option value="project">Project</option>
+                  <option value="presentation">Presentation</option>
+                </select>
+                <input type="date" value={formatDateInputValue(task.due_date)} onChange={e => handleTaskChange(idx, 'due_date', e.target.value || '')} />
+                <select value={task.priority ?? 'medium'} onChange={e => handleTaskChange(idx, 'priority', e.target.value as any)}>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+                <input type="number" value={task.estimated_hours ?? ''} min={0.5} step={0.5} onChange={e => handleTaskChange(idx, 'estimated_hours', Number(e.target.value))} />
+              </div>
+              <div className={styles.taskDetailRow}>
+                <input value={task.description ?? ''} onChange={e => handleTaskChange(idx, 'description', e.target.value)} placeholder="Description" />
+                <button type="button" onClick={() => handleDeleteTask(idx)} className={styles.deleteButton}><Trash2 size={16}/></button>
+              </div>
+            </div>
+          ))}
+
+          <div className={`${styles.taskItem} ${styles.addTaskItem}`}>
+            <div className={styles.taskRow}>
+              <input value={newTask.title} onChange={e => setNewTask({ ...newTask, title: e.target.value })} placeholder="New task title" />
+              <select value={newTask.type} onChange={e => setNewTask({ ...newTask, type: e.target.value as any })}>
                 <option value="assignment">Assignment</option>
                 <option value="reading">Reading</option>
                 <option value="writing">Writing</option>
@@ -132,37 +164,18 @@ const CourseParseResultEditor: React.FC<Props> = ({ initialData, onSave, onCance
                 <option value="project">Project</option>
                 <option value="presentation">Presentation</option>
               </select>
-              <input type="date" value={formatDateInputValue(task.due_date)} onChange={e => handleTaskChange(idx, 'due_date', e.target.value || '')} />
-              <select value={task.priority ?? ''} onChange={e => handleTaskChange(idx, 'priority', e.target.value as any)}>
+              <input type="date" value={newTask.due_date || ''} onChange={e => setNewTask({ ...newTask, due_date: e.target.value || '' })} />
+              <select value={newTask.priority} onChange={e => setNewTask({ ...newTask, priority: e.target.value as any })}>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
               </select>
-              <input type="number" value={task.estimated_hours ?? ''} min={0.5} step={0.5} onChange={e => handleTaskChange(idx, 'estimated_hours', Number(e.target.value))} />
-              <input style={{gridColumn: 'span 3'}} value={task.description ?? ''} onChange={e => handleTaskChange(idx, 'description', e.target.value)} placeholder="Description" />
-              <button type="button" onClick={() => handleDeleteTask(idx)} className={styles.deleteButton}><Trash2 size={16}/></button>
+              <input type="number" value={newTask.estimated_hours ?? ''} min={0.5} step={0.5} onChange={e => setNewTask({ ...newTask, estimated_hours: Number(e.target.value)})} placeholder="Hours" />
             </div>
-          ))}
-          <div className={`${styles.taskRow} ${styles.addTaskRow}`}>
-            <input style={{gridColumn: 'span 3'}} value={newTask.title} onChange={e => setNewTask({ ...newTask, title: e.target.value })} placeholder="New task title" />
-            <select value={newTask.type} onChange={e => setNewTask({ ...newTask, type: e.target.value as any })}>
-               <option value="assignment">Assignment</option>
-               <option value="reading">Reading</option>
-               <option value="writing">Writing</option>
-               <option value="exam">Exam</option>
-               <option value="quiz">Quiz</option>
-               <option value="project">Project</option>
-               <option value="presentation">Presentation</option>
-            </select>
-            <input type="date" value={formatDateInputValue(newTask.due_date)} onChange={e => setNewTask({ ...newTask, due_date: e.target.value || '' })} />
-            <select value={newTask.priority} onChange={e => setNewTask({ ...newTask, priority: e.target.value as any })}>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-            <input type="number" value={newTask.estimated_hours} min={0.5} step={0.5} onChange={e => setNewTask({ ...newTask, estimated_hours: Number(e.target.value)})} />
-            <input style={{gridColumn: 'span 3'}} value={newTask.description} onChange={e => setNewTask({ ...newTask, description: e.target.value })} placeholder="Description" />
-            <button type="button" onClick={handleAddTask} className={styles.addButton}><PlusCircle size={16}/><span>Add</span></button>
+            <div className={styles.taskDetailRow}>
+                <input value={newTask.description} onChange={e => setNewTask({ ...newTask, description: e.target.value })} placeholder="New task description" />
+                <button type="button" onClick={handleAddTask} className={styles.addButton}><PlusCircle size={16}/><span>Add</span></button>
+            </div>
           </div>
         </div>
         

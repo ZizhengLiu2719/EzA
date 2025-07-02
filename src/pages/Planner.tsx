@@ -195,94 +195,95 @@ const Planner: React.FC = () => {
 
   return (
     <div className={styles.smartPlannerRoot}>
-      <button className={styles.backToMenuBtn} onClick={() => navigate('/dashboard')}>Return to Main</button>
-      <div className={styles.leftPanel}>
-        <div className={styles.calendarHeader}>
-          <span className={styles.title}>Calendar</span>
-          <div className={styles.viewSwitch}>
-            <button className={calendarView === 'dayGridMonth' ? styles.active : ''} onClick={() => setCalendarView('dayGridMonth')}>Month</button>
-            <button className={calendarView === 'timeGridWeek' ? styles.active : ''} onClick={() => setCalendarView('timeGridWeek')}>Week</button>
-            <button className={calendarView === 'timeGridDay' ? styles.active : ''} onClick={() => setCalendarView('timeGridDay')}>Day</button>
-            <button className={calendarView === 'listWeek' ? styles.active : ''} onClick={() => setCalendarView('listWeek')}>List</button>
-          </div>
-        </div>
-        <div className={styles.mslCalendarToolbarWrap}>
-          <FullCalendar
-            ref={ref => setCalendarRef(ref)}
-            plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
-            initialView={calendarView}
-            headerToolbar={headerToolbar}
-            customButtons={customButtons}
-            height="auto"
-            events={calendarEvents}
-            eventClick={handleEventClick}
-            eventClassNames={arg => [styles.calendarEvent, isTaskSelected(arg.event.id) ? styles.selectedEvent : '']}
-            datesSet={arg => setCalendarView(arg.view.type)}
-            buttonText={{ today: 'Today' }}
-            droppable={true}
-            editable={true}
-            eventReceive={handleEventReceive}
-            eventDrop={handleEventDrop}
-          />
-        </div>
-        {showStatusModal && modalTask && (
-          <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.18)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}}>
-            <div style={{background:'#fff',borderRadius:16,padding:32,minWidth:320,boxShadow:'0 4px 24px 0 rgba(59,130,246,0.12)'}}>
-              <h3 style={{marginBottom:18,fontSize:'1.2rem',color:'#2563eb'}}>Task Status</h3>
-              <div style={{marginBottom:18}}>
-                <div style={{fontWeight:600,fontSize:'1.1rem',marginBottom:6}}>{modalTask.title}</div>
-                <div style={{color:'#64748b',fontSize:'0.98rem'}}>{modalTask.status === 'completed' ? 'Completed' : 'Incomplete'}</div>
-              </div>
-              <button style={{background:'#3b82f6',color:'#fff',border:'none',borderRadius:8,padding:'8px 24px',fontWeight:600,fontSize:'1rem',marginRight:12,cursor:'pointer'}} onClick={()=>toggleTaskStatus(modalTask)}>
-                {modalTask.status === 'completed' ? 'Mark as Incomplete' : 'Mark as Completed'}
-              </button>
-              <button style={{background:'#f3f4f6',color:'#374151',border:'none',borderRadius:8,padding:'8px 18px',fontWeight:500,fontSize:'1rem',cursor:'pointer'}} onClick={()=>setShowStatusModal(false)}>Cancel</button>
+      <button className={styles.backToMenuBtn} onClick={() => navigate('/dashboard')}>
+        Return to Main
+      </button>
+
+      <div className={styles.plannerContent}>
+        <div className={styles.leftPanel}>
+          <div className={styles.calendarHeader}>
+            <span className={styles.title}>📅 Calendar</span>
+            <div className={styles.viewSwitch}>
+              <button className={calendarView === 'dayGridMonth' ? styles.active : ''} onClick={() => setCalendarView('dayGridMonth')}>Month</button>
+              <button className={calendarView === 'timeGridWeek' ? styles.active : ''} onClick={() => setCalendarView('timeGridWeek')}>Week</button>
+              <button className={calendarView === 'timeGridDay' ? styles.active : ''} onClick={() => setCalendarView('timeGridDay')}>Day</button>
+              <button className={calendarView === 'listWeek' ? styles.active : ''} onClick={() => setCalendarView('listWeek')}>List</button>
             </div>
           </div>
-        )}
-      </div>
-      <div className={styles.rightPanel}>
-        <div className={styles.tasksHeader}>
-          <span className={styles.title}>Task Activities</span>
-          <div className={styles.filterBar}>
-            {FILTERS.map(f => (
-              <button key={f.key} className={filter === f.key ? styles.active : ''} onClick={() => setFilter(f.key)}>{f.label}</button>
-            ))}
+          <div className={styles.mslCalendarToolbarWrap}>
+            <FullCalendar
+              ref={ref => setCalendarRef(ref)}
+              plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
+              initialView={calendarView}
+              headerToolbar={headerToolbar}
+              customButtons={customButtons}
+              height="auto"
+              events={calendarEvents}
+              eventClick={handleEventClick}
+              eventClassNames={arg => isTaskSelected(arg.event.id) ? `${styles.calendarEvent} ${styles.selectedEvent}` : styles.calendarEvent}
+              datesSet={arg => setCalendarView(arg.view.type)}
+              buttonText={{ today: 'Today' }}
+              droppable={true}
+              editable={true}
+              eventReceive={handleEventReceive}
+              eventDrop={handleEventDrop}
+            />
           </div>
         </div>
-        <div className={styles.taskList} ref={taskListRef}>
-          {loading ? <div className={styles.loading}>Loading...</div> :
-            filteredTasks.length === 0 ? <div className={styles.empty}>No tasks</div> :
-              filteredTasks.map(task => (
-                <div
-                  key={task.id}
-                  id={`task-${task.id}`}
-                  data-task-id={task.id}
-                  className={[
-                    styles.taskItem,
-                    isTaskSelected(task.id) ? styles.selectedTask : '',
-                    isOverdue(task.due_date) && task.status !== 'completed' ? styles.overdue : '',
-                    styles[task.priority],
-                  ].join(' ')}
-                  onClick={() => handleTaskClick(task.id)}
-                  draggable
-                  style={{ cursor: 'grab' }}
-                >
-                  <div className={styles.taskTitleRow}>
-                    <span className={styles.taskTitle}>{task.title}</span>
-                    <span className={styles.taskType}>[{task.type}]</span>
+
+        <div className={styles.rightPanel}>
+          <div className={styles.tasksHeader}>
+            <span className={styles.title}>⚡ Task Activities</span>
+            <div className={styles.filterBar}>
+              {FILTERS.map(f => (
+                <button key={f.key} className={filter === f.key ? styles.active : ''} onClick={() => setFilter(f.key)}>{f.label}</button>
+              ))}
+            </div>
+          </div>
+          <div className={styles.taskList} ref={taskListRef}>
+            {loading ? <p>Loading tasks...</p> :
+              filteredTasks.length > 0 ? (
+                filteredTasks.map(task => (
+                  <div
+                    key={task.id}
+                    id={`task-${task.id}`}
+                    className={`${styles.taskItem} ${isTaskSelected(task.id) ? styles.selected : ''}`}
+                    onClick={() => handleTaskClick(task.id)}
+                    data-task-id={task.id}
+                    style={{ borderLeftColor: getPriorityColor(task.priority) }}
+                  >
+                    <div className={styles.taskTitle}>{task.title}</div>
+                    <div className={styles.taskCourse}>{getCourseName(task.course_id)}</div>
+                    <div className={`${styles.taskDue} ${isOverdue(task.due_date) ? styles.overdue : ''}`}>
+                      Due: {formatDateTime(task.due_date)}
+                    </div>
                   </div>
-                  <div className={styles.taskMeta}>
-                    <span className={styles.courseName}>{getCourseName(task.course_id)}</span>
-                    <span className={styles.dueDate}>{formatDateTime(task.due_date)}</span>
-                    <span className={styles.status}>{task.status === 'completed' ? '✅ Completed' : isOverdue(task.due_date) ? '⚠️ Overdue' : ''}</span>
-                  </div>
-                  {task.description && <div className={styles.taskDesc}>{task.description}</div>}
-                </div>
-              ))
-          }
+                ))
+              ) : (
+                <p>No tasks found for this filter.</p>
+              )
+            }
+          </div>
         </div>
       </div>
+
+      {showStatusModal && modalTask && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h3 className={styles.modalTitle}>Task Status</h3>
+            <div className={styles.modalTaskInfo}>
+              <div className={styles.modalTaskTitle}>{modalTask.title}</div>
+              <div className={styles.modalTaskStatus}>{modalTask.status}</div>
+            </div>
+            <div className={styles.modalActions}>
+              <button className={`${styles.modalButton} ${styles.confirmButton}`} onClick={() => toggleTaskStatus(modalTask)}>
+                {modalTask.status === 'completed' ? 'Mark as Incomplete' : 'Mark as Completed'}
+              </button>
+              <button className={`${styles.modalButton} ${styles.cancelButton}`} onClick={() => setShowStatusModal(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
