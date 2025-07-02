@@ -61,7 +61,19 @@ const ExamFlow: React.FC<ExamFlowProps> = ({ isOpen, examType: _examType, onClos
       setPhase('loading'); // Use the loading phase to display the modal error
       return;
     }
-    setExam(generatedExam)
+    
+    // 确保所有问题都有唯一的ID
+    const questionsWithIds = generatedExam.questions.map((q, index) => ({
+      ...q,
+      id: q.id || `gen_qid_${index}_${Date.now()}`
+    }));
+    
+    const examWithEnsuredIds = {
+      ...generatedExam,
+      questions: questionsWithIds
+    };
+
+    setExam(examWithEnsuredIds);
     setPhase('runner')
   }
 

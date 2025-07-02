@@ -49,14 +49,6 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   // 提交答案的逻辑
   const handleConfirmAnswer = () => {
     if (currentAnswer !== undefined) {
-      console.log(
-        '[QuestionRenderer] 确认答案:', 
-        { 
-          questionId: question.id, 
-          answer: currentAnswer, 
-          confidence 
-        }
-      );
       onAnswerChange(question.id, currentAnswer, confidence)
       setIsConfirmed(true)
     }
