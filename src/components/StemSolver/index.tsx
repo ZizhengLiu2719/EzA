@@ -1,22 +1,11 @@
-import React, { useState } from 'react';
-import { BlockMath } from 'react-katex';
-import styles from './StemSolver.module.css';
+import { deleteAllProblemHistory, deleteProblemHistory, getProblemHistory, ProblemHistoryItem, saveProblemToHistory } from '@/api/solver'
+import { Solution, SolutionStep, Visual } from '@/types'
+import { Trash2 } from 'lucide-react'
+import React, { useCallback, useEffect, useState } from 'react'
+import { BlockMath } from 'react-katex'
+import styles from './StemSolver.module.css'
 
 // Define types for the solution data
-interface SolutionStep {
-  title: string;
-  step: string;
-}
-
-interface Visual {
-  type: 'plot';
-  imageUrl: string;
-}
-
-interface Solution {
-  steps: SolutionStep[];
-  visuals: Visual[];
-}
 
 // 从环境变量中获取API Key
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
@@ -27,6 +16,31 @@ const StemSolver = () => {
   const [error, setError] = useState<string | null>(null);
   const [solution, setSolution] = useState<Solution | null>(null);
   const [recognizedText, setRecognizedText] = useState<string | null>(null);
+  const [history, setHistory] = useState<ProblemHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState<ProblemHistoryItem | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<{
+    isOpen: boolean
+    type: 'single' | 'all'
+    id?: string
+  }>({ isOpen: false, type: 'single' });
+
+  const fetchHistory = useCallback(async () => {
+    try {
+      setHistoryLoading(true);
+      const fetchedHistory = await getProblemHistory();
+      setHistory(fetchedHistory);
+    } catch (err) {
+      console.error('Failed to fetch history:', err);
+      // Non-critical error, so we don't show it to the user
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
 
   const handleManualSolve = async () => {
     if (!inputText.trim()) {
@@ -58,6 +72,7 @@ const StemSolver = () => {
     setError(null);
     setSolution(null);
     setRecognizedText(null);
+    setSelectedHistoryItem(null);
 
     if (!OPENAI_API_KEY) {
       setError('OpenAI API Key is not configured in your .env file.');
@@ -106,7 +121,7 @@ const StemSolver = () => {
       const latex = ocrResult.choices[0].message.content.trim();
       
       setRecognizedText(latex);
-      await solveProblem(latex);
+      await solveProblem(latex, `data:image/jpeg;base64,${image_b64}`);
 
     } catch (err: any) {
       console.error('Error with OCR:', err);
@@ -115,11 +130,12 @@ const StemSolver = () => {
     }
   };
 
-  const solveProblem = async (query: string) => {
+  const solveProblem = async (query: string, imageUrl: string | null = null) => {
     setIsLoading(true);
     setError(null);
     setSolution(null);
-    
+    setSelectedHistoryItem(null);
+
     if (!OPENAI_API_KEY) {
       setError('OpenAI API Key is not configured in your .env file.');
       setIsLoading(false);
@@ -165,6 +181,26 @@ const StemSolver = () => {
       
       setSolution(finalSolution);
 
+      // Save to history
+      try {
+        const problem_type = imageUrl ? 'image' : 'text';
+        const problem_input = imageUrl || query;
+        const problem_title = query.length > 40 ? query.substring(0, 37) + '...' : query;
+
+        const newHistoryItem = await saveProblemToHistory({
+          problem_type,
+          problem_input,
+          ai_solution: { steps: finalSolution.steps, visuals: finalSolution.visuals },
+          problem_title
+        });
+
+        // Optimistic update
+        setHistory(prev => [newHistoryItem, ...prev]);
+      } catch (saveError) {
+        console.error('Failed to save to history:', saveError);
+        // Non-critical, so we just log it
+      }
+
     } catch (err: any) {
       console.error('Error solving problem:', err);
       setError('Failed to solve the problem. The solver might not support this type of question yet.');
@@ -173,6 +209,60 @@ const StemSolver = () => {
     }
   };
 
+  const handleHistoryClick = (item: ProblemHistoryItem) => {
+    setSelectedHistoryItem(item);
+    setSolution(item.ai_solution);
+    setRecognizedText(item.problem_type === 'image' ? item.problem_title : null);
+    setInputText(item.problem_type === 'text' ? item.problem_input : '');
+    setError(null);
+  };
+
+  const handleDeleteSingle = (id: string) => {
+    setShowDeleteConfirm({ isOpen: true, type: 'single', id });
+  };
+
+  const handleClearAll = () => {
+    if (history.length === 0) return;
+    setShowDeleteConfirm({ isOpen: true, type: 'all' });
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirm({ isOpen: false, type: 'single' });
+  };
+
+  const handleConfirmDelete = async () => {
+    const { type, id } = showDeleteConfirm;
+
+    if (type === 'single' && id) {
+      const originalHistory = [...history];
+      setHistory(prev => prev.filter(item => item.id !== id));
+      if (selectedHistoryItem?.id === id) {
+        setSelectedHistoryItem(null);
+        setSolution(null);
+      }
+      try {
+        await deleteProblemHistory(id);
+      } catch (err) {
+        console.error('Failed to delete history item:', err);
+        setHistory(originalHistory);
+        alert('Failed to delete item. Please try again.');
+      }
+    } else if (type === 'all') {
+      const originalHistory = [...history];
+      setHistory([]);
+      setSelectedHistoryItem(null);
+      setSolution(null);
+      try {
+        await deleteAllProblemHistory();
+      } catch (err) {
+        console.error('Failed to clear history:', err);
+        setHistory(originalHistory);
+        alert('Failed to clear history. Please try again.');
+      }
+    }
+
+    handleCancelDelete();
+  };
 
   return (
     <div className={styles.solverContainer}>
@@ -202,17 +292,52 @@ const StemSolver = () => {
             onChange={(e) => setInputText(e.target.value)}
             disabled={isLoading}
           />
-          <button onClick={handleManualSolve} className={styles.solveButton} disabled={isLoading}>
-            {isLoading ? 'Solving...' : 'Solve'}
+          <button onClick={() => handleManualSolve()} className={styles.solveButton} disabled={isLoading}>
+            {isLoading && !solution ? 'Solving...' : 'Solve'}
           </button>
         </div>
         <div className={styles.historyCard}>
+          <div className={styles.historyCardHeader}>
             <h2 className={styles.cardTitle}>History</h2>
-            <p className={styles.cardSubtitle}>Your recent problems will appear here.</p>
-            <div className={styles.historyList}>
-              {/* History items will be mapped here */}
+            <button
+              onClick={handleClearAll}
+              className={styles.clearAllButton}
+              disabled={history.length === 0 || historyLoading}
+              title="Clear all history"
+            >
+              <Trash2 size={16} />
+              <span>Clear All</span>
+            </button>
+          </div>
+          <p className={styles.cardSubtitle}>Your recent problems will appear here.</p>
+          <div className={styles.historyList}>
+            {historyLoading ? (
+              <div className={styles.historyItem}>Loading history...</div>
+            ) : history.length === 0 ? (
               <div className={styles.historyItem}>No problems solved yet.</div>
-            </div>
+            ) : (
+              history.map(item => (
+                <div
+                  key={item.id}
+                  className={`${styles.historyItem} ${selectedHistoryItem?.id === item.id ? styles.selected : ''}`}
+                  onClick={() => handleHistoryClick(item)}
+                >
+                  <span className={styles.historyIcon}>{item.problem_type === 'image' ? '🖼️' : '✏️'}</span>
+                  <span className={styles.historyTitle}>{item.problem_title}</span>
+                  <button
+                    className={styles.deleteItemButton}
+                    onClick={e => {
+                      e.stopPropagation()
+                      handleDeleteSingle(item.id)
+                    }}
+                    title="Delete item"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
       <div className={styles.resultsColumn}>
@@ -245,25 +370,56 @@ const StemSolver = () => {
                   </div>
                 </div>
               )}
+              {selectedHistoryItem && selectedHistoryItem.problem_type === 'image' && (
+                 <div className={styles.recognizedProblem}>
+                    <h3>Problem Image:</h3>
+                    <img src={selectedHistoryItem.problem_input} alt="Problem" className={styles.historyImage} />
+                  </div>
+              )}
               <h3>Solution Steps:</h3>
               <div className={styles.stepsContainer}>
-                {solution.steps.map((item, index) => (
+                {solution.steps.map((item: SolutionStep, index: number) => (
                   <div key={index} className={styles.step}>
-                    <div className={styles.stepTitle}>{item.title}</div>
-                    <div className={styles.stepContent}>{item.step}</div>
+                    <h4>{index + 1}. {item.title}</h4>
+                    <p>{item.step}</p>
                   </div>
                 ))}
               </div>
-              {solution.visuals.length > 0 && <h3>Visualizations:</h3>}
-              <div className={styles.visualsContainer}>
-                {solution.visuals.map((vis, index) => (
-                  <img key={index} src={vis.imageUrl} alt={vis.type} className={styles.visualImage} />
-                ))}
-              </div>
+              {solution.visuals && solution.visuals.length > 0 && (
+                <div className={styles.visualsContainer}>
+                  <h3>Visuals:</h3>
+                  {solution.visuals.map((vis: Visual, index: number) => (
+                    <div key={index} className={styles.visual}>
+                      <img src={vis.imageUrl} alt={`Visual aid ${index + 1}`} />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {showDeleteConfirm.isOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h3 className={styles.modalTitle}>Confirm Deletion</h3>
+            <p className={styles.modalText}>
+              {showDeleteConfirm.type === 'all'
+                ? 'Are you sure you want to delete all your history? This action cannot be undone.'
+                : 'Are you sure you want to delete this item?'}
+            </p>
+            <div className={styles.modalActions}>
+              <button onClick={handleCancelDelete} className={`${styles.modalButton} ${styles.modalButtonSecondary}`}>
+                Cancel
+              </button>
+              <button onClick={handleConfirmDelete} className={`${styles.modalButton} ${styles.modalButtonDanger}`}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

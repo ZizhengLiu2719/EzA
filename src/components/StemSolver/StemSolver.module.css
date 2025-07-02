@@ -101,12 +101,176 @@
 
 .historyList {
   margin-top: 16px;
+  max-height: 250px; /* or any height you prefer */
+  overflow-y: auto;
+  padding-right: 8px; /* For scrollbar spacing */
   color: #a0a0b0;
 }
 
 .historyItem {
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(136, 108, 255, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 8px;
+  border-radius: 6px;
+  border-bottom: 1px solid rgba(136, 108, 255, 0.1);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  position: relative;
+}
+
+.historyItem:hover {
+  background-color: rgba(136, 108, 255, 0.1);
+}
+
+.historyItem.selected {
+  background-color: rgba(136, 108, 255, 0.2);
+  border-left: 2px solid #886cff;
+}
+
+.historyIcon {
+  flex-shrink: 0;
+}
+
+.historyTitle {
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #d0d0d0;
+}
+
+.deleteItemButton {
+  background: none;
+  border: none;
+  color: #a0a0b0;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: none; /* Hidden by default */
+  transition: color 0.2s, background-color 0.2s;
+  margin-left: auto;
+}
+
+.historyItem:hover .deleteItemButton {
+  display: block; /* Show on hover */
+}
+
+.deleteItemButton:hover {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.historyCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: -10px; /* Adjust layout */
+}
+
+.clearAllButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clearAllButton:hover:not(:disabled) {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+}
+
+.clearAllButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+
+/* Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: linear-gradient(145deg, #191b2a, #23263b);
+  border: 1px solid rgba(136, 108, 255, 0.3);
+  border-radius: 16px;
+  padding: 32px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.modalTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #f0f0f0;
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.modalText {
+  font-size: 1rem;
+  color: #a0a0b0;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.modalActions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.modalButton {
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  min-width: 120px;
+}
+
+.modalButtonSecondary {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #f0f0f0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modalButtonSecondary:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.modalButtonDanger {
+  background: linear-gradient(90deg, #d32f2f, #ef4444);
+  color: white;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.modalButtonDanger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
 }
 
 .resultsCard {

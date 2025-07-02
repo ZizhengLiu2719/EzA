@@ -400,3 +400,18 @@ export interface SmartPrompt {
   examples?: string[];
 }
 
+export interface SolutionStep {
+  title: string
+  step: string
+}
+
+export interface Visual {
+  type: 'plot'
+  imageUrl: string
+}
+
+export interface Solution {
+  steps: SolutionStep[]
+  visuals: Visual[]
+}
+
