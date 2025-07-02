@@ -1,21 +1,13 @@
 import { courseParseApi, coursesApi } from '@/api/courses';
-import BackButton from '@/components/BackButton';
 import { Course, Task } from '@/types';
+import { ArrowLeft, BookOpen, Calendar, ListChecks, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-
-const infoBoxStyle: React.CSSProperties = {
-  background: '#fff',
-  borderRadius: 12,
-  border: '1px solid #e5e7eb',
-  padding: 32,
-  margin: '40px auto',
-  maxWidth: 900,
-  position: 'relative',
-};
+import { useNavigate, useParams } from 'react-router-dom';
+import styles from './CourseDetail.module.css';
 
 const CourseDetail = () => {
   const { courseId } = useParams<{ courseId: string }>();
+  const navigate = useNavigate();
   const [course, setCourse] = useState<Course | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,47 +33,96 @@ const CourseDetail = () => {
     if (courseId) fetchData();
   }, [courseId]);
 
-  if (loading) return <div style={infoBoxStyle}><BackButton /><div>Loading...</div></div>;
-  if (error) return <div style={infoBoxStyle}><BackButton /><div style={{ color: 'red' }}>{error}</div></div>;
+  const getPriorityClass = (priority: string) => {
+    switch (priority?.toLowerCase()) {
+      case 'high':
+        return styles.highPriority;
+      case 'medium':
+        return styles.mediumPriority;
+      case 'low':
+        return styles.lowPriority;
+      default:
+        return '';
+    }
+  };
+
+  if (loading) return <div className={styles.container}><div className={styles.loader}></div></div>;
+  if (error) return <div className={styles.container}><div className={styles.error}>{error}</div></div>;
   if (!course) return null;
 
   return (
-    <div style={infoBoxStyle}>
-      <BackButton />
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 16 }}>Course Details</h1>
-      <div style={{ marginBottom: 20 }}>
-        <strong>Course Name:</strong> {course.name}<br />
-        <strong>Semester:</strong> {course.semester} <strong>Year:</strong> {course.year}<br />
-        {course.description && <><strong>Course Description:</strong> {course.description}<br /></>}
-        {course.grading_policy && <><strong>Grading Policy:</strong> {course.grading_policy}<br /></>}
+    <div className={styles.container}>
+      <button onClick={() => navigate('/courses')} className={styles.backButton}>
+        <ArrowLeft size={18} />
+        <span>Back to Courses</span>
+      </button>
+
+      <div className={styles.courseCard}>
+        <div className={styles.cardHeader}>
+          <BookOpen size={28} className={styles.headerIcon} />
+          <h1 className={styles.courseName}>{course.name}</h1>
+        </div>
+        <div className={styles.courseMeta}>
+          <span className={styles.metaItem}>
+            <Calendar size={16} />
+            {course.semester} {course.year}
+          </span>
+        </div>
+        <div className={styles.courseContent}>
+          {course.description && (
+            <div className={styles.contentBlock}>
+              <h3 className={styles.blockTitle}>Description</h3>
+              <p>{course.description}</p>
+            </div>
+          )}
+          {course.grading_policy && (
+            <div className={styles.contentBlock}>
+              <h3 className={styles.blockTitle}>Grading Policy</h3>
+              <p>{course.grading_policy}</p>
+            </div>
+          )}
+        </div>
       </div>
-      <h2 style={{ fontSize: 22, fontWeight: 600, margin: '24px 0 12px' }}>Task List</h2>
-      {tasks.length === 0 ? <div>No tasks</div> : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', background: '#f9fafb' }}>
-          <thead>
-            <tr style={{ background: '#f3f4f6' }}>
-              <th style={{ padding: '8px', textAlign: 'left' }}>Task Title</th>
-              <th style={{ padding: '8px', textAlign: 'left' }}>Type</th>
-              <th style={{ padding: '8px', textAlign: 'left' }}>Due Date</th>
-              <th style={{ padding: '8px', textAlign: 'left' }}>Priority</th>
-              <th style={{ padding: '8px', textAlign: 'left' }}>Estimated Hours</th>
-              <th style={{ padding: '8px', textAlign: 'left' }}>Task Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tasks.map(task => (
-              <tr key={task.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                <td style={{ padding: '8px' }}>{task.title}</td>
-                <td style={{ padding: '8px' }}>{task.type}</td>
-                <td style={{ padding: '8px' }}>{task.due_date ? (task.due_date.length > 10 ? task.due_date.slice(0, 10) : task.due_date) : ''}</td>
-                <td style={{ padding: '8px' }}>{task.priority}</td>
-                <td style={{ padding: '8px' }}>{task.estimated_hours}</td>
-                <td style={{ padding: '8px' }}>{task.description}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+
+      <div className={styles.tasksCard}>
+        <div className={styles.cardHeader}>
+          <ListChecks size={28} className={styles.headerIcon} />
+          <h2 className={styles.tasksTitle}>Task List</h2>
+        </div>
+        <div className={styles.taskList}>
+          {tasks.length > 0 ? (
+            <>
+              <div className={styles.taskHeaderRow}>
+                <div className={styles.taskCell}>Task Title</div>
+                <div className={styles.taskCell}>Type</div>
+                <div className={styles.taskCell}>Due Date</div>
+                <div className={styles.taskCell}>Priority</div>
+                <div className={styles.taskCell}>Hours</div>
+                <div className={`${styles.taskCell} ${styles.taskCellDesc}`}>Description</div>
+              </div>
+              {tasks.map(task => (
+                <div key={task.id} className={styles.taskRow}>
+                  <div className={styles.taskCell}>{task.title}</div>
+                  <div className={styles.taskCell}>{task.type}</div>
+                  <div className={styles.taskCell}>{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}</div>
+                  <div className={styles.taskCell}>
+                    <span className={`${styles.priorityBadge} ${getPriorityClass(task.priority)}`}>
+                      <Star size={12} />
+                      {task.priority}
+                    </span>
+                  </div>
+                  <div className={styles.taskCell}>{task.estimated_hours}</div>
+                  <div className={`${styles.taskCell} ${styles.taskCellDesc}`}>{task.description}</div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <div className={styles.emptyState}>
+              <p>No tasks found for this course.</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

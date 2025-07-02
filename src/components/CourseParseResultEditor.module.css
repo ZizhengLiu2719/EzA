@@ -1,75 +1,280 @@
-.editorRoot {
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  padding: 32px;
-  margin-bottom: 32px;
+.editorContainer {
+  width: 100%;
+  max-width: 1400px;
+  margin: 2rem auto;
+  padding: 2rem;
+  color: #e0e0e0;
 }
-.section {
-  margin-bottom: 20px;
-}
-.section label {
-  font-weight: 500;
-  margin-right: 8px;
-}
-.section input, .section textarea, .section select {
-  margin-right: 8px;
-  margin-bottom: 4px;
-  padding: 6px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 15px;
-}
-.section textarea {
-  min-width: 300px;
-  min-height: 40px;
-}
-.taskItem {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1.5fr 1fr 1.2fr 2.5fr 0.8fr;
-  align-items: center;
-  gap: 0;
-  margin-bottom: 8px;
-}
-.addTaskRow {
+
+.infoBanner {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 1rem;
+  background-color: rgba(23, 87, 128, 0.3);
+  border: 1px solid #175780;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+  color: #b0c4de;
 }
-.saveBtn {
-  background: #3b82f6;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-right: 12px;
+
+.infoBanner p {
+  margin: 0;
 }
-.cancelBtn {
-  background: #f3f4f6;
-  color: #374151;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
+
+.card {
+  background: rgba(10, 25, 47, 0.8);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
-.taskHeader {
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00c6ff, #0072ff, #00c6ff, transparent);
+  animation: glow-border 4s linear infinite;
+}
+
+@keyframes glow-border {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.cardTitle, .cardSubtitle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #c5c6c7;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-shadow: 0 0 5px rgba(0, 198, 255, 0.5);
+}
+
+.cardTitle {
+  font-size: 1.8rem;
+  margin-top: 0;
+}
+
+.cardSubtitle {
+  font-size: 1.4rem;
+  margin-top: 2rem;
+  border-bottom: 1px solid rgba(0, 198, 255, 0.2);
+  padding-bottom: 0.75rem;
+}
+
+.grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1.5fr 1fr 1.2fr 2.5fr 0.8fr;
-  font-weight: 600;
-  background: #f3f4f6;
-  padding: 8px 0;
-  border-radius: 6px;
-  margin-bottom: 6px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
 }
-.taskHeader span {
-  text-align: left;
-  font-size: 15px;
-  color: #374151;
-  padding: 0 4px;
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formGroup label {
+  font-size: 0.9rem;
+  color: #8892b0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.formGroup input,
+.formGroup textarea,
+.formGroup select {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid #303c55;
+  border-radius: 6px;
+  padding: 0.75rem;
+  color: #e0e0e0;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus,
+.formGroup select:focus {
+  outline: none;
+  border-color: #00c6ff;
+  box-shadow: 0 0 0 3px rgba(0, 198, 255, 0.2);
+}
+.formGroup textarea {
+  resize: vertical;
+}
+
+/* Task Table Styling */
+.taskTable {
+  display: flex;
+  flex-direction: column;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.taskRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 
+    minmax(150px, 3fr) /* Title */
+    minmax(100px, 1.2fr) /* Type */
+    minmax(120px, 1.2fr) /* Due Date */
+    minmax(100px, 1fr) /* Priority */
+    minmax(60px, 0.8fr) /* Hours */
+    minmax(150px, 3fr) /* Description */
+    minmax(50px, 0.8fr); /* Actions */
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #303c55;
+}
+
+
+.taskRow > * {
+   /* This will apply to all direct children of taskRow */
+   grid-column: span 1; /* Default span */
+}
+
+/* This is a better way to handle multi-column spans in a reusable way */
+.taskRow > [style*="grid-column: span 3"] {
+    grid-column: span 3;
+}
+
+
+.taskHeader {
+  color: #8892b0;
+  font-weight: bold;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  border-bottom: 2px solid #00c6ff;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.taskHeader > div {
+    padding: 0 0.5rem;
+}
+
+.taskRow input,
+.taskRow select {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid #303c55;
+  border-radius: 4px;
+  padding: 0.5rem;
+  color: #e0e0e0;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.taskRow input:focus,
+.taskRow select:focus {
+  outline: none;
+  border-color: #0072ff;
+  background: rgba(0, 20, 40, 0.5);
+}
+
+.addTaskRow {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #303c55;
+}
+
+.deleteButton, .addButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.deleteButton {
+  color: #ff5555;
+}
+
+.deleteButton:hover {
+  background-color: rgba(255, 85, 85, 0.1);
+  color: #ff8080;
+}
+
+.addButton {
+  color: #00c6ff;
+  background-color: rgba(0, 198, 255, 0.1);
+  border: 1px solid #00c6ff;
+  gap: 0.5rem;
+}
+
+.addButton span {
+    font-weight: bold;
+}
+
+.addButton:hover {
+  background-color: rgba(0, 198, 255, 0.2);
+  box-shadow: 0 0 10px rgba(0, 198, 255, 0.3);
+}
+
+/* --- Actions --- */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(0, 198, 255, 0.2);
+}
+
+.mainButton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.saveButton {
+  color: #ffffff;
+  background: linear-gradient(90deg, #0072ff, #00c6ff);
+  border-image: linear-gradient(90deg, #00c6ff, #0072ff) 1;
+  box-shadow: 0 0 15px rgba(0, 198, 255, 0.4);
+}
+
+.saveButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 198, 255, 0.6);
+}
+
+.cancelButton {
+  color: #a8b2d1;
+  background: transparent;
+  border: 2px solid #303c55;
+}
+
+.cancelButton:hover {
+  background: #303c55;
+  color: #ffffff;
 } 

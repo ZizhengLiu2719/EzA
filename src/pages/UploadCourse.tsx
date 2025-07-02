@@ -287,9 +287,6 @@ const UploadCourse = () => {
         
         {editMode && parseResult ? (
           <>
-            <div className={styles.infoTip} style={{marginBottom: 16, color: '#b45309', background: '#fef3c7', padding: '10px 16px', borderRadius: 6, fontSize: 15}}>
-              AI-parsed task lists only include tasks related to course grading. If syllabus information is not clear enough, AI may not extract relevant information. Students should add tasks based on actual course requirements during the semester.
-            </div>
             <CourseParseResultEditor
               initialData={parseResult}
               onSave={handleSaveStructured}

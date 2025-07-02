@@ -1,61 +1,106 @@
-import BackToDashboardButton from '@/components/BackToDashboardButton';
-import { useCourses } from '@/hooks/useCourses';
-import { Link } from 'react-router-dom';
+import { useCourses } from '@/hooks/useCourses'
+import { Edit, Eye, Home, PlusCircle, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import styles from './CourseList.module.css'
 
 const CourseList = () => {
-  const { courses, loading, error, deleteCourse, fetchCourses } = useCourses();
+  const { courses, loading, error, deleteCourse } = useCourses()
+  const navigate = useNavigate()
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<{
+    isOpen: boolean
+    id?: string
+  }>({ isOpen: false })
 
-  const handleDelete = async (courseId: string) => {
-    const ok = window.confirm('Are you sure you want to delete this course syllabus? This action cannot be undone!');
-    if (!ok) return;
-    const success = await deleteCourse(courseId);
-    if (success) {
-      fetchCourses();
-    } else {
-      alert('Delete failed, please try again');
+  const handleDeleteClick = (courseId: string) => {
+    setShowDeleteConfirm({ isOpen: true, id: courseId })
+  }
+
+  const handleConfirmDelete = async () => {
+    if (showDeleteConfirm.id) {
+      await deleteCourse(showDeleteConfirm.id)
+      setShowDeleteConfirm({ isOpen: false })
     }
-  };
+  }
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirm({ isOpen: false })
+  }
 
   return (
-    <div style={{ maxWidth: 900, margin: '40px auto', background: '#fff', borderRadius: 12, padding: 32, boxShadow: '0 1px 3px rgba(0,0,0,0.06)', position: 'relative' }}>
-      <BackToDashboardButton />
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 24 }}>My Course Syllabi</h1>
-      <div style={{ marginBottom: 24 }}>
-        <Link to="/upload">
-          <button style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 20px', fontSize: 16, fontWeight: 600, cursor: 'pointer' }}>Upload New Syllabus</button>
+    <div className={styles.container}>
+      <button onClick={() => navigate('/dashboard')} className={styles.backButton}>
+        <Home size={18} />
+        <span>Return to Main</span>
+      </button>
+
+      <div className={styles.header}>
+        <h1 className={styles.title}>My Course Syllabi</h1>
+        <Link to="/upload" className={styles.uploadButton}>
+          <PlusCircle size={20} />
+          <span>Upload New Syllabus</span>
         </Link>
       </div>
-      {loading && <div>Loading...</div>}
-      {error && <div style={{ color: 'red' }}>{error}</div>}
-      {!loading && courses.length === 0 && <div>No courses yet, please upload a syllabus first.</div>}
-      {!loading && courses.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse', background: '#f9fafb' }}>
-          <thead>
-            <tr style={{ background: '#f3f4f6' }}>
-              <th style={{ padding: '10px 8px', textAlign: 'left' }}>Course Name</th>
-              <th style={{ padding: '10px 8px', textAlign: 'left' }}>Semester</th>
-              <th style={{ padding: '10px 8px', textAlign: 'left' }}>Year</th>
-              <th style={{ padding: '10px 8px', textAlign: 'left' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {courses.map(course => (
-              <tr key={course.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                <td style={{ padding: '10px 8px' }}>{course.name}</td>
-                <td style={{ padding: '10px 8px' }}>{course.semester}</td>
-                <td style={{ padding: '10px 8px' }}>{course.year}</td>
-                <td style={{ padding: '10px 8px', display: 'flex', gap: 8 }}>
-                  <Link to={`/courses/${course.id}`}><button style={{ background: '#e0f2fe', color: '#0369a1', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 500, cursor: 'pointer' }}>View</button></Link>
-                  <Link to={`/upload-course/${course.id}`}><button style={{ background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 500, cursor: 'pointer' }}>Edit Syllabus</button></Link>
-                  <button onClick={() => handleDelete(course.id)} style={{ background: '#fee2e2', color: '#b91c1c', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 500, cursor: 'pointer' }}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+      <div className={styles.content}>
+        {loading && <div className={styles.loader}></div>}
+        {error && <div className={styles.error}>{error}</div>}
+        {!loading && !error && (
+          <div className={styles.courseList}>
+            <div className={styles.listHeader}>
+              <div className={styles.headerName}>Course Name</div>
+              <div className={styles.headerSemester}>Semester</div>
+              <div className={styles.headerYear}>Year</div>
+              <div className={styles.headerActions}>Actions</div>
+            </div>
+            {courses.length > 0 ? (
+              courses.map(course => (
+                <div key={course.id} className={styles.courseRow}>
+                  <div className={styles.cellName}>{course.name}</div>
+                  <div className={styles.cellSemester}>{course.semester}</div>
+                  <div className={styles.cellYear}>{course.year}</div>
+                  <div className={styles.cellActions}>
+                    <button onClick={() => navigate(`/courses/${course.id}`)} className={`${styles.actionButton} ${styles.viewButton}`} title="View">
+                      <Eye size={16} />
+                    </button>
+                    <button onClick={() => navigate(`/upload-course/${course.id}`)} className={`${styles.actionButton} ${styles.editButton}`} title="Edit">
+                      <Edit size={16} />
+                    </button>
+                    <button onClick={() => handleDeleteClick(course.id)} className={`${styles.actionButton} ${styles.deleteButton}`} title="Delete">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className={styles.emptyState}>
+                <p>No courses yet. Upload your first syllabus to get started!</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {showDeleteConfirm.isOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h3 className={styles.modalTitle}>Confirm Deletion</h3>
+            <p className={styles.modalText}>
+              Are you sure you want to delete this course syllabus? This action cannot be undone.
+            </p>
+            <div className={styles.modalActions}>
+              <button onClick={handleCancelDelete} className={`${styles.modalButton} ${styles.modalButtonSecondary}`}>
+                Cancel
+              </button>
+              <button onClick={handleConfirmDelete} className={`${styles.modalButton} ${styles.modalButtonDanger}`}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default CourseList; 
+export default CourseList 

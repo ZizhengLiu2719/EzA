@@ -1,0 +1,303 @@
+.container {
+  padding: 40px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  color: #f0f0f0;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 20%, rgba(79, 70, 229, 0.1) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+.backButton {
+  position: absolute;
+  top: 40px;
+  right: 40px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: linear-gradient(145deg, rgba(25, 27, 42, 0.9), rgba(35, 38, 59, 0.7));
+  border: 1px solid rgba(136, 108, 255, 0.3);
+  color: #f0f0f0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(5px);
+}
+
+.backButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(136, 108, 255, 0.2);
+  border-color: rgba(136, 108, 255, 0.5);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 2;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, #be93fd, #9b59b6, #8e44ad, #be93fd);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 300% 100%;
+  animation: gradient-shift 4s ease infinite;
+  text-transform: uppercase;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.uploadButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(90deg, #886cff, #6d4fff);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 15px rgba(136, 108, 255, 0.2);
+}
+
+.uploadButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(136, 108, 255, 0.3);
+}
+
+.content {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #0ea5e9, #22d3ee, #818cf8);
+  opacity: 0.8;
+}
+
+.loader {
+  border: 4px solid rgba(136, 108, 255, 0.2);
+  border-left-color: #886cff;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 40px auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error {
+  text-align: center;
+  color: #ef4444;
+  padding: 40px;
+  font-size: 1.1rem;
+}
+
+.courseList {
+  width: 100%;
+}
+
+.listHeader, .courseRow {
+  display: grid;
+  grid-template-columns: 3fr 1fr 1fr 1.2fr;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(136, 108, 255, 0.1);
+}
+
+.listHeader {
+  color: #a0a0b0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.courseRow {
+  background-color: transparent;
+  transition: background-color 0.2s;
+  border-radius: 8px;
+}
+
+.courseRow:hover {
+  background-color: rgba(136, 108, 255, 0.05);
+}
+
+.cellName {
+  font-weight: 500;
+  color: #e0e0e0;
+}
+
+.cellSemester, .cellYear {
+  color: #b0b0c0;
+}
+
+.cellActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.actionButton {
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #d0d0d0;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.actionButton:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.viewButton:hover {
+  color: #6d4fff;
+  border-color: #6d4fff;
+}
+
+.editButton:hover {
+  color: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.deleteButton:hover {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 60px;
+  color: #a0a0b0;
+  border: 2px dashed rgba(136, 108, 255, 0.2);
+  border-radius: 12px;
+  margin-top: 24px;
+}
+
+/* Modal Styles are identical to StemSolver, can be reused or put in a global file */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: linear-gradient(145deg, #191b2a, #23263b);
+  border: 1px solid rgba(136, 108, 255, 0.3);
+  border-radius: 16px;
+  padding: 32px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.modalTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #f0f0f0;
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.modalText {
+  font-size: 1rem;
+  color: #a0a0b0;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.modalActions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.modalButton {
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  min-width: 120px;
+}
+
+.modalButtonSecondary {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #f0f0f0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modalButtonSecondary:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.modalButtonDanger {
+  background: linear-gradient(90deg, #d32f2f, #ef4444);
+  color: white;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.modalButtonDanger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+} 
