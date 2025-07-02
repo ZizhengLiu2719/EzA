@@ -35,12 +35,13 @@ export interface CourseMaterial {
 export interface Task {
   id: string
   course_id: string
+  user_id: string
   title: string
-  description?: string
+  description: string
   type: 'reading' | 'writing' | 'assignment' | 'exam' | 'quiz' | 'project' | 'presentation'
   due_date: string
-  priority: 'low' | 'medium' | 'high'
-  status: 'pending' | 'in_progress' | 'completed' | 'overdue'
+  priority: 'high' | 'medium' | 'low'
+  status: 'pending' | 'in_progress' | 'completed'
   estimated_hours: number
   actual_hours?: number
   weight?: number // 占课程总分的百分比

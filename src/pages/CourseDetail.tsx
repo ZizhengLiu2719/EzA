@@ -1,4 +1,4 @@
-import { courseParseApi, coursesApi } from '@/api/courses';
+import { coursesApi, tasksApi } from '@/api/courses';
 import { Course, Task } from '@/types';
 import { ArrowLeft, BookOpen, Calendar, ListChecks, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -22,7 +22,7 @@ const CourseDetail = () => {
         const found = courseRes.data.find((c: any) => c.id === courseId);
         if (!found) throw new Error('Course not found');
         setCourse(found);
-        const tasksRes = await courseParseApi.getCourseTasks(courseId!);
+        const tasksRes = await tasksApi.getCourseTasks(courseId!);
         setTasks(tasksRes.data || []);
       } catch (err: any) {
         setError(err.message || 'Loading failed');

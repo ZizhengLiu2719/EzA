@@ -1,4 +1,4 @@
-import { courseParseApi, materialsApi } from '@/api/courses'
+import { materialsApi, tasksApi } from '@/api/courses'
 import BackToDashboardButton from '@/components/BackToDashboardButton'
 import CourseParseResultEditor from '@/components/CourseParseResultEditor'
 import { useCourses } from '@/hooks/useCourses'
@@ -37,7 +37,7 @@ const UploadCourse = () => {
         const course = courseRes.data.find((c: any) => c.id === courseId)
         if (!course) throw new Error('Course not found')
         // 获取任务
-        const tasksRes = await import('@/api/courses').then(m => m.courseParseApi.getCourseTasks(courseId))
+        const tasksRes = await tasksApi.getCourseTasks(courseId)
         const tasks = tasksRes.data || []
         // 组装结构化信息
         const structured: CourseParseResult = {
@@ -147,10 +147,10 @@ const UploadCourse = () => {
         grading_policy: edited.grading_policy,
       });
       // 先删除原有任务，防止重复
-      await courseParseApi.deleteAllTasksForCourse(finalCourseId);
+      await tasksApi.deleteAllTasksForCourse(finalCourseId);
       // 批量保存任务
       if (edited.tasks.length > 0) {
-        await courseParseApi.saveParsedTasks(finalCourseId, edited.tasks);
+        await tasksApi.saveParsedTasks(finalCourseId, edited.tasks);
       }
       setSuccess('Course information and tasks saved successfully!');
       setEditMode(false);
@@ -227,7 +227,7 @@ const UploadCourse = () => {
       // 4. 解析课程内容
       setParsing(true)
       const materialIds = uploadedMaterials.map(material => material.id)
-      const parseResponse = await courseParseApi.parseCourseMaterials(newCourse.id, materialIds)
+      const parseResponse = await materialsApi.parseCourseMaterials(newCourse.id, materialIds)
       
       if (parseResponse.error) {
         // 解析失败，删除刚创建的课程

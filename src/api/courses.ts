@@ -1,7 +1,7 @@
 import { ApiResponse, Course, CourseMaterial, CourseParseResult, Task } from '@/types'
 import { checkFileSizeLimit, validateFileSize, validateFileType } from '@/utils'
 import { FileParser, FileTypeDetector, FileUploadProgress } from '@/utils/fileParser'
-import { courseParseApi as aiCourseParseApi } from './ai'
+import { aiCourseParseApi } from './ai'
 import { supabase } from './supabase'
 
 // 课程管理 API
@@ -367,140 +367,204 @@ export const materialsApi = {
     } catch (error: any) {
       return { data: {} as any, error: error.message }
     }
-  }
-}
+  },
 
-// 课程解析 API
-export const courseParseApi = {
-  // 解析课程材料并生成任务
+  // 使用AI解析课程材料，生成学习任务
   async parseCourseMaterials(
     courseId: string,
     materialIds: string[]
   ): Promise<ApiResponse<CourseParseResult>> {
     try {
-      // 获取材料内容
+      // 1. 获取选定的课程材料
       const { data: materials, error: materialsError } = await supabase
         .from('course_materials')
-        .select('*')
-        .in('id', materialIds)
+        .select('name, extracted_text')
+        .in('id', materialIds);
 
-      if (materialsError) throw materialsError
-
-      // 使用 AI 解析课程材料
-      const parseResult = await aiCourseParseApi.parseCourseMaterials(materials || [])
-
-      // 如果AI解析失败，直接返回错误
-      if (parseResult.error) {
-        return { data: {} as CourseParseResult, error: parseResult.error }
+      if (materialsError) throw materialsError;
+      if (!materials || materials.length === 0) {
+        throw new Error('未找到任何可供解析的材料。');
+      }
+        
+      // 2. 调用AI服务进行解析
+      const result = await aiCourseParseApi.parseCourseMaterials(materials);
+      
+      if (result.error || !result.data) {
+        return { data: {} as CourseParseResult, error: result.error || 'AI解析失败，未返回任何数据。' }
+      }
+      
+      // 3. 保存解析成功并返回的任务
+      if (result.data.tasks && result.data.tasks.length > 0) {
+        await tasksApi.saveParsedTasks(courseId, result.data.tasks);
       }
 
-      // 保存解析的任务到数据库
-      if (parseResult.data.tasks && parseResult.data.tasks.length > 0) {
-        await this.saveParsedTasks(courseId, parseResult.data.tasks)
-      }
-
-      return parseResult
+      return { data: result.data };
     } catch (error: any) {
-      return { data: {} as CourseParseResult, error: error.message }
+      return { data: {} as CourseParseResult, error: error.message };
     }
   },
+}
 
-  // 保存解析的任务
-  async saveParsedTasks(courseId: string, tasks: Omit<Task, 'id' | 'course_id' | 'created_at' | 'updated_at'>[]): Promise<void> {
-    try {
-      // 过滤非法日期
-      const cleanedTasks = tasks.map(task => ({
-        ...task,
-        due_date: /^\d{4}-\d{2}-\d{2}$/.test(task.due_date || '') ? task.due_date : null
-      }));
-      const tasksWithCourseId = cleanedTasks.map(task => ({
-        ...task,
-        course_id: courseId
-      }))
+// 任务管理 API
+export const tasksApi = {
+  // 批量保存解析出的任务
+  async saveParsedTasks(courseId: string, tasks: Omit<Task, 'id' | 'course_id' | 'user_id' | 'created_at' | 'updated_at'>[]): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('用户未登录');
 
-      const { error } = await supabase
-        .from('tasks')
-        .insert(tasksWithCourseId)
-
-      if (error) throw error
-    } catch (error: any) {
-      console.error('Failed to save parsed tasks:', error)
-      throw error
-    }
+    const tasksToInsert = tasks.map(task => ({
+      ...task,
+      course_id: courseId,
+      user_id: user.id,
+    }));
+    const { error } = await supabase.from('tasks').insert(tasksToInsert);
+    if (error) throw error;
   },
 
-  // 获取课程任务
+  // 获取单个课程的所有任务
   async getCourseTasks(courseId: string): Promise<ApiResponse<Task[]>> {
     try {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
         .eq('course_id', courseId)
-        .order('due_date', { ascending: true })
+        .order('due_date', { ascending: true });
 
-      if (error) throw error
-      return { data: data || [] }
+      if (error) throw error;
+      return { data: data || [] };
     } catch (error: any) {
-      return { data: [], error: error.message }
+      return { data: [], error: error.message };
     }
   },
 
   // 批量删除某课程下所有任务
   async deleteAllTasksForCourse(courseId: string): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('course_id', courseId)
-      if (error) throw error
-    } catch (error: any) {
-      console.error('Failed to delete all tasks for course:', error)
-      throw error
-    }
-  }
-}
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('用户未登录');
 
-// 任务管理 API
-export const tasksApi = {
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('course_id', courseId)
+      .eq('user_id', user.id);
+    if (error) throw error;
+  },
+
   // 获取用户的所有任务
   async getUserTasks(): Promise<ApiResponse<Task[]>> {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('用户未登录')
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('用户未登录');
 
+      // 1. 获取用户的所有课程 ID
+      const { data: courses, error: coursesError } = await supabase
+        .from('courses')
+        .select('id')
+        .eq('user_id', user.id);
+
+      if (coursesError) throw coursesError;
+      if (!courses || courses.length === 0) {
+        return { data: [] }; // 如果用户没有课程，就返回空任务列表
+      }
+
+      const courseIds = courses.map(c => c.id);
+
+      // 2. 根据课程 ID 获取所有相关任务
       const { data, error } = await supabase
         .from('tasks')
-        .select(`
-          *,
-          courses!inner(user_id)
-        `)
-        .eq('courses.user_id', user.id)
-        .order('due_date', { ascending: true })
+        .select('*')
+        .in('course_id', courseIds)
+        .order('due_date', { ascending: true });
 
-      if (error) throw error
-      return { data: data || [] }
+      if (error) throw error;
+      
+      // 3. (后台任务) 为没有 user_id 的旧任务补充上，实现数据自愈
+      if (data) {
+        const tasksToBackfill = data.filter(task => !task.user_id);
+        if (tasksToBackfill.length > 0) {
+          console.log(`[Data-Healing] Found ${tasksToBackfill.length} tasks to backfill with user_id.`);
+          // 执行更新，但不阻塞返回
+          Promise.all(tasksToBackfill.map(task =>
+            supabase.from('tasks').update({ user_id: user.id }).eq('id', task.id)
+          )).then((results) => {
+            const errors = results.filter(res => res.error);
+            if (errors.length > 0) {
+              console.error(`[Data-Healing] Failed to backfill some tasks.`, errors);
+            } else {
+              console.log(`[Data-Healing] Successfully backfilled ${tasksToBackfill.length} tasks.`);
+            }
+          });
+        }
+      }
+
+      return { data: data || [] };
     } catch (error: any) {
-      return { data: [], error: error.message }
+      return { data: [], error: error.message };
     }
   },
 
-  // 创建新任务
-  async createTask(taskData: Omit<Task, 'id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<Task>> {
+  // 创建单个任务
+  async createTask(taskData: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<Task>> {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('用户未登录');
+
       const { data, error } = await supabase
         .from('tasks')
-        .insert([taskData])
+        .insert([{ ...taskData, user_id: user.id }])
         .select()
-        .single()
+        .single();
 
-      if (error) throw error
-      return { data }
+      if (error) throw error;
+      return { data };
     } catch (error: any) {
-      return { data: {} as Task, error: error.message }
+      return { data: {} as Task, error: error.message };
+    }
+  },
+  
+  // 批量创建任务
+  async bulkCreateTasks(tasks: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>[]): Promise<ApiResponse<Task[]>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('用户未登录');
+
+      const tasksToInsert = tasks.map(task => ({
+        ...task,
+        user_id: user.id,
+      }));
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert(tasksToInsert)
+        .select();
+
+      if (error) throw error;
+      return { data: data || [] };
+    } catch (error: any) {
+      return { data: [], error: error.message };
     }
   },
 
-  // 更新任务
+  // 删除用户所有的工作块
+  async deleteWorkBlocksForUser(): Promise<ApiResponse<void>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('用户未登录');
+
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('type', 'work_block');
+        
+      if (error) throw error;
+      return { data: undefined };
+    } catch (error: any) {
+      return { data: undefined, error: error.message };
+    }
+  },
+
+  // 更新单个任务
   async updateTask(taskId: string, updates: Partial<Task>): Promise<ApiResponse<Task>> {
     try {
       const { data, error } = await supabase
@@ -508,27 +572,27 @@ export const tasksApi = {
         .update(updates)
         .eq('id', taskId)
         .select()
-        .single()
+        .single();
 
-      if (error) throw error
-      return { data }
+      if (error) throw error;
+      return { data };
     } catch (error: any) {
-      return { data: {} as Task, error: error.message }
+      return { data: {} as Task, error: error.message };
     }
   },
 
-  // 删除任务
+  // 删除单个任务
   async deleteTask(taskId: string): Promise<ApiResponse<void>> {
     try {
       const { error } = await supabase
         .from('tasks')
         .delete()
-        .eq('id', taskId)
+        .eq('id', taskId);
 
-      if (error) throw error
-      return { data: undefined }
+      if (error) throw error;
+      return { data: undefined };
     } catch (error: any) {
-      return { data: undefined, error: error.message }
+      return { data: undefined, error: error.message };
     }
-  }
-} 
+  },
+}; 

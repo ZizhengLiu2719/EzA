@@ -858,12 +858,13 @@ export const weeklyReportApi = {
   }
 }
 
-// 课程解析 API
-export const courseParseApi = {
-  // 解析课程材料
+// AI Course Parsing API
+export const aiCourseParseApi = {
+  // Parse course materials and generate tasks
   async parseCourseMaterials(materials: any[]): Promise<ApiResponse<any>> {
+    const courseContent = materials
     try {
-      const result = await aiService.parseCourseMaterials(materials)
+      const result = await aiService.parseCourseMaterials(courseContent)
       return { data: result }
     } catch (error: any) {
       return { data: {}, error: error.message }

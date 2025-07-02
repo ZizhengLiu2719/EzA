@@ -84,16 +84,67 @@ await sendMessage("我需要写一篇关于人工智能的论文，请帮我规�
 
 #### 使用示例
 
-```typescript
-import { materialsApi, courseParseApi } from "@/api/courses";
+### Step 1: Upload Materials
 
-// 上传课程材料
-const material = await materialsApi.uploadMaterial(courseId, file, "syllabus");
+Use `materialsApi.uploadMaterial` to upload course materials to the backend.
 
-// 解析课程材料
-const parseResult = await courseParseApi.parseCourseMaterials(courseId, [
-  material.id,
-]);
+```javascript
+import { materialsApi } from "@/api/courses";
+
+// ... inside an async function
+const courseId = "..."; // The ID of the newly created course
+const file = "..."; // The path to the uploaded file
+const type = "syllabus"; // The type of the uploaded file
+
+try {
+  const material = await materialsApi.uploadMaterial(courseId, file, type);
+  if (material.error) {
+    console.error("Upload failed:", material.error);
+    return;
+  }
+
+  // Now you have:
+  // material.id
+  // material.course_id
+  // material.type
+  // material.uploaded_at
+  // ... and other material details
+} catch (error) {
+  console.error("An error occurred during upload:", error);
+}
+```
+
+### Step 2: Parse Materials and Get Structured Data
+
+Use `materialsApi.parseCourseMaterials` to send the uploaded material IDs to the backend. The backend will then use the AI service to parse the text and return a structured `CourseParseResult` object.
+
+```javascript
+import { materialsApi } from "@/api/courses";
+
+// ... inside an async function
+const courseId = "..."; // The ID of the newly created course
+const materialIds = ["...", "..."]; // IDs of uploaded materials
+
+try {
+  const parseResult = await materialsApi.parseCourseMaterials(
+    courseId,
+    materialIds
+  );
+  if (parseResult.error) {
+    console.error("Parsing failed:", parseResult.error);
+    return;
+  }
+
+  const structuredData = parseResult.data;
+  // Now you have:
+  // structuredData.course_name
+  // structuredData.semester
+  // structuredData.year
+  // structuredData.tasks (an array of Task objects)
+  // ... and other course details
+} catch (error) {
+  console.error("An error occurred during parsing:", error);
+}
 ```
 
 ### 3. 复习卡片生成
