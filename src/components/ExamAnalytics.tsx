@@ -280,7 +280,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                       ✅ 优势分析 (Strengths)
                     </h3>
                     {(strengths || []).map((s, i) => (
-                      <p key={i} className={styles.diagnosisText}>
+                      <p key={`strength-${i}`} className={styles.diagnosisText}>
                         {s}
                       </p>
                     ))}
@@ -294,7 +294,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                       ⚠️ 弱点与错误模式 (Weaknesses)
                     </h3>
                     {(weaknesses || []).map((w, i) => (
-                      <p key={i} className={styles.diagnosisText}>
+                      <p key={`weakness-${i}`} className={styles.diagnosisText}>
                         {w}
                       </p>
                     ))}
@@ -322,7 +322,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                   </h2>
                   <div className={styles.radarChartContainer}>
                     {radarData.map((data, index) => (
-                      <div key={index} className={styles.radarItem}>
+                      <div key={data.metric} className={styles.radarItem}>
                         <span className={styles.radarLabel}>{data.metric}</span>
                         <div className={styles.radarBar}>
                           <motion.div

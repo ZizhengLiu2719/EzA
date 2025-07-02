@@ -63,6 +63,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now())
 
   const timerRef = useRef<NodeJS.Timeout>()
+  const responseStartTime = useRef<number | null>(null)
   
   const handleSubmitExam = useCallback(async () => {
     setIsSubmitting(true)
@@ -152,33 +153,38 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     return `${secs}秒`;
   }, []);
 
-  const handleAnswerSubmit = useCallback((answer: string | string[], confidence?: number) => {
-    if (!currentQuestion) return;
+  const handleAnswerSubmit = useCallback((student_answer: string | string[], confidence_level?: number) => {
+    if (!timer.isRunning) {
+      setTimer((prev) => ({ ...prev, isRunning: true }))
+    }
 
-    const now = Date.now()
-    const responseTime = now - questionStartTime
+    const response_time = Date.now() - (responseStartTime.current || Date.now())
+    responseStartTime.current = Date.now()
+
+    const newResponses = [...session.responses]
+    const existingResponseIndex = newResponses.findIndex(
+      (r) => r.question_id === currentQuestion.id
+    )
 
     const newResponse: ExamResponse = {
       question_id: currentQuestion.id,
-      student_answer: answer,
-      response_time: responseTime,
-      confidence_level: confidence,
-      flagged_for_review: flaggedQuestions.has(currentQuestion.id),
-      timestamp: new Date()
+      student_answer,
+      response_time,
+      confidence_level: confidence_level || 3, // Default confidence
+      timestamp: new Date(),
     }
 
-    setSession((prev: ExamSession) => {
-      const existingResponseIndex = prev.responses.findIndex((r: ExamResponse) => r.question_id === currentQuestion.id)
-      const updatedResponses = existingResponseIndex >= 0
-        ? prev.responses.map((r: ExamResponse, i: number) => i === existingResponseIndex ? newResponse : r)
-        : [...prev.responses, newResponse]
+    if (existingResponseIndex > -1) {
+      newResponses[existingResponseIndex] = newResponse
+    } else {
+      newResponses.push(newResponse)
+    }
 
-      return {
-        ...prev,
-        responses: updatedResponses
-      }
+    setSession({
+      ...session,
+      responses: newResponses,
     })
-  }, [currentQuestion, questionStartTime, flaggedQuestions])
+  }, [currentQuestion, timer.isRunning, session])
 
   const navigateToQuestion = useCallback((index: number) => {
     if (index >= 0 && index < exam.questions.length) {
@@ -263,7 +269,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
 
               return (
                 <button 
-                  key={q.id}
+                  key={q.id || `question-nav-${index}`}
                   onClick={() => navigateToQuestion(index)}
                   className={`${styles.questionNavItem} ${
                     isCurrent ? styles.current : ''
