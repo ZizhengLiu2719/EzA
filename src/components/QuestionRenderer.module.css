@@ -78,4 +78,49 @@
     border-radius: 8px;
     text-align: center;
     color: #a0a0b8;
+}
+
+/* New styles for submission controls */
+.submissionControls {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.confirmButton {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background-color: #16a34a; /* Green */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.confirmButton:hover:not(:disabled) {
+    background-color: #15803d;
+}
+
+.confirmButton:disabled {
+    background-color: #374151;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+/* Styles for textareas and inputs that were previously using Tailwind */
+.textarea, .fillBlankInput {
+    background-color: rgba(0,0,0,0.2);
+    border: 1px solid #4b5563;
+    color: #e0e0e0;
+    border-radius: 8px;
+    transition: border-color 0.2s;
+}
+.textarea:focus, .fillBlankInput:focus {
+    outline: none;
+    border-color: #3b82f6;
 } 

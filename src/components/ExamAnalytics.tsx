@@ -537,7 +537,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
               <ul className={styles.recommendationsList}>
                 {(recommendations || []).map(
                   (recommendation: string, index: number) => (
-                    <li key={index}>
+                    <li key={`rec-${index}`}>
                       <CheckCircle size={16} />
                       <span>{recommendation}</span>
                     </li>

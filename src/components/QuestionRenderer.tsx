@@ -10,7 +10,7 @@ import {
   HelpCircle,
   Lightbulb
 } from 'lucide-react'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import type { ExamQuestion } from '../types/examTypes'
 import styles from './QuestionRenderer.module.css'
 
@@ -36,19 +36,29 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   className = ''
 }) => {
   const [currentAnswer, setCurrentAnswer] = useState<string | string[] | undefined>(answer)
-  const [confidence, setConfidence] = useState<number | undefined>(undefined)
+  const [confidence, setConfidence] = useState<number>(3) // Default confidence
+  const [isConfirmed, setIsConfirmed] = useState<boolean>(answer !== undefined)
   const [showHintPanel, setShowHintPanel] = useState(false)
   
-  // 当外部answer改变时同步内部状态
+  // 当外部的 `answer` prop 或 `question` 改变时，同步内部状态
   useEffect(() => {
     setCurrentAnswer(answer)
-  }, [answer])
+    setIsConfirmed(answer !== undefined)
+  }, [answer, question.id])
 
-  // 提交答案
-  const handleAnswerSubmit = useCallback((newAnswer: string | string[], newConfidence?: number) => {
-    setCurrentAnswer(newAnswer)
-    onAnswerChange(newAnswer, newConfidence || confidence)
-  }, [onAnswerChange, confidence])
+  // 提交答案的逻辑
+  const handleConfirmAnswer = () => {
+    if (currentAnswer !== undefined) {
+      onAnswerChange(currentAnswer, confidence)
+      setIsConfirmed(true)
+    }
+  }
+  
+  const handleSelectionChange = (newAnswer: string | string[]) => {
+    if (disabled) return;
+    setCurrentAnswer(newAnswer);
+    setIsConfirmed(false); // 用户做出新选择，重置确认状态
+  }
 
   // 渲染单选题
   const renderSingleChoice = () => (
@@ -59,10 +69,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
         return (
           <motion.button
             key={index}
-            onClick={() => {
-              if (disabled) return;
-              handleAnswerSubmit(option);
-            }}
+            onClick={() => handleSelectionChange(option)}
             className={`${styles.optionButton} ${isSelected ? styles.selected : ''}`}
             whileHover={!disabled ? { scale: 1.03 } : {}}
             whileTap={!disabled ? { scale: 0.98 } : {}}
@@ -81,12 +88,10 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   const renderMultipleChoice = () => {
     const currentAnswers = Array.isArray(currentAnswer) ? currentAnswer : []
     const handleSelect = (option: string) => {
-      if (disabled) return
       const newAnswers = currentAnswers.includes(option)
         ? currentAnswers.filter(a => a !== option)
         : [...currentAnswers, option]
-      setCurrentAnswer(newAnswers)
-      handleAnswerSubmit(newAnswers)
+      handleSelectionChange(newAnswers)
     }
 
     return (
@@ -121,10 +126,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
         return (
           <motion.button
             key={index}
-            onClick={() => {
-              if(disabled) return;
-              handleAnswerSubmit(option)
-            }}
+            onClick={() => handleSelectionChange(option)}
             className={`${styles.optionButton} ${isSelected ? styles.selected : ''}`}
             whileHover={!disabled ? { scale: 1.03 } : {}}
             whileTap={!disabled ? { scale: 0.98 } : {}}
@@ -151,12 +153,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
         <div className="space-y-2">
           <textarea
             value={answerText}
-            onChange={(e) => {
-              if (disabled) return;
-              const value = e.target.value
-              setCurrentAnswer(value);
-              handleAnswerSubmit(value);
-            }}
+            onChange={(e) => handleSelectionChange(e.target.value)}
             disabled={disabled}
             placeholder="请在此输入您的答案..."
             className={`${styles.textarea} w-full p-4 border-2 rounded-lg resize-none focus:outline-none focus:ring-2 focus:border-transparent ${disabled ? 'cursor-not-allowed' : ''}`}
@@ -198,12 +195,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
         <div className="space-y-2">
           <textarea
             value={answerText}
-            onChange={(e) => {
-              if (disabled) return;
-              const value = e.target.value
-              setCurrentAnswer(value);
-              handleAnswerSubmit(value);
-            }}
+            onChange={(e) => handleSelectionChange(e.target.value)}
             disabled={disabled}
             placeholder="请详细阐述您的观点，注意逻辑清晰、论证充分..."
             className={`${styles.textarea} w-full p-4 border-2 rounded-lg resize-none focus:outline-none focus:ring-2 focus:border-transparent ${disabled ? 'cursor-not-allowed' : ''}`}
@@ -227,8 +219,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
       
       const newAnswers = [...answers]
       newAnswers[index] = value
-      setCurrentAnswer(newAnswers)
-      handleAnswerSubmit(newAnswers)
+      handleSelectionChange(newAnswers)
     }
 
     return (
@@ -259,11 +250,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
             <input
               type="text"
               value={Array.isArray(currentAnswer) ? currentAnswer[0] || '' : currentAnswer}
-              onChange={(e) => {
-                if (disabled) return;
-                setCurrentAnswer(e.target.value);
-                handleAnswerSubmit(e.target.value);
-              }}
+              onChange={(e) => handleSelectionChange(e.target.value)}
               disabled={disabled}
               className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 disabled ? 'bg-gray-50 cursor-not-allowed' : ''
@@ -291,7 +278,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
       
       const newAnswer = Object.entries(newAnswerMap).flat()
       if (newAnswer) {
-        handleAnswerSubmit(newAnswer)
+        handleSelectionChange(newAnswer)
       }
     }
 
@@ -323,11 +310,6 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
           max="5"
           value={confidence || 3}
           onChange={(e) => setConfidence(parseInt(e.target.value))}
-          onMouseUp={() => {
-            if (currentAnswer !== undefined) {
-              handleAnswerSubmit(currentAnswer, confidence)
-            }
-          }}
           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
         />
         <div className="flex justify-between text-xs text-gray-400 mt-1">
@@ -377,11 +359,27 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
   return (
     <div className={`${styles.questionRendererContainer} ${className}`}>
-      <h3 className={styles.questionText}>{question.question}</h3>
-      {renderQuestionBody()}
+      <div className={styles.questionHeader}>
+        <h3 className={styles.questionText}>{question.question}</h3>
+      </div>
+      
+      <div className={styles.questionBody}>
+        {renderQuestionBody()}
+      </div>
 
-      {/* 置信度滑块 */}
-      {renderConfidenceSlider()}
+      {/* 置信度滑块和确认按钮 */}
+      {!isReview && !disabled && (
+        <div className={styles.submissionControls}>
+          {renderConfidenceSlider()}
+          <button 
+            onClick={handleConfirmAnswer} 
+            disabled={isConfirmed || currentAnswer === undefined}
+            className={styles.confirmButton}
+          >
+            {isConfirmed ? '✓ 已确认' : '确认答案'}
+          </button>
+        </div>
+      )}
 
       {/* 提示和解释面板 */}
       {(showHint || showExplanation) && (
