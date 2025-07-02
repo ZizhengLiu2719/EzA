@@ -215,7 +215,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     setQuestionStartTime(Date.now())
   }, [session.current_question_index])
 
-  const answeredCount = session.responses.length
+  const answeredCount = new Set(session.responses.map(r => r.question_id)).size;
   const progressPercentage = (answeredCount / exam.questions.length) * 100
 
   const getCurrentAnswer = useCallback(() => {
@@ -225,7 +225,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
   }, [session.responses, currentQuestion])
 
   return (
-    <div className={styles.examRunner}>
+    <div className={`${styles.examRunner} ${className}`}>
       <div className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
           <h1 className={styles.examTitle}>{exam.config.title}</h1>
@@ -234,141 +234,133 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
 
         <div className={styles.sidebarSection}>
             <div className={styles.timer}>
-                <Clock size={20} />
+                <Clock size={18} />
                 <span>{formatTime(timer.timeRemaining)}</span>
                 <button onClick={toggleTimer} className={styles.timerControl}>
-                    {timer.isRunning ? <PauseCircle size={20} /> : <PlayCircle size={20} />}
+                    {timer.isRunning ? <PauseCircle size={18} /> : <PlayCircle size={18} />}
                 </button>
             </div>
              <div className={styles.progressBar}>
-                <div 
+                <motion.div 
                     className={styles.progressFill}
-                    style={{ width: `${progressPercentage}%` }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progressPercentage}%` }}
+                    transition={{ duration: 0.5 }}
                 />
             </div>
             <div className={styles.progressText}>
                 <span>进度: {answeredCount} / {exam.questions.length}</span>
             </div>
         </div>
-
+        
         <div className={styles.sidebarSection}>
-            <h3 className={styles.sectionTitle}>题目导航</h3>
-            <div className={styles.questionGrid}>
-                {exam.questions.map((q, index) => {
-                    const isAnswered = session.responses.some(r => r.question_id === q.id);
-                    const isCurrent = index === session.current_question_index;
-                    const isFlagged = flaggedQuestions.has(q.id);
-                    
-                    return (
-                        <button
-                            key={q?.id || index}
-                            onClick={() => navigateToQuestion(index)}
-                            className={`${styles.questionGridItem} ${isCurrent ? styles.current : ''} ${isAnswered ? styles.answered : ''}`}
-                        >
-                            {isFlagged && <Flag size={10} className={styles.flagIcon} />}
-                            {index + 1}
-                        </button>
-                    )
-                })}
-            </div>
+          <h2 className={styles.navHeader}>题目导航</h2>
+          <div className={styles.questionGrid}>
+            {exam.questions.map((q, index) => {
+              const isAnswered = session.responses.some(r => r.question_id === q.id);
+              const isCurrent = session.current_question_index === index;
+              const isFlagged = flaggedQuestions.has(q.id);
+
+              return (
+                <button 
+                  key={q.id}
+                  onClick={() => navigateToQuestion(index)}
+                  className={`${styles.questionNavItem} ${
+                    isCurrent ? styles.current : ''
+                  } ${
+                    isAnswered ? styles.answered : ''
+                  }`}
+                >
+                  {isFlagged && <Flag size={10} className={styles.flagIcon} />}
+                  {index + 1}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         <div className={styles.sidebarFooter}>
-            <button className={styles.exitButton} onClick={() => setShowExitConfirm(true)}>
+            <button onClick={() => setShowExitConfirm(true)} className={styles.exitButton}>
                 <Home size={16} />
-                <span>返回主页</span>
+                <span>退出考试</span>
             </button>
-             <button className={styles.submitButton} onClick={handleSubmitExam}>
-                <Send size={16} />
-                <span>提交试卷</span>
+            <button onClick={handleSubmitExam} className={styles.submitButton} disabled={isSubmitting}>
+                <Send size={16}/>
+                <span>{isSubmitting ? '正在提交...' : '提交试卷'}</span>
             </button>
         </div>
       </div>
-
+      
       <div className={styles.mainContent}>
         <AnimatePresence mode="wait">
-          {currentQuestion ? (
             <motion.div
                 key={currentQuestion.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
                 className={styles.questionContainer}
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.3 }}
             >
                 <div className={styles.questionHeader}>
                     <div className={styles.questionMeta}>
-                        {/* ABSOLUTELY ROBUST RENDERING */}
-                        <span>{currentQuestion.type?.replace('_', ' ') ?? '未知题型'}</span>
-                        <span>&bull;</span>
-                        <span>{currentQuestion.points ?? '?'} 分</span>
-                        <span>&bull;</span>
-                        <span>难度: {currentQuestion.difficulty ?? '?'}/10</span>
-                        <span>&bull;</span>
-                        <span>预计: {formatTimeWithUnits(currentQuestion.estimated_time)}</span>
+                        <span>{currentQuestion.points}分</span> • 
+                        <span>难度: {currentQuestion.difficulty}/10</span> •
+                        <span>{currentQuestion.topic}</span>
                     </div>
-                    <button onClick={() => toggleFlag(currentQuestion.id)} className={`${styles.flagButton} ${flaggedQuestions.has(currentQuestion.id) ? styles.flagged : ''}`}>
-                        <Flag size={18} />
-                        <span>{flaggedQuestions.has(currentQuestion.id) ? '已标记' : '标记题目'}</span>
+                    <button 
+                      onClick={() => toggleFlag(currentQuestion.id)}
+                      className={`${styles.flagButton} ${flaggedQuestions.has(currentQuestion.id) ? styles.flagged : ''}`}
+                    >
+                      <Flag size={16} />
+                      <span>{flaggedQuestions.has(currentQuestion.id) ? '已标记' : '标记题目'}</span>
                     </button>
                 </div>
 
                 <QuestionRenderer
-                    question={currentQuestion}
-                    onAnswerChange={handleAnswerSubmit}
-                    answer={getCurrentAnswer()}
+                  question={currentQuestion}
+                  onAnswerChange={handleAnswerSubmit}
+                  answer={getCurrentAnswer()}
+                  className={styles.questionRenderer}
                 />
-
-                {currentQuestion.hint && (
-                    <div className={styles.hintBox}>
-                        <strong>💡 提示:</strong>
-                        <p>{currentQuestion.hint.replace(/hint:/i, '').trim()}</p>
-                    </div>
-                )}
-
-                <div className={styles.questionFooter}>
-                     <div className={styles.confidenceSlider}>
-                        <label>答题置信度</label>
-                        <input type="range" min="1" max="5" defaultValue="3" />
-                    </div>
-                    <div className={styles.navigationButtons}>
-                        <button onClick={handlePreviousQuestion} disabled={session.current_question_index === 0}>
-                            <ChevronLeft size={20}/>
-                            上一题
-                        </button>
-                        <button onClick={handleNextQuestion} disabled={session.current_question_index === exam.questions.length - 1}>
-                            下一题
-                            <ChevronRight size={20}/>
-                        </button>
-                    </div>
+                
+                <div className={styles.navigationButtons}>
+                    <button onClick={handlePreviousQuestion} disabled={session.current_question_index === 0}>
+                        <ChevronLeft />
+                        上一题
+                    </button>
+                    <button onClick={handleNextQuestion} disabled={session.current_question_index === exam.questions.length - 1}>
+                        下一题
+                        <ChevronRight />
+                    </button>
                 </div>
             </motion.div>
-          ) : (
-            <div className={styles.confirmOverlay}>
-              <div className={styles.confirmModal}>
-                  <h3>加载题目失败</h3>
-                  <p>无法加载当前题目。可能是考试数据有误或已全部完成。</p>
-                  <div className={styles.confirmActions}>
-                    <button onClick={onExit} style={{ flex: '1' }}>返回</button>
-                  </div>
-              </div>
-            </div>
-          )}
         </AnimatePresence>
       </div>
 
-      {showExitConfirm && (
-         <div className={styles.confirmOverlay}>
-            <div className={styles.confirmModal}>
-                <h3>确认退出</h3>
-                <p>退出后，本次考试进度将不会被保存。您确定要退出吗？</p>
-                <div className={styles.confirmActions}>
-                    <button onClick={() => setShowExitConfirm(false)}>继续答题</button>
-                    <button onClick={onExit}>毅然退出</button>
-                </div>
-            </div>
-         </div>
-      )}
+      <AnimatePresence>
+        {showExitConfirm && (
+            <motion.div 
+                className={styles.confirmOverlay}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+            >
+                <motion.div 
+                    className={styles.confirmModal}
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                >
+                    <h3>确认退出？</h3>
+                    <p>您的答题进度将会丢失。确定要退出本次考试吗？</p>
+                    <div className={styles.confirmActions}>
+                        <button onClick={() => setShowExitConfirm(false)}>继续答题</button>
+                        <button onClick={onExit} className={styles.confirmExit}>毅然退出</button>
+                    </div>
+                </motion.div>
+            </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

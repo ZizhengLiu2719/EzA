@@ -5,20 +5,18 @@
 
 import { motion } from 'framer-motion'
 import {
-  AlertCircle,
-  ArrowUpDown,
   BookOpen,
   Check,
   HelpCircle,
-  Lightbulb,
-  X
+  Lightbulb
 } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
-import { ExamQuestion } from '../types/examTypes'
+import type { ExamQuestion } from '../types/examTypes'
+import styles from './QuestionRenderer.module.css'
 
 interface QuestionRendererProps {
   question: ExamQuestion
-  answer?: string | string[]
+  answer: string | string[] | undefined
   onAnswerChange: (answer: string | string[], confidence?: number) => void
   showHint?: boolean
   disabled?: boolean
@@ -37,15 +35,13 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   isReview = false,
   className = ''
 }) => {
-  const [currentAnswer, setCurrentAnswer] = useState<string | string[]>(answer || '')
-  const [confidence, setConfidence] = useState<number>(3)
+  const [currentAnswer, setCurrentAnswer] = useState<string | string[] | undefined>(answer)
+  const [confidence, setConfidence] = useState<number | undefined>(undefined)
   const [showHintPanel, setShowHintPanel] = useState(false)
   
   // 当外部answer改变时同步内部状态
   useEffect(() => {
-    if (answer !== undefined) {
-      setCurrentAnswer(answer)
-    }
+    setCurrentAnswer(answer)
   }, [answer])
 
   // 提交答案
@@ -54,121 +50,97 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     onAnswerChange(newAnswer, newConfidence || confidence)
   }, [onAnswerChange, confidence])
 
+  // 渲染单选题
+  const renderSingleChoice = () => (
+    <div className={styles.optionsContainer}>
+      {question?.options?.map((option, index) => {
+        const isSelected = currentAnswer === option
+
+        return (
+          <motion.button
+            key={index}
+            onClick={() => {
+              if (disabled) return;
+              handleAnswerSubmit(option);
+            }}
+            className={`${styles.optionButton} ${isSelected ? styles.selected : ''}`}
+            whileHover={!disabled ? { scale: 1.03 } : {}}
+            whileTap={!disabled ? { scale: 0.98 } : {}}
+            disabled={disabled}
+          >
+            <span className={styles.optionLetter}>{String.fromCharCode(65 + index)}</span>
+            <span className={styles.optionText}>{option}</span>
+            {isSelected && <Check className={styles.checkIcon} />}
+          </motion.button>
+        )
+      })}
+    </div>
+  )
+
   // 渲染多选题
   const renderMultipleChoice = () => {
-    // 统一处理单选和多选的答案
+    const currentAnswers = Array.isArray(currentAnswer) ? currentAnswer : []
     const handleSelect = (option: string) => {
-      if (disabled) return;
-      
-      if (question.type === 'multiple_choice') {
-        const currentAnswers = Array.isArray(currentAnswer) ? [...currentAnswer] : [];
-        const optionIndex = currentAnswers.indexOf(option);
-        if (optionIndex > -1) {
-          currentAnswers.splice(optionIndex, 1);
-        } else {
-          currentAnswers.push(option);
-        }
-        handleAnswerSubmit(currentAnswers);
-      } else { // single_choice
-        handleAnswerSubmit(option);
-      }
-    };
-
-    // 检查选项是否被选中
-    const isSelected = (option: string) => {
-      if (question.type === 'multiple_choice') {
-        return Array.isArray(currentAnswer) && currentAnswer.includes(option);
-      }
-      return currentAnswer === option;
-    };
+      if (disabled) return
+      const newAnswers = currentAnswers.includes(option)
+        ? currentAnswers.filter(a => a !== option)
+        : [...currentAnswers, option]
+      setCurrentAnswer(newAnswers)
+      handleAnswerSubmit(newAnswers)
+    }
 
     return (
-      <div className="space-y-3">
-        <h3 className="text-lg font-medium text-gray-800 mb-4">
-          {question.question}
-        </h3>
-        {question.type === 'multiple_choice' && <p className="text-sm text-gray-500 -mt-2 mb-3">请选择所有适用选项。</p>}
-        
-        <div className="space-y-2">
-          {question.options?.map((option, index) => {
-            const optionLetter = String.fromCharCode(65 + index) // A, B, C, D...
-            const selected = isSelected(option);
-            
-            return (
-              <motion.button
-                key={index}
-                onClick={() => handleSelect(option)}
-                disabled={disabled}
-                whileHover={!disabled ? { scale: 1.01 } : {}}
-                whileTap={!disabled ? { scale: 0.99 } : {}}
-                className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
-                  selected
-                    ? 'border-blue-500 bg-blue-50 text-blue-800'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-sm font-medium ${
-                    selected 
-                      ? 'border-blue-500 bg-blue-500 text-white' 
-                      : 'border-gray-400 text-gray-600'
-                  }`}>
-                    {selected && question.type === 'multiple_choice' ? <Check size={14} /> : optionLetter}
-                  </div>
-                  <span className="flex-1">{option}</span>
-                  {selected && question.type !== 'multiple_choice' && <Check className="w-5 h-5 text-blue-500" />}
-                </div>
-              </motion.button>
-            )
-          })}
-        </div>
+      <div className={styles.optionsContainer}>
+        {question?.options?.map((option, index) => {
+          const isSelected = currentAnswers.includes(option)
+
+          return (
+            <motion.button
+              key={index}
+              onClick={() => handleSelect(option)}
+              className={`${styles.optionButton} ${isSelected ? styles.selected : ''}`}
+              whileHover={!disabled ? { scale: 1.03 } : {}}
+              whileTap={!disabled ? { scale: 0.98 } : {}}
+              disabled={disabled}
+            >
+              <span className={styles.optionLetter}>{String.fromCharCode(65 + index)}</span>
+              <span className={styles.optionText}>{option}</span>
+              {isSelected && <Check className={styles.checkIcon} />}
+            </motion.button>
+          )
+        })}
       </div>
     )
   }
 
   // 渲染判断题
-  const renderTrueFalse = () => {
-    return (
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-800 mb-4">
-          {question.question}
-        </h3>
-        
-        <div className="flex gap-4 justify-center">
-          {['正确', '错误'].map((option, index) => {
-            const value = index === 0 ? 'true' : 'false'
-            const isSelected = currentAnswer === value;
-            
-            return (
-              <motion.button
-                key={option}
-                onClick={() => !disabled && handleAnswerSubmit(value)}
-                disabled={disabled}
-                whileHover={!disabled ? { scale: 1.05 } : {}}
-                whileTap={!disabled ? { scale: 0.95 } : {}}
-                className={`px-8 py-4 rounded-xl border-2 font-medium transition-all ${
-                  isSelected
-                    ? index === 0
-                      ? 'border-green-500 bg-green-50 text-green-700'
-                      : 'border-red-500 bg-red-50 text-red-700'
-                    : 'border-gray-200 hover:border-gray-300 text-gray-600'
-                } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
-              >
-                <div className="flex items-center gap-2">
-                  {index === 0 ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
-                  {option}
-                </div>
-              </motion.button>
-            )
-          })}
-        </div>
-      </div>
-    )
-  }
+  const renderTrueFalse = () => (
+    <div className={styles.optionsContainer}>
+      {['True', 'False'].map((option, index) => {
+        const isSelected = currentAnswer === option
+        return (
+          <motion.button
+            key={index}
+            onClick={() => {
+              if(disabled) return;
+              handleAnswerSubmit(option)
+            }}
+            className={`${styles.optionButton} ${isSelected ? styles.selected : ''}`}
+            whileHover={!disabled ? { scale: 1.03 } : {}}
+            whileTap={!disabled ? { scale: 0.98 } : {}}
+            disabled={disabled}
+          >
+            <span className={styles.optionText}>{option === 'True' ? '正确' : '错误'}</span>
+            {isSelected && <Check className={styles.checkIcon} />}
+          </motion.button>
+        )
+      })}
+    </div>
+  )
 
   // 渲染简答题
   const renderShortAnswer = () => {
-    const answerText = Array.isArray(currentAnswer) ? currentAnswer.join('\n') : currentAnswer
+    const answerText = Array.isArray(currentAnswer) ? currentAnswer.join('\n') : currentAnswer || ''
 
     return (
       <div className="space-y-4">
@@ -179,14 +151,15 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
         <div className="space-y-2">
           <textarea
             value={answerText}
-            onChange={(e) => !disabled && setCurrentAnswer(e.target.value)}
-            onBlur={() => handleAnswerSubmit(currentAnswer)}
+            onChange={(e) => {
+              if (disabled) return;
+              const value = e.target.value
+              setCurrentAnswer(value);
+              handleAnswerSubmit(value);
+            }}
             disabled={disabled}
             placeholder="请在此输入您的答案..."
-            className={`w-full p-4 border-2 border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              disabled ? 'bg-gray-50 cursor-not-allowed' : ''
-            }`}
-            rows={4}
+            className={`${styles.textarea} w-full p-4 border-2 rounded-lg resize-none focus:outline-none focus:ring-2 focus:border-transparent ${disabled ? 'cursor-not-allowed' : ''}`}
           />
           <div className="flex justify-between items-center text-sm text-gray-500">
             <span>建议字数: 50-200字</span>
@@ -199,7 +172,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
   // 渲染论述题
   const renderEssay = () => {
-    const answerText = Array.isArray(currentAnswer) ? currentAnswer.join('\n') : currentAnswer
+    const answerText = Array.isArray(currentAnswer) ? currentAnswer.join('\n') : currentAnswer || ''
 
     return (
       <div className="space-y-4">
@@ -225,14 +198,15 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
         <div className="space-y-2">
           <textarea
             value={answerText}
-            onChange={(e) => !disabled && setCurrentAnswer(e.target.value)}
-            onBlur={() => handleAnswerSubmit(currentAnswer)}
+            onChange={(e) => {
+              if (disabled) return;
+              const value = e.target.value
+              setCurrentAnswer(value);
+              handleAnswerSubmit(value);
+            }}
             disabled={disabled}
             placeholder="请详细阐述您的观点，注意逻辑清晰、论证充分..."
-            className={`w-full p-4 border-2 border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              disabled ? 'bg-gray-50 cursor-not-allowed' : ''
-            }`}
-            rows={8}
+            className={`${styles.textarea} w-full p-4 border-2 rounded-lg resize-none focus:outline-none focus:ring-2 focus:border-transparent ${disabled ? 'cursor-not-allowed' : ''}`}
           />
           <div className="flex justify-between items-center text-sm text-gray-500">
             <span>建议字数: 300-800字</span>
@@ -245,9 +219,8 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
   // 渲染填空题
   const renderFillBlank = () => {
-    // 解析题目中的空格 (假设用 ___ 表示空格)
     const questionParts = question.question.split('___')
-    const answers = Array.isArray(currentAnswer) ? currentAnswer : [currentAnswer]
+    const answers = Array.isArray(currentAnswer) ? currentAnswer : (currentAnswer ? [currentAnswer] : [])
     
     const handleBlankChange = (index: number, value: string) => {
       if (disabled) return
@@ -255,10 +228,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
       const newAnswers = [...answers]
       newAnswers[index] = value
       setCurrentAnswer(newAnswers)
-    }
-
-    const handleBlankBlur = () => {
-      handleAnswerSubmit(currentAnswer)
+      handleAnswerSubmit(newAnswers)
     }
 
     return (
@@ -276,12 +246,8 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                   type="text"
                   value={answers[index] || ''}
                   onChange={(e) => handleBlankChange(index, e.target.value)}
-                  onBlur={handleBlankBlur}
                   disabled={disabled}
-                  className={`inline-block mx-1 px-2 py-1 border-b-2 border-blue-400 bg-transparent focus:outline-none focus:border-blue-600 min-w-[80px] text-center ${
-                    disabled ? 'bg-gray-50 cursor-not-allowed' : ''
-                  }`}
-                  placeholder="?"
+                  className={`${styles.fillBlankInput} inline-block mx-1 px-2 py-1 border-b-2 bg-transparent focus:outline-none min-w-[80px] text-center ${disabled ? 'cursor-not-allowed' : ''}`}
                 />
               )}
             </span>
@@ -293,8 +259,11 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
             <input
               type="text"
               value={Array.isArray(currentAnswer) ? currentAnswer[0] || '' : currentAnswer}
-              onChange={(e) => !disabled && setCurrentAnswer(e.target.value)}
-              onBlur={() => handleAnswerSubmit(currentAnswer)}
+              onChange={(e) => {
+                if (disabled) return;
+                setCurrentAnswer(e.target.value);
+                handleAnswerSubmit(e.target.value);
+              }}
               disabled={disabled}
               className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 disabled ? 'bg-gray-50 cursor-not-allowed' : ''
@@ -309,67 +278,26 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
   // 渲染匹配题
   const renderMatching = () => {
-    // 假设options包含匹配选项，correct_answer是正确的匹配关系
-    const leftItems = question.options?.slice(0, Math.ceil((question.options?.length || 0) / 2)) || []
-    const rightItems = question.options?.slice(Math.ceil((question.options?.length || 0) / 2)) || []
-    const matches = Array.isArray(currentAnswer) ? currentAnswer : []
+    const handleDrop = (event: React.DragEvent<HTMLDivElement>, targetItemId: string) => {
+      const sourceItemId = event.dataTransfer.getData('text/plain')
+      
+      const currentMap: { [key: string]: string } = 
+        (Array.isArray(currentAnswer) ? Object.fromEntries(currentAnswer.map((v, i) => [i, v])) : (typeof currentAnswer === 'object' ? currentAnswer : {})) || {}
 
-    const handleMatch = (leftIndex: number, rightIndex: number) => {
-      if (disabled) return
-      
-      const matchKey = `${leftIndex}-${rightIndex}`
-      const newMatches = [...matches]
-      const existingIndex = newMatches.findIndex(m => m.startsWith(`${leftIndex}-`))
-      
-      if (existingIndex >= 0) {
-        newMatches[existingIndex] = matchKey
-      } else {
-        newMatches.push(matchKey)
+      const newAnswerMap = {
+        ...currentMap,
+        [sourceItemId]: targetItemId
       }
       
-      setCurrentAnswer(newMatches)
-      handleAnswerSubmit(newMatches)
+      const newAnswer = Object.entries(newAnswerMap).flat()
+      if (newAnswer) {
+        handleAnswerSubmit(newAnswer)
+      }
     }
 
     return (
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-800 mb-4">
-          {question.question}
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <h4 className="font-medium text-gray-700 mb-3">左侧选项</h4>
-            {leftItems.map((item, index) => (
-              <div key={index} className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <span className="font-medium text-blue-800">{index + 1}.</span> {item}
-              </div>
-            ))}
-          </div>
-          
-          <div className="space-y-2">
-            <h4 className="font-medium text-gray-700 mb-3">右侧选项</h4>
-            {rightItems.map((item, index) => (
-              <button
-                key={index}
-                onClick={() => {/* 匹配逻辑需要更复杂的UI */}}
-                disabled={disabled}
-                className={`w-full p-3 text-left bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors ${
-                  disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
-                }`}
-              >
-                <span className="font-medium text-green-800">{String.fromCharCode(65 + index)}.</span> {item}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-          <ArrowUpDown className="w-4 h-4 inline mr-2" />
-          请点击右侧选项与左侧对应项目进行匹配
-        </div>
-      </div>
-    )
+      <div className="text-white">Matching questions UI not fully implemented yet.</div>
+    );
   }
 
   // 渲染置信度滑块
@@ -393,9 +321,13 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
           type="range"
           min="1"
           max="5"
-          value={confidence}
+          value={confidence || 3}
           onChange={(e) => setConfidence(parseInt(e.target.value))}
-          onMouseUp={() => handleAnswerSubmit(currentAnswer, confidence)}
+          onMouseUp={() => {
+            if (currentAnswer !== undefined) {
+              handleAnswerSubmit(currentAnswer, confidence)
+            }
+          }}
           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
         />
         <div className="flex justify-between text-xs text-gray-400 mt-1">
@@ -410,19 +342,18 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   }
 
   // 根据题型渲染对应组件
-  const renderQuestionContent = () => {
+  const renderQuestionBody = () => {
     if (!question.type) {
       return (
-        <div className="text-center py-8 text-gray-500">
-          <AlertCircle className="w-8 h-8 mx-auto mb-2" />
-          <p className="font-semibold">AI返回了无效的题目格式</p>
-          <p className="text-sm text-gray-400 mt-1">缺少必要的"题型"信息，请尝试重新生成考试。</p>
+        <div className={styles.unsupported}>
+          AI返回了无效的题目格式
         </div>
       )
     }
 
     switch (question.type) {
       case 'single_choice':
+        return renderSingleChoice()
       case 'multiple_choice':
         return renderMultipleChoice()
       case 'true_false':
@@ -437,20 +368,17 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
         return renderMatching()
       default:
         return (
-          <div className="text-center py-8 text-gray-500">
-            <AlertCircle className="w-8 h-8 mx-auto mb-2" />
-            <p>不支持的题型: {question.type}</p>
+          <div className={styles.unsupported}>
+            Unsupported question type: {question.type}
           </div>
         )
     }
   }
 
   return (
-    <div className={`question-renderer ${className}`}>
-      {/* 题目内容 */}
-      <div className="mb-6">
-        {renderQuestionContent()}
-      </div>
+    <div className={`${styles.questionRendererContainer} ${className}`}>
+      <h3 className={styles.questionText}>{question.question}</h3>
+      {renderQuestionBody()}
 
       {/* 置信度滑块 */}
       {renderConfidenceSlider()}

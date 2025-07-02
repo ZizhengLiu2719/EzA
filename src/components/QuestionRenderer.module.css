@@ -1,0 +1,81 @@
+/* QuestionRenderer.module.css */
+.questionRendererContainer {
+    width: 100%;
+}
+
+.questionText {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.optionsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.optionButton {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 2px solid #374151;
+    background-color: transparent;
+    color: #e0e0e0;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.optionButton:hover {
+    border-color: #4b5563;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.optionButton.selected {
+    border-color: #3b82f6;
+    background-color: rgba(59, 130, 246, 0.1);
+    color: white;
+    font-weight: 600;
+}
+
+.optionLetter {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid #4b5563;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.optionButton.selected .optionLetter {
+    border-color: #3b82f6;
+    background-color: #3b82f6;
+    color: white;
+}
+
+.optionText {
+    flex-grow: 1;
+}
+
+.checkIcon {
+    margin-left: auto;
+    color: #3b82f6;
+}
+
+.unsupported {
+    padding: 2rem;
+    border: 2px dashed #4b5563;
+    border-radius: 8px;
+    text-align: center;
+    color: #a0a0b8;
+} 

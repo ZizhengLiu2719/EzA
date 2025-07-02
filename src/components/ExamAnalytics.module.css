@@ -1,0 +1,435 @@
+/* ExamAnalytics.module.css */
+.analyticsContainer {
+  background-color: #1a1a2e;
+  color: #e0e0e0;
+  min-height: 100vh;
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  position: relative;
+}
+
+.header {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mainTitle {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: #ffffff;
+  margin: 0;
+}
+
+.subTitle {
+  font-size: 0.9rem;
+  color: #a0a0b8;
+  margin-top: 0.25rem;
+}
+
+.scoreContainer {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.gradeBadge {
+  font-size: 2rem;
+  font-weight: bold;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid;
+}
+
+.scoreText {
+  text-align: right;
+}
+
+.percentage {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.scoreDetail {
+  font-size: 0.9rem;
+  color: #a0a0b8;
+}
+
+/* Grade Colors */
+.gradeA { color: #4ade80; border-color: #4ade80; }
+.gradeB { color: #60a5fa; border-color: #60a5fa; }
+.gradeC { color: #facc15; border-color: #facc15; }
+.gradeD { color: #f97316; border-color: #f97316; }
+.gradeF { color: #f87171; border-color: #f87171; }
+.gradeDefault { color: #9ca3af; border-color: #9ca3af; }
+
+.mainContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.leftPanel, .rightPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* AI Diagnosis Card */
+.aiDiagnosisCard .strengthsTitle {
+  color: #4ade80;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+.aiDiagnosisCard .weaknessesTitle {
+  color: #f87171;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+.diagnosisText {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #c0c0d8;
+}
+
+.createSetButton {
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 0.75rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.createSetButton:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+.createSetButton:disabled {
+  background-color: #4b5563;
+  cursor: not-allowed;
+}
+
+/* Recommendations Card */
+.recommendationsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  space-y: 1rem;
+}
+.recommendationsList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: #c0c0d8;
+  font-size: 0.9rem;
+}
+.recommendationsList li svg {
+  color: #60a5fa;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+/* Metrics Grid */
+.metricsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+.metricItem {
+  display: flex;
+  flex-direction: column;
+}
+.metricLabel {
+  font-size: 0.9rem;
+  color: #a0a0b8;
+  margin-bottom: 0.25rem;
+}
+.metricValue {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+/* Questions List */
+.questionsList {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+.questionItem {
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.questionItem:last-child {
+  border-bottom: none;
+}
+.questionHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+.questionNumber {
+  font-weight: bold;
+  color: #60a5fa;
+}
+.questionText {
+  flex: 1;
+  color: #e0e0e0;
+}
+.questionScore {
+  font-weight: bold;
+}
+.correct {
+  color: #4ade80;
+}
+.incorrect {
+  color: #f87171;
+}
+.explanation {
+  font-size: 0.85rem;
+  color: #a0a0b8;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-top: 0.75rem;
+}
+
+.tabNav {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.tabButton {
+  background: none;
+  border: none;
+  color: #a0a0b8;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+.tabButton:hover {
+  color: white;
+}
+.tabButton.active {
+  color: #60a5fa;
+  border-bottom-color: #60a5fa;
+}
+
+.tabContent {
+  width: 100%;
+}
+
+/* Questions List - Detailed View */
+.detailedAnalysisCard {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.questionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.questionItem {
+  padding: 1.5rem;
+  border-radius: 8px;
+  background-color: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.questionHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.questionNumber {
+  font-weight: bold;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid;
+}
+.questionText {
+  flex: 1;
+  color: #e0e0e0;
+  font-weight: 500;
+}
+.questionScore {
+  font-weight: bold;
+}
+.correct { color: #4ade80; }
+.incorrect { color: #f87171; }
+.questionNumber.correct { border-color: #4ade80; }
+.questionNumber.incorrect { border-color: #f87171; }
+
+.questionDetailsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+.detailLabel {
+  color: #a0a0b8;
+  margin-right: 0.5rem;
+}
+.detailValue {
+  color: #e0e0e0;
+}
+.correctAnswer {
+  color: #4ade80;
+  font-weight: bold;
+}
+
+.explanationContainer {
+  margin-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 1rem;
+}
+.explanationToggle {
+  background: none;
+  border: none;
+  color: #60a5fa;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+.explanation {
+  font-size: 0.9rem;
+  color: #c0c0d8;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-top: 0.75rem;
+  line-height: 1.7;
+}
+
+/* Radar Chart */
+.radarChartContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.radarItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.radarLabel {
+  width: 80px;
+  color: #a0a0b8;
+  font-size: 0.9rem;
+}
+.radarBar {
+  flex-grow: 1;
+  height: 10px;
+  background-color: rgba(0,0,0,0.3);
+  border-radius: 5px;
+}
+.radarFill {
+  height: 100%;
+  background-color: #60a5fa;
+  border-radius: 5px;
+}
+.radarValue {
+  width: 50px;
+  text-align: right;
+  font-weight: 600;
+}
+
+/* Difficulty Performance */
+.difficultyContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.difficultyItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.difficultyLabel {
+  width: 80px;
+  text-transform: capitalize;
+  color: #a0a0b8;
+  font-size: 0.9rem;
+}
+.difficultyBar {
+  flex-grow: 1;
+  height: 8px;
+  background-color: rgba(0,0,0,0.3);
+  border-radius: 4px;
+}
+.difficultyFill {
+  height: 100%;
+  border-radius: 4px;
+}
+.difficultyValue {
+  width: 50px;
+  text-align: right;
+  font-weight: 600;
+}
+
+/* Placeholder for Comparison Tab */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem 2rem;
+  color: #a0a0b8;
+  text-align: center;
+}
+.placeholder h3 {
+  font-size: 1.5rem;
+  color: white;
+} 
