@@ -383,27 +383,27 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                   </h2>
                   <div className={styles.difficultyContainer}>
                     {Object.entries(metrics.difficulty_performance).map(
-                      ([level, score]) => (
-                        <div key={level} className={styles.difficultyItem}>
+                      ([level, score], index) => (
+                        <div key={`${level}-${index}`} className={styles.difficultyItem}>
                           <span className={styles.difficultyLabel}>
-                            {level}
+                            {level as string}
                           </span>
                           <div className={styles.difficultyBar}>
                             <div
                               className={styles.difficultyFill}
                               style={{
-                                width: `${score}%`,
+                                width: `${score as number}%`,
                                 backgroundColor:
-                                  score >= 80
+                                  (score as number) >= 80
                                     ? '#4ade80'
-                                    : score >= 60
+                                    : (score as number) >= 60
                                     ? '#facc15'
                                     : '#f87171',
                               }}
                             />
                           </div>
                           <span className={styles.difficultyValue}>
-                            {score.toFixed(0)}%
+                            {(score as number).toFixed(0)}%
                           </span>
                         </div>
                       )

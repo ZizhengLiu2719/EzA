@@ -153,38 +153,47 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     return `${secs}秒`;
   }, []);
 
-  const handleAnswerSubmit = useCallback((student_answer: string | string[], confidence_level?: number) => {
-    if (!timer.isRunning) {
-      setTimer((prev) => ({ ...prev, isRunning: true }))
-    }
+  const handleAnswerSubmit = useCallback(
+    (student_answer: string | string[], confidence_level?: number) => {
+      // Start timer if not running
+      if (!timer.isRunning) {
+        setTimer((prev) => ({ ...prev, isRunning: true }))
+      }
+      
+      responseStartTime.current = Date.now()
 
-    const response_time = Date.now() - (responseStartTime.current || Date.now())
-    responseStartTime.current = Date.now()
+      setSession((prevSession) => {
+        const currentQuestion =
+          exam.questions[prevSession.current_question_index]
+        if (!currentQuestion) return prevSession
 
-    const newResponses = [...session.responses]
-    const existingResponseIndex = newResponses.findIndex(
-      (r) => r.question_id === currentQuestion.id
-    )
+        const newResponses = [...prevSession.responses]
+        const existingResponseIndex = newResponses.findIndex(
+          (r) => r.question_id === currentQuestion.id
+        )
 
-    const newResponse: ExamResponse = {
-      question_id: currentQuestion.id,
-      student_answer,
-      response_time,
-      confidence_level: confidence_level || 3, // Default confidence
-      timestamp: new Date(),
-    }
+        const newResponse: ExamResponse = {
+          question_id: currentQuestion.id,
+          student_answer,
+          response_time: Date.now() - (responseStartTime.current || Date.now()),
+          confidence_level: confidence_level || 3,
+          timestamp: new Date(),
+        }
 
-    if (existingResponseIndex > -1) {
-      newResponses[existingResponseIndex] = newResponse
-    } else {
-      newResponses.push(newResponse)
-    }
+        if (existingResponseIndex > -1) {
+          newResponses[existingResponseIndex] = newResponse
+        } else {
+          newResponses.push(newResponse)
+        }
 
-    setSession({
-      ...session,
-      responses: newResponses,
-    })
-  }, [currentQuestion, timer.isRunning, session])
+        return {
+          ...prevSession,
+          responses: newResponses,
+        }
+      })
+    },
+    [exam.questions, timer.isRunning]
+  )
 
   const navigateToQuestion = useCallback((index: number) => {
     if (index >= 0 && index < exam.questions.length) {
@@ -221,8 +230,8 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     setQuestionStartTime(Date.now())
   }, [session.current_question_index])
 
-  const answeredCount = new Set(session.responses.map(r => r.question_id)).size;
-  const progressPercentage = (answeredCount / exam.questions.length) * 100
+  const answeredCount = new Set(session.responses.map((r) => r.question_id))
+  const progressPercentage = (answeredCount.size / exam.questions.length) * 100
 
   const getCurrentAnswer = useCallback(() => {
     if (!currentQuestion) return undefined;
@@ -255,7 +264,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
                 />
             </div>
             <div className={styles.progressText}>
-                <span>进度: {answeredCount} / {exam.questions.length}</span>
+                <span>进度: {answeredCount.size} / {exam.questions.length}</span>
             </div>
         </div>
         
