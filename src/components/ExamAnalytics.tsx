@@ -91,18 +91,24 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
   const metrics = useMemo((): PerformanceMetrics => {
     const totalQuestions = exam.questions.length
     const correctAnswers = scored_questions.filter((q: { is_correct: boolean; }) => q.is_correct).length
-    const accuracy = (correctAnswers / totalQuestions) * 100
+    const accuracy = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0
 
     const totalTime = session.end_time && session.start_time 
       ? (new Date(session.end_time).getTime() - new Date(session.start_time).getTime()) / 1000 / 60
       : exam.config.duration
-    const speed = totalQuestions / totalTime
+    const speed = totalTime > 0 ? totalQuestions / totalTime : 0
 
     // 计算答题时间一致性
     const responseTimes = session.responses.map(r => r.response_time)
-    const avgResponseTime = responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
-    const timeVariance = responseTimes.reduce((sum, time) => sum + Math.pow(time - avgResponseTime, 2), 0) / responseTimes.length
-    const consistency = Math.max(0, 100 - (Math.sqrt(timeVariance) / avgResponseTime * 100))
+    const avgResponseTime = responseTimes.length > 0 
+      ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length 
+      : 0
+    const timeVariance = responseTimes.length > 0 
+      ? responseTimes.reduce((sum, time) => sum + Math.pow(time - avgResponseTime, 2), 0) / responseTimes.length 
+      : 0
+    const consistency = avgResponseTime > 0 && responseTimes.length > 0
+      ? Math.max(0, 100 - (Math.sqrt(timeVariance) / avgResponseTime * 100))
+      : 80 // 默认值
 
     // 计算平均置信度
     const confidenceLevels = session.responses
@@ -189,10 +195,10 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
 
   // 渲染性能雷达图数据
   const radarData = [
-    { metric: '准确率', value: metrics.accuracy, max: 100 },
-    { metric: '答题速度', value: Math.min(metrics.speed * 10, 100), max: 100 },
-    { metric: '稳定性', value: metrics.consistency, max: 100 },
-    { metric: '置信度', value: metrics.confidence, max: 100 }
+    { metric: '准确率', value: isNaN(metrics.accuracy) ? 0 : metrics.accuracy, max: 100 },
+    { metric: '答题速度', value: isNaN(metrics.speed) ? 0 : Math.min(metrics.speed * 10, 100), max: 100 },
+    { metric: '稳定性', value: isNaN(metrics.consistency) ? 80 : metrics.consistency, max: 100 },
+    { metric: '置信度', value: isNaN(metrics.confidence) ? 60 : metrics.confidence, max: 100 }
   ]
 
   const tabItems = [
@@ -384,7 +390,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                   <div className={styles.difficultyContainer}>
                     {Object.entries(metrics.difficulty_performance).map(
                       ([level, score], index) => (
-                        <div key={`${level}-${index}`} className={styles.difficultyItem}>
+                        <div key={`diff-${level}-${index}-${score}`} className={styles.difficultyItem}>
                           <span className={styles.difficultyLabel}>
                             {level as string}
                           </span>
@@ -465,7 +471,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                         )}
                       </div>
                       <div className={styles.questionDetailsGrid}>
-                        <div>
+                        <div key={`student-answer-${question.id}`}>
                           <span className={styles.detailLabel}>你的答案:</span>
                           <span className={styles.detailValue}>
                             {Array.isArray(response?.student_answer)
@@ -473,7 +479,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                               : response?.student_answer || '未答'}
                           </span>
                         </div>
-                        <div>
+                        <div key={`correct-answer-${question.id}`}>
                           <span className={styles.detailLabel}>正确答案:</span>
                           <span
                             className={`${styles.detailValue} ${styles.correctAnswer}`}
@@ -483,7 +489,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                               : question.correct_answer}
                           </span>
                         </div>
-                        <div>
+                        <div key={`response-time-${question.id}`}>
                           <span className={styles.detailLabel}>答题时间:</span>
                           <span className={styles.detailValue}>
                             {response

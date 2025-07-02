@@ -17,7 +17,7 @@ import styles from './QuestionRenderer.module.css'
 interface QuestionRendererProps {
   question: ExamQuestion
   answer: string | string[] | undefined
-  onAnswerChange: (answer: string | string[], confidence?: number) => void
+  onAnswerChange: (questionId: string, answer: string | string[], confidence?: number) => void
   showHint?: boolean
   disabled?: boolean
   showExplanation?: boolean
@@ -49,7 +49,15 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   // 提交答案的逻辑
   const handleConfirmAnswer = () => {
     if (currentAnswer !== undefined) {
-      onAnswerChange(currentAnswer, confidence)
+      console.log(
+        '[QuestionRenderer] 确认答案:', 
+        { 
+          questionId: question.id, 
+          answer: currentAnswer, 
+          confidence 
+        }
+      );
+      onAnswerChange(question.id, currentAnswer, confidence)
       setIsConfirmed(true)
     }
   }

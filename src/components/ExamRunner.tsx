@@ -51,10 +51,25 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     created_at: new Date()
   }))
 
+  const [examWithIds, setExamWithIds] = useState<GeneratedExam>(exam);
+
+  useEffect(() => {
+    // 确保所有问题都有唯一的ID
+    const questionsWithIds = exam.questions.map((q, index) => ({
+      ...q,
+      id: q.id || `gen_qid_${index}_${Date.now()}`
+    }));
+    setExamWithIds({
+      ...exam,
+      questions: questionsWithIds
+    });
+    console.log('[ExamRunner] 已确保所有题目都拥有唯一ID', questionsWithIds);
+  }, [exam]);
+
   const [timer, setTimer] = useState<TimerState>({
-    timeRemaining: exam.config.duration * 60,
+    timeRemaining: examWithIds.config.duration * 60,
     isRunning: true,
-    totalTime: exam.config.duration * 60
+    totalTime: examWithIds.config.duration * 60
   })
 
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set())
@@ -83,7 +98,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
   }, [session, onComplete])
 
   // Primary defense against invalid exam data
-  if (!exam || !exam.questions || exam.questions.length === 0) {
+  if (!examWithIds || !examWithIds.questions || examWithIds.questions.length === 0) {
     return (
       <div className={styles.confirmOverlay}>
           <div className={styles.confirmModal}>
@@ -98,7 +113,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
   }
 
   // 安全获取当前题目
-  const currentQuestion = exam.questions[session.current_question_index]
+  const currentQuestion = examWithIds.questions[session.current_question_index]
 
   // 计时器管理
   useEffect(() => {
@@ -154,7 +169,9 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
   }, []);
 
   const handleAnswerSubmit = useCallback(
-    (student_answer: string | string[], confidence_level?: number) => {
+    (questionId: string, student_answer: string | string[], confidence_level?: number) => {
+      console.log('[ExamRunner] 收到答案提交:', { questionId, student_answer, confidence_level });
+
       // Start timer if not running
       if (!timer.isRunning) {
         setTimer((prev) => ({ ...prev, isRunning: true }))
@@ -163,17 +180,21 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
       responseStartTime.current = Date.now()
 
       setSession((prevSession) => {
-        const currentQuestion =
-          exam.questions[prevSession.current_question_index]
-        if (!currentQuestion) return prevSession
+        console.log('[ExamRunner] 更新Session前:', prevSession);
+        
+        const questionExists = examWithIds.questions.some(q => q.id === questionId)
+        if (!questionExists) {
+          console.error('[ExamRunner] 错误: 找不到题目 ID', questionId);
+          return prevSession
+        }
 
         const newResponses = [...prevSession.responses]
         const existingResponseIndex = newResponses.findIndex(
-          (r) => r.question_id === currentQuestion.id
+          (r) => r.question_id === questionId
         )
 
         const newResponse: ExamResponse = {
-          question_id: currentQuestion.id,
+          question_id: questionId,
           student_answer,
           response_time: Date.now() - (responseStartTime.current || Date.now()),
           confidence_level: confidence_level || 3,
@@ -181,32 +202,36 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
         }
 
         if (existingResponseIndex > -1) {
+          console.log(`[ExamRunner] 正在更新题目 ${questionId} 的答案`);
           newResponses[existingResponseIndex] = newResponse
         } else {
+          console.log(`[ExamRunner] 正在为题目 ${questionId} 添加新答案`);
           newResponses.push(newResponse)
         }
-
-        return {
+        
+        const updatedSession = {
           ...prevSession,
           responses: newResponses,
         }
+        console.log('[ExamRunner] 更新Session后:', updatedSession);
+        return updatedSession;
       })
     },
-    [exam.questions, timer.isRunning]
+    [examWithIds.questions, timer.isRunning]
   )
 
   const navigateToQuestion = useCallback((index: number) => {
-    if (index >= 0 && index < exam.questions.length) {
+    if (index >= 0 && index < examWithIds.questions.length) {
       setSession((prev: ExamSession) => ({ ...prev, current_question_index: index }))
       setQuestionStartTime(Date.now())
     }
-  }, [exam.questions.length])
+  }, [examWithIds.questions.length])
 
   const handleNextQuestion = useCallback(() => {
-    if (session.current_question_index < exam.questions.length - 1) {
+    if (session.current_question_index < examWithIds.questions.length - 1) {
       navigateToQuestion(session.current_question_index + 1)
     }
-  }, [session.current_question_index, exam.questions.length, navigateToQuestion])
+  }, [session.current_question_index, examWithIds.questions.length, navigateToQuestion])
 
   const handlePreviousQuestion = useCallback(() => {
     if (session.current_question_index > 0) {
@@ -231,7 +256,8 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
   }, [session.current_question_index])
 
   const answeredCount = new Set(session.responses.map((r) => r.question_id))
-  const progressPercentage = (answeredCount.size / exam.questions.length) * 100
+  const progressPercentage = (answeredCount.size / examWithIds.questions.length) * 100
+  console.log(`[ExamRunner] 重新渲染: 已答 ${answeredCount.size} 题`, session.responses);
 
   const getCurrentAnswer = useCallback(() => {
     if (!currentQuestion) return undefined;
@@ -243,7 +269,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     <div className={`${styles.examRunner} ${className}`}>
       <div className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
-          <h1 className={styles.examTitle}>{exam.config.title}</h1>
+          <h1 className={styles.examTitle}>{examWithIds.config.title}</h1>
           <p className={styles.examSubtitle}>由 AI 智能生成</p>
         </div>
 
@@ -264,14 +290,14 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
                 />
             </div>
             <div className={styles.progressText}>
-                <span>进度: {answeredCount.size} / {exam.questions.length}</span>
+                <span>进度: {answeredCount.size} / {examWithIds.questions.length}</span>
             </div>
         </div>
         
         <div className={styles.sidebarSection}>
           <h2 className={styles.navHeader}>题目导航</h2>
           <div className={styles.questionGrid}>
-            {exam.questions.map((q, index) => {
+            {examWithIds.questions.map((q, index) => {
               const isAnswered = session.responses.some(r => r.question_id === q.id);
               const isCurrent = session.current_question_index === index;
               const isFlagged = flaggedQuestions.has(q.id);
@@ -343,7 +369,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
                         <ChevronLeft />
                         上一题
                     </button>
-                    <button onClick={handleNextQuestion} disabled={session.current_question_index === exam.questions.length - 1}>
+                    <button onClick={handleNextQuestion} disabled={session.current_question_index === examWithIds.questions.length - 1}>
                         下一题
                         <ChevronRight />
                     </button>
