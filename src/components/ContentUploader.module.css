@@ -1,0 +1,91 @@
+.uploaderContainer {
+  background-color: #2a2a3e;
+  border: 1px solid #4a4a6a;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.uploaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #d1d1f0;
+  margin: 0 0 0.25rem 0;
+}
+
+.uploaderSubtitle {
+  font-size: 0.85rem;
+  color: #a0a0c0;
+  margin: 0 0 1rem 0;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  border: 2px dashed #4a4a6a;
+  border-radius: 6px;
+  background-color: #1e1e30;
+  color: #a0a0c0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dropzone.dragging {
+  border-color: #8a8af0;
+  background-color: #252540;
+}
+
+.dropzone:hover {
+  border-color: #6a6ad0;
+}
+
+.fileInput {
+  display: none;
+}
+
+.uploadIcon {
+  color: #8a8af0;
+  margin-bottom: 0.75rem;
+  transition: transform 0.3s ease;
+}
+
+.dropzone:hover .uploadIcon {
+  transform: scale(1.1);
+}
+
+.dropzoneText {
+  font-size: 0.9rem;
+}
+
+.fileName {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #b0b0e0;
+  background-color: #3a3a5a;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+}
+
+/* Spinner for loading state */
+.spinner {
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-left-color: #8a8af0;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 0.75rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+} 

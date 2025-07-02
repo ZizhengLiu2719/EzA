@@ -4,83 +4,27 @@
  */
 
 import { AlertCircle, BrainCircuit } from 'lucide-react'
-import React, { useCallback, useState } from 'react'
-import { CreateFlashcardSetData } from '../api/flashcards'
-import { examAI, ExamConfiguration, ExamQuestion, GeneratedExam } from '../services/examAI'
+import * as mammoth from 'mammoth'
+import * as pdfjsLib from 'pdfjs-dist'
+import React, { useCallback, useMemo, useState } from 'react'
+import { FlashcardSetWithStats, getFlashcardsBySetIds } from '../api/flashcards'
+import { examAI, ExamConfiguration, GeneratedExam } from '../services/examAI'
 import { FSRSCard } from '../types/SRSTypes'
-import styles from './CreateFlashcardSetModal.module.css'
+import styles from './ExamGeneratorModal.module.css'
 
-interface CreateFlashcardSetModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (data: CreateFlashcardSetData) => Promise<void>
-  onMethodSelected?: (method: CreationMethod, setData: CreateFlashcardSetData) => void
-  isLoading?: boolean
-}
-
-// 创建方式枚举
-type CreationMethod = 'manual' | 'import' | 'ai-generate'
-
-const CREATION_METHODS = [
-  {
-    id: 'manual' as CreationMethod,
-    title: '🖊️ Manual Creation',
-    description: 'Create flashcards manually with full control',
-    icon: '🖊️',
-    features: ['Custom design', 'Flexible content', 'Step by step']
-  },
-  {
-    id: 'import' as CreationMethod,
-    title: '📤 Batch Import',
-    description: 'Import from CSV, text, images, or JSON',
-    icon: '📤',
-    features: ['CSV files', 'OCR from images', 'Text parsing', 'JSON import']
-  },
-  {
-    id: 'ai-generate' as CreationMethod,
-    title: '🤖 AI Generation',
-    description: 'Let AI generate flashcards from topics',
-    icon: '🤖',
-    features: ['Topic-based', 'Multiple types', 'Instant creation', 'Smart content']
-  }
-]
-
-const SUBJECTS = [
-  'Mathematics',
-  'Science', 
-  'History',
-  'English',
-  'Foreign Language',
-  'Computer Science',
-  'Chemistry',
-  'Physics',
-  'Biology',
-  'Psychology',
-  'Philosophy',
-  'Art',
-  'Music',
-  'Other'
-]
-
-const DIFFICULTY_LEVELS = [
-  { value: 1, label: 'Beginner', description: 'Basic concepts and vocabulary' },
-  { value: 2, label: 'Elementary', description: 'Fundamental knowledge' },
-  { value: 3, label: 'Intermediate', description: 'Standard academic level' },
-  { value: 4, label: 'Advanced', description: 'Complex concepts and applications' },
-  { value: 5, label: 'Expert', description: 'Professional and research level' }
-]
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
 
 interface ExamGeneratorModalProps {
   isOpen: boolean
   onClose: () => void
-  cards: FSRSCard[]
+  flashcardSets: FlashcardSetWithStats[]
   onExamGenerated: (exam: GeneratedExam) => void
 }
 
 interface ExamSettings {
   title: string
   subject: string
-  duration: number // 分钟
+  duration: number
   total_points: number
   question_types: {
     multiple_choice: number
@@ -88,6 +32,7 @@ interface ExamSettings {
     short_answer: number
     essay: number
     fill_blank: number
+    matching: number
   }
   difficulty_focus: 'easy' | 'medium' | 'hard' | 'mixed'
   cognitive_focus: 'remember' | 'understand' | 'apply' | 'analyze' | 'mixed'
@@ -97,14 +42,19 @@ interface ExamSettings {
 const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
   isOpen,
   onClose,
-  cards,
+  flashcardSets,
   onExamGenerated
 }) => {
   const [step, setStep] = useState<'settings' | 'generating' | 'error'>('settings')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isProfessorMode, setIsProfessorMode] = useState(false)
+  const [selectedSetIds, setSelectedSetIds] = useState<Set<string>>(new Set())
+  const [isSetSelectionOpen, setIsSetSelectionOpen] = useState(false);
+  const [isFileUploading, setIsFileUploading] = useState(false);
+
   const [settings, setSettings] = useState<ExamSettings>({
-    title: '复习测试',
-    subject: '通用',
+    title: 'Review Test',
+    subject: 'General',
     duration: 30,
     total_points: 100,
     question_types: {
@@ -113,32 +63,67 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
       short_answer: 2,
       essay: 0,
       fill_blank: 0,
+      matching: 0,
     },
     difficulty_focus: 'mixed',
     cognitive_focus: 'mixed',
-    learning_objectives: ['测试知识掌握度', '巩固学习成果'],
+    learning_objectives: ['Test knowledge mastery', 'Reinforce learning outcomes'],
   })
   const [newObjective, setNewObjective] = useState('')
   const [error, setError] = useState<string>('')
 
+  const selectedSets = useMemo(() => flashcardSets.filter(set => selectedSetIds.has(set.id)), [flashcardSets, selectedSetIds]);
+  const totalCardsInSelectedSets = useMemo(() => selectedSets.reduce((sum, set) => sum + (set.card_count || 0), 0), [selectedSets]);
   const totalQuestions = Object.values(settings.question_types).reduce((sum, count) => sum + count, 0)
 
   const handleClose = () => {
-    // Reset state on close, but not if generation is in progress
-    if (isGenerating) return;
+    if (isGenerating || isFileUploading) return;
     setStep('settings')
     setError('')
     onClose()
   }
 
-  const createExamConfig = useCallback((): ExamConfiguration => {
+  const handleFileUpload = async (file: File) => {
+    setIsFileUploading(true);
+    setError('');
+    try {
+      let textContent = '';
+      if (file.type === 'application/pdf') {
+        const doc = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
+        for (let i = 1; i <= doc.numPages; i++) {
+          const page = await doc.getPage(i);
+          const content = await page.getTextContent();
+          textContent += content.items.map((item: any) => item.str).join(' ');
+        }
+      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        textContent = result.value;
+      } else {
+        textContent = await file.text();
+      }
+      const extractedTopics = await examAI.extractTopicsFromDocument(textContent);
+      if (extractedTopics.length > 0) {
+        updateSettings({
+          learning_objectives: [...new Set([...settings.learning_objectives, ...extractedTopics])]
+        });
+      }
+    } catch (e) {
+      console.error("File processing error:", e);
+      setError("Failed to process the uploaded file.");
+    } finally {
+      setIsFileUploading(false);
+    }
+  };
+
+  const createExamConfig = useCallback((cards: FSRSCard[]): ExamConfiguration => {
     const questionDistribution = Object.entries(settings.question_types)
       .filter(([, count]) => count > 0)
       .map(([type, count]) => ({
-        type: type as ExamQuestion['type'],
+        type: type as ExamConfiguration['question_distribution'][0]['type'],
         count,
         points_per_question: Math.floor(settings.total_points / (totalQuestions || 1)),
-      }))
+      }));
 
     const difficultyDistribution =
       settings.difficulty_focus === 'mixed'
@@ -172,32 +157,40 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
     return {
       title: settings.title,
       subject: settings.subject,
-      topics: Array.from(new Set(cards.map(card => card.tags || []).flat())).filter(Boolean),
+      topics: Array.from(new Set(cards.map(card => (card.tags || []).flat()).flat())).filter(Boolean),
       duration: settings.duration,
       total_points: settings.total_points,
       question_distribution: questionDistribution,
       difficulty_distribution: difficultyDistribution,
       cognitive_distribution: cognitiveDistribution,
       learning_objectives: settings.learning_objectives,
-    }
-  }, [settings, cards, totalQuestions])
+    } as ExamConfiguration;
+  }, [settings, totalQuestions]);
 
   const handleGenerateExam = useCallback(async () => {
     if (isGenerating) return
-    if (cards.length < 10) {
-      setError(`至少需要10张卡片才能生成考试，当前只有 ${cards.length} 张。`)
-      setStep('error')
-      return
+    if (selectedSetIds.size === 0) {
+      setError('Please select at least one flashcard set to generate the exam from.');
+      setStep('error');
+      return;
+    }
+    
+    const relevantCards = await getFlashcardsBySetIds(Array.from(selectedSetIds));
+
+    if (relevantCards.length < 10) {
+      setError(`At least 10 cards are needed to generate an exam, but the selected sets only contain ${relevantCards.length}.`);
+      setStep('error');
+      return;
     }
     if (totalQuestions === 0) {
-      setError('请至少选择一种题型。')
-      setStep('error')
-      return
+      setError('Please select at least one question type.');
+      setStep('error');
+      return;
     }
-    if (totalQuestions > cards.length) {
-      setError(`题目总数 (${totalQuestions}) 不能超过可用闪卡数量 (${cards.length})。`)
-      setStep('error')
-      return
+    if (totalQuestions > relevantCards.length) {
+      setError(`Total questions (${totalQuestions}) cannot exceed the number of available cards in selected sets (${relevantCards.length}).`);
+      setStep('error');
+      return;
     }
 
     setIsGenerating(true)
@@ -205,18 +198,30 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
     setError('')
 
     try {
-      const examConfig = createExamConfig()
-      const exam = await examAI.generateExamFromCards(cards, examConfig)
+      const examConfig = createExamConfig(relevantCards)
+      const exam = await examAI.generateExamFromCards(relevantCards, examConfig, isProfessorMode)
       onExamGenerated(exam)
     } catch (err) {
-      console.error('❌ 考试生成失败:', err)
-      const errorMessage = err instanceof Error ? err.message : '发生未知错误，请稍后重试。'
-      setError(`考试生成失败: ${errorMessage}`)
+      console.error('❌ Exam Generation Failed:', err)
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred. Please try again later.'
+      setError(`Exam Generation Failed: ${errorMessage}`)
       setStep('error')
     } finally {
       setIsGenerating(false)
     }
-  }, [cards, totalQuestions, createExamConfig, onExamGenerated, isGenerating])
+  }, [isGenerating, selectedSetIds, totalQuestions, createExamConfig, onExamGenerated, isProfessorMode]);
+  
+  const toggleSetId = (setId: string) => {
+    setSelectedSetIds(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(setId)) {
+            newSet.delete(setId);
+        } else {
+            newSet.add(setId);
+        }
+        return newSet;
+    });
+  };
 
   const updateSettings = useCallback((updates: Partial<ExamSettings>) => {
     setSettings(prev => ({ ...prev, ...updates }))
@@ -258,26 +263,22 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
   const renderContent = () => {
     if (step === 'generating') {
       return (
-        <div className={styles.centeredContent}>
-            <div className={styles.spinner}></div>
-            <h3 className={styles.loadingTitle}>AI 正在为您精心组卷...</h3>
-            <p className={styles.loadingText}>请稍候，这可能需要一点时间</p>
+        <div className={styles.centeredMessage}>
+            <div className={styles.spinner} />
+            <p className={styles.loadingMessage}>The AI is crafting your exam...</p>
+            <p className={styles.loadingSubMessage}>Analyzing weaknesses and selecting questions.</p>
         </div>
       )
     }
 
     if (step === 'error') {
         return (
-          <div className={styles.centeredContent}>
-            <AlertCircle size={48} className={styles.errorIcon} />
-            <h3 className={styles.loadingTitle}>出错了</h3>
-            <p className={styles.errorText}>{error}</p>
-            <button
-              type="button"
-              onClick={() => setStep('settings')}
-              className={styles.submitButton}
-            >
-              返回设置
+          <div className={styles.centeredMessage}>
+            <AlertCircle className={styles.errorIcon} />
+            <p className={styles.errorMessageHeader}>Generation Failed</p>
+            <p className={styles.errorMessageText}>{error}</p>
+            <button onClick={() => { setStep('settings'); setError(''); }} className={styles.actionButton}>
+              Back to Settings
             </button>
           </div>
         )
@@ -429,7 +430,7 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
                 <BrainCircuit size={24} />
                 <div>
                   <h2 className={styles.modalTitle}>智能考试生成器</h2>
-                  <p className={styles.modalSubtitle}>基于 {cards.length} 张闪卡</p>
+                  <p className={styles.modalSubtitle}>基于 {totalCardsInSelectedSets} 张闪卡</p>
                 </div>
               </div>
               <button className={styles.closeButton} onClick={handleClose}>

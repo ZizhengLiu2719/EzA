@@ -753,4 +753,60 @@ export const getAllUserFlashcards = async (): Promise<FSRSCard[]> => {
   }
 
   return allCards
-} 
+}
+
+/**
+ * Get all flashcards for a specific list of set IDs
+ */
+export const getFlashcardsBySetIds = async (setIds: string[]): Promise<FSRSCard[]> => {
+  if (!setIds || setIds.length === 0) {
+    return [];
+  }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const { data, error } = await supabase
+    .from('flashcards')
+    .select('*')
+    .in('set_id', setIds)
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+  return data.map(convertToFSRSCard);
+};
+
+/**
+ * Create a new flashcard set from a list of mistaken questions
+ */
+export const createSetFromMistakes = async (title: string, questions: any[]): Promise<FlashcardSet> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // 1. Create the new flashcard set
+    const newSet = await createFlashcardSet({
+        title,
+        description: `A collection of questions you answered incorrectly. Keep practicing!`,
+        subject: questions[0]?.subject_area || 'Review',
+        difficulty: 3, // Default difficulty
+    });
+
+    if (!newSet || !newSet.id) {
+        throw new Error('Failed to create the new flashcard set for mistakes.');
+    }
+
+    // 2. Prepare flashcards from the mistaken questions
+    const cardsToCreate: CreateFlashcardData[] = questions.map(q => ({
+        set_id: newSet.id,
+        question: q.question,
+        answer: Array.isArray(q.correct_answer) ? q.correct_answer.join('; ') : q.correct_answer,
+        hint: q.hint,
+        explanation: q.explanation,
+        card_type: 'basic', // Default to basic, can be enhanced later
+        tags: [q.topic, 'mistake-review'],
+    }));
+
+    // 3. Batch create the flashcards
+    await createFlashcards(cardsToCreate);
+
+    return newSet;
+};

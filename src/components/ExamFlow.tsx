@@ -1,7 +1,6 @@
-import { getAllUserFlashcards } from '@/api/flashcards'
+import { FlashcardSetWithStats, getFlashcardSets } from '@/api/flashcards'
 import { examAI, GeneratedExam } from '@/services/examAI'
 import { ExamSession, ExamResult as TypesExamResult } from '@/types'
-import { FSRSCard } from '@/types/SRSTypes'
 import React, { useEffect, useState } from 'react'
 import ExamAnalytics from './ExamAnalytics'
 import styles from './ExamFlow.module.css'
@@ -16,7 +15,7 @@ interface ExamFlowProps {
 
 const ExamFlow: React.FC<ExamFlowProps> = ({ isOpen, examType: _examType, onClose }) => {
   const [phase, setPhase] = useState<'loading' | 'generator' | 'runner' | 'analytics'>('loading')
-  const [cards, setCards] = useState<FSRSCard[]>([])
+  const [flashcardSets, setFlashcardSets] = useState<FlashcardSetWithStats[]>([])
   const [exam, setExam] = useState<GeneratedExam | null>(null)
   const [session, setSession] = useState<ExamSession | null>(null)
   const [result, setResult] = useState<any>(null)
@@ -26,7 +25,7 @@ const ExamFlow: React.FC<ExamFlowProps> = ({ isOpen, examType: _examType, onClos
     if (!isOpen) {
       // Reset state when flow is closed, regardless of phase
       setPhase('loading');
-      setCards([]);
+      setFlashcardSets([]);
       setExam(null);
       setSession(null);
       setResult(null);
@@ -37,22 +36,22 @@ const ExamFlow: React.FC<ExamFlowProps> = ({ isOpen, examType: _examType, onClos
     setPhase('loading')
     setError(null)
     
-    const loadCards = async () => {
+    const loadSets = async () => {
       try {
-        const allCards = await getAllUserFlashcards()
-        if (allCards.length === 0) {
-          setError('您还没有任何闪卡可用于生成考试。')
+        const sets = await getFlashcardSets();
+        if (sets.length === 0) {
+          setError('您还没有任何闪卡集可用于生成考试。请先创建一些闪卡集。')
           return
         }
-        setCards(allCards)
+        setFlashcardSets(sets);
         setPhase('generator')
       } catch (err) {
-        console.error('Failed to load flashcards for exam:', err)
-        setError('无法加载闪卡数据，请稍后重试。')
+        console.error('Failed to load flashcard sets for exam:', err)
+        setError('无法加载闪卡集数据，请稍后重试。')
       }
     }
 
-    loadCards()
+    loadSets()
   }, [isOpen])
 
   const handleExamGenerated = (generatedExam: GeneratedExam) => {
@@ -101,7 +100,7 @@ const ExamFlow: React.FC<ExamFlowProps> = ({ isOpen, examType: _examType, onClos
       <ExamGeneratorModal
         isOpen={true}
         onClose={onClose}
-        cards={cards}
+        flashcardSets={flashcardSets}
         onExamGenerated={handleExamGenerated}
       />
     )
