@@ -204,7 +204,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
               <h1 className="text-2xl font-bold text-gray-800">{exam.config.title} - 成绩分析</h1>
               <p className="text-gray-600 mt-1">
                 完成时间: {new Date(session.end_time || Date.now()).toLocaleString()} • 
-                用时: {Math.floor(analysis.time_analysis.total_time / 60)}分{Math.round(analysis.time_analysis.total_time) % 60}秒
+                用时: {Math.floor((analysis?.time_analysis?.total_time || 0) / 60)}分{Math.round(analysis?.time_analysis?.total_time || 0) % 60}秒
               </p>
             </div>
 
