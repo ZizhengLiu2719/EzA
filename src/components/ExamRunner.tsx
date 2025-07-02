@@ -59,33 +59,28 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
 
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set())
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now())
 
   const timerRef = useRef<NodeJS.Timeout>()
   const responseStartTime = useRef<number | null>(null)
   
-  const handleSubmitExam = useCallback(async () => {
-    setIsSubmitting(true)
-    
-    try {
-      // 使用函数式更新来获取最新的session状态
-      setSession(currentSession => {
-        const completedSession: ExamSession = {
-          ...currentSession,
-          status: 'completed',
-          end_time: new Date()
-        };
-        onComplete(completedSession);
-        return completedSession; // 更新本地状态
-      });
-    } catch (error) {
-      console.error('❌ 考试提交失败:', error)
-      // 如果需要，这里可以添加错误处理逻辑
-    } finally {
-      setIsSubmitting(false)
+  useEffect(() => {
+    if (isCompleting) {
+      const completedSession: ExamSession = {
+        ...session,
+        status: 'completed',
+        end_time: new Date()
+      };
+      onComplete(completedSession);
     }
-  }, [onComplete])
+  }, [isCompleting, session, onComplete]);
+
+  const handleSubmitExam = useCallback(async () => {
+    setIsSubmitting(true);
+    setIsCompleting(true);
+  }, []);
 
   // Primary defense against invalid exam data
   if (!exam || !exam.questions || exam.questions.length === 0) {
