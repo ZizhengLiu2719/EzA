@@ -3,7 +3,7 @@
  * 统一的闪卡集创建模态框 - 支持多种创建方式
  */
 
-import { AlertCircle, BrainCircuit } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import React, { useCallback, useMemo, useState } from 'react'
 import { CreateFlashcardSetData, FlashcardSetWithStats, getFlashcardsBySetIds } from '../api/flashcards'
 import { examAI, ExamConfiguration, ExamQuestion, GeneratedExam } from '../services/examAI'
@@ -81,8 +81,8 @@ interface ExamSettings {
   title: string
   subject: string
   duration: number // 分钟
-  total_points: number
   question_types: {
+    single_choice: number;
     multiple_choice: number
     true_false: number
     short_answer: number
@@ -102,15 +102,16 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
   onExamGenerated
 }) => {
   const [step, setStep] = useState<'settings' | 'generating' | 'error'>('settings')
+  const [source, setSource] = useState<'flashcards' | 'files'>('flashcards');
   const [isGenerating, setIsGenerating] = useState(false)
-  const [selectedSetIds, setSelectedSetIds] = useState<string[]>(() => flashcardSets.map(s => s.id));
+  const [selectedSetIds, setSelectedSetIds] = useState<string[]>([])
   const [extractedTopics, setExtractedTopics] = useState<string[]>([]);
   const [settings, setSettings] = useState<ExamSettings>({
     title: '复习测试',
     subject: '通用',
     duration: 30,
-    total_points: 100,
     question_types: {
+      single_choice: 0,
       multiple_choice: 5,
       true_false: 3,
       short_answer: 2,
@@ -129,7 +130,6 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
 
   const handleTopicsExtracted = (topics: string[]) => {
     setExtractedTopics(topics);
-    // Automatically select the newly extracted topics
     updateSettings({
       selectedTopics: Array.from(new Set([...settings.selectedTopics, ...topics]))
     });
@@ -144,13 +144,13 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
   };
 
   const selectedCardsCount = useMemo(() => {
+    if (source !== 'flashcards') return 0;
     return flashcardSets
       .filter(set => selectedSetIds.includes(set.id))
       .reduce((sum, set) => sum + (set.card_count || 0), 0);
-  }, [selectedSetIds, flashcardSets]);
+  }, [selectedSetIds, flashcardSets, source]);
 
   const handleClose = () => {
-    // Reset state on close, but not if generation is in progress
     if (isGenerating) return;
     setStep('settings')
     setError('')
@@ -158,15 +158,16 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
   }
 
   const createExamConfig = useCallback((): ExamConfiguration => {
+    const totalPoints = Object.values(settings.question_types).reduce((sum, count) => sum + count, 0) * 5; // Assuming 5 points per question
+
     const questionDistribution = Object.entries(settings.question_types)
       .filter(([, count]) => count > 0)
       .map(([type, count]) => ({
         type: type as ExamQuestion['type'],
         count,
-        points_per_question: Math.floor(settings.total_points / (totalQuestions || 1)),
+        points_per_question: 5,
       }))
 
-    // Use the new selectedTopics state directly
     const finalTopics = settings.selectedTopics;
 
     const difficultyDistribution =
@@ -203,31 +204,32 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
       subject: settings.subject,
       topics: finalTopics,
       duration: settings.duration,
-      total_points: settings.total_points,
+      total_points: totalPoints,
       question_distribution: questionDistribution,
       difficulty_distribution: difficultyDistribution,
       cognitive_distribution: cognitiveDistribution,
-      learning_objectives: settings.selectedTopics, // learning_objectives is now an alias for selectedTopics
+      learning_objectives: settings.selectedTopics,
     }
-  }, [settings, totalQuestions])
+  }, [settings])
 
   const handleGenerateExam = useCallback(async () => {
     if (isGenerating) return
 
-    if (selectedSetIds.length === 0) {
+    if (source === 'flashcards' && selectedSetIds.length === 0) {
       setError('请至少选择一个闪卡集作为考试范围。')
       setStep('error')
       return
     }
 
+    if (source === 'flashcards') {
     const availableCardsCount = selectedCardsCount;
-    if (availableCardsCount < 10) {
+      if (totalQuestions === 0) {
+        setError('请至少设置一个题型和数量。');
+        setStep('error');
+        return;
+      }
+      if (availableCardsCount < 10 && availableCardsCount < totalQuestions) {
       setError(`所选范围内至少需要10张卡片才能生成考试，当前只有 ${availableCardsCount} 张。`)
-      setStep('error')
-      return
-    }
-    if (totalQuestions === 0) {
-      setError('请至少选择一种题型。')
       setStep('error')
       return
     }
@@ -235,6 +237,13 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
       setError(`题目总数 (${totalQuestions}) 不能超过所选范围内的卡片数量 (${availableCardsCount})。`)
       setStep('error')
       return
+      }
+    }
+    
+    if (source === 'files' && totalQuestions === 0) {
+      setError('请至少设置一个题型和数量。');
+      setStep('error');
+      return;
     }
 
     setIsGenerating(true)
@@ -243,35 +252,54 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
 
     try {
       const examConfig = createExamConfig()
+      let generatedExam;
+      if (source === 'flashcards') {
       const cardsForExam = await getFlashcardsBySetIds(selectedSetIds);
-      const generatedExam = await examAI.generateExamFromCards(cardsForExam, examConfig, settings.isProfessorMode)
+        generatedExam = await examAI.generateExamFromCards(cardsForExam, examConfig, settings.isProfessorMode)
+      } else {
+        // TODO: Implement generateExamFromContent
+        // For now, we'll use a placeholder or throw an error
+        setError('从文件生成考试的功能尚未实现。');
+        setStep('error');
+        setIsGenerating(false);
+        return;
+      }
       onExamGenerated(generatedExam)
     } catch (err: any) {
       console.error('Exam generation failed:', err)
-      const errorMessage = err instanceof Error ? err.message : '发生未知错误，请稍后重试。'
-      setError(`考试生成失败: ${errorMessage}`)
+      setError(err.message || '考试生成失败，请稍后重试。')
       setStep('error')
     } finally {
       setIsGenerating(false)
     }
-  }, [selectedSetIds, selectedCardsCount, totalQuestions, createExamConfig, onExamGenerated, isGenerating, settings.isProfessorMode])
+  }, [
+    isGenerating, 
+    source, 
+    selectedSetIds, 
+    selectedCardsCount, 
+    totalQuestions, 
+    createExamConfig, 
+    onExamGenerated, 
+    settings.isProfessorMode
+  ]);
 
-  const updateSettings = useCallback((updates: Partial<ExamSettings>) => {
-    setSettings(prev => ({ ...prev, ...updates }))
-  }, [])
-
-  const updateQuestionType = useCallback(
-    (type: keyof ExamSettings['question_types'], count: number) => {
-      setSettings(prev => ({
+  const updateSettings = (newSettings: Partial<ExamSettings>) => {
+    setSettings(prev => ({ ...prev, ...newSettings }));
+  };
+  
+  const updateQuestionCount = (type: keyof ExamSettings['question_types'], delta: number) => {
+    setSettings(prev => {
+      const newCount = (prev.question_types[type] || 0) + delta;
+      if (newCount < 0) return prev; // Don't allow negative numbers
+      return {
         ...prev,
         question_types: {
           ...prev.question_types,
-          [type]: Math.max(0, count),
-        },
-      }))
-    },
-    []
-  )
+          [type]: newCount,
+        }
+      };
+    });
+  };
 
   const handleTopicSubmit = () => {
     if (newTopic.trim() && !settings.selectedTopics.includes(newTopic.trim())) {
@@ -283,16 +311,169 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
   }
 
   const handleTopicToggle = (topic: string) => {
-    const newTopics = settings.selectedTopics.includes(topic)
+    updateSettings({
+      selectedTopics: settings.selectedTopics.includes(topic)
       ? settings.selectedTopics.filter(t => t !== topic)
-      : [...settings.selectedTopics, topic];
-    updateSettings({ selectedTopics: newTopics });
-  };
-  
-  if (!isOpen) return null
+        : [...settings.selectedTopics, topic],
+    })
+  }
+
+  const renderSettings = () => (
+    <>
+      <div className={styles.modalBody}>
+        <div className={styles.mainArea}>
+          {/* Left Panel: Settings */}
+          <div className={styles.configPanel}>
+             <div className={styles.configSection}>
+                <p className={styles.sectionTitle}>基础设置</p>
+                <div className={styles.formGrid}>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>考试标题</label>
+                    <input
+                      type="text"
+                      className={styles.fieldInput}
+                      value={settings.title}
+                      onChange={(e) => updateSettings({ title: e.target.value })}
+                    />
+                  </div>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>所属学科</label>
+                    <input
+                      type="text"
+                      className={styles.fieldInput}
+                      value={settings.subject}
+                      onChange={(e) => updateSettings({ subject: e.target.value })}
+                    />
+                  </div>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>时长(分钟)</label>
+                    <input
+                      type="number"
+                      className={styles.fieldInput}
+                      value={settings.duration}
+                      onChange={(e) => updateSettings({ duration: parseInt(e.target.value, 10) || 0 })}
+                    />
+                  </div>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>难度重点</label>
+                    <select
+                      className={styles.fieldSelect}
+                      value={settings.difficulty_focus}
+                      onChange={e => updateSettings({ difficulty_focus: e.target.value as any })}
+                    >
+                      <option value="mixed">混合</option>
+                      <option value="easy">偏简单</option>
+                      <option value="medium">偏中等</option>
+                      <option value="hard">偏困难</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+            <div className={styles.configSection}>
+              <p className={styles.sectionTitle}>题型分布 (共 {totalQuestions} 题)</p>
+              <div className={styles.questionTypeGrid}>
+                {(Object.keys(settings.question_types) as Array<keyof typeof settings.question_types>).map(type => (
+                  <div key={type} className={styles.stepperRow}>
+                    <span className={styles.stepperLabel}>{type.replace(/_/g, ' ')}</span>
+                    <div className={styles.stepper}>
+                      <button onClick={() => updateQuestionCount(type, -1)} disabled={settings.question_types[type] <= 0}>-</button>
+                      <span>{settings.question_types[type]}</span>
+                      <button onClick={() => updateQuestionCount(type, 1)}>+</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Panel: Source Selection */}
+          <div className={styles.sourcePanel}>
+            <div className={styles.sourceSelector}>
+              <button
+                className={`${styles.sourceButton} ${source === 'flashcards' ? styles.active : ''}`}
+                onClick={() => setSource('flashcards')}
+              >
+                从卡片集选择
+              </button>
+              <button
+                className={`${styles.sourceButton} ${source === 'files' ? styles.active : ''}`}
+                onClick={() => setSource('files')}
+              >
+                从文件上传
+              </button>
+            </div>
+
+            {source === 'flashcards' && (
+              <div className={styles.configSection}>
+                <p className={styles.sectionTitle}>
+                  选择卡片集
+                  <span className={styles.selectionCount}>已选 {selectedSetIds.length} 套 / 共 {selectedCardsCount} 张卡片</span>
+                </p>
+                <div className={styles.setList}>
+                  {flashcardSets.map(set => (
+                    <div
+                      key={set.id}
+                      className={`${styles.setItem} ${selectedSetIds.includes(set.id) ? styles.selected : ''}`}
+                      onClick={() => handleSetSelectionChange(set.id)}
+                    >
+                      <span className={styles.setName}>{set.title}</span>
+                      <span className={styles.setCount}>{set.card_count} cards</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {source === 'files' && (
+              <div className={styles.configSection}>
+                <p className={styles.sectionTitle}>上传学习资料</p>
+                <ContentUploader onTopicsExtracted={handleTopicsExtracted} />
+              </div>
+            )}
+
+            <div className={styles.configSection}>
+              <p className={styles.sectionTitle}>考试重点 (Topics)</p>
+              <div className={styles.tagsList}>
+                {settings.selectedTopics.map(topic => (
+                  <span
+                    key={topic}
+                    className={`${styles.tag} ${styles.tagSelected}`}
+                    onClick={() => handleTopicToggle(topic)}
+                  >
+                    {topic}
+                  </span>
+                ))}
+              </div>
+              <div className={styles.tagInputWrapper}>
+                <input
+                  type="text"
+                  value={newTopic}
+                  onChange={e => setNewTopic(e.target.value)}
+                  placeholder="手动添加考点..."
+                  className={styles.tagInput}
+                  onKeyPress={e => e.key === 'Enter' && handleTopicSubmit()}
+                />
+                <button onClick={handleTopicSubmit} className={styles.tagAddButton}>添加</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className={styles.modalFooter}>
+        <button onClick={handleClose} className={styles.cancelButton}>取消</button>
+        <button onClick={handleGenerateExam} disabled={isGenerating} className={styles.generateButton}>
+          {isGenerating ? '生成中...' : `生成 ${totalQuestions} 道题`}
+        </button>
+      </div>
+    </>
+  );
 
   const renderContent = () => {
-    if (step === 'generating') {
+    switch (step) {
+      case 'settings':
+        return renderSettings();
+      case 'generating':
       return (
         <div className={styles.centeredContent}>
             <div className={styles.spinner}></div>
@@ -300,9 +481,7 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
             <p className={styles.loadingText}>请稍候，这可能需要一点时间</p>
         </div>
       )
-    }
-
-    if (step === 'error') {
+      case 'error':
         return (
           <div className={styles.centeredContent}>
             <AlertCircle size={48} className={styles.errorIcon} />
@@ -317,191 +496,32 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
             </button>
           </div>
         )
-      }
+      default:
+        return renderSettings();
+    }
+  }
 
-    return (
-        <form className={styles.modalForm} onSubmit={(e) => { e.preventDefault(); handleGenerateExam(); }}>
-            <div className={styles.formGridWide}>
-              <ContentUploader onTopicsExtracted={handleTopicsExtracted} />
-            </div>
-
-            <div className={styles.fieldGroupFull}>
-              <label className={styles.fieldLabel}>考试重点 (Topics)</label>
-              <div className={styles.tagContainer}>
-                  <div className={styles.tagsList}>
-                      {Array.from(new Set([...settings.selectedTopics, ...extractedTopics])).map((topic) => (
-                      <button 
-                        type="button" 
-                        key={topic} 
-                        className={`${styles.tag} ${settings.selectedTopics.includes(topic) ? styles.tagSelected : ''} ${extractedTopics.includes(topic) ? styles.tagAI : ''}`}
-                        onClick={() => handleTopicToggle(topic)}
-                      >
-                          {extractedTopics.includes(topic) && <BrainCircuit size={14} className={styles.aiIcon} />}
-                          {topic}
-                      </button>
-                      ))}
-                  </div>
-                  <div className={styles.tagInputWrapper}>
-                      <input
-                      type="text"
-                      className={styles.tagInput}
-                      value={newTopic}
-                      onChange={e => setNewTopic(e.target.value)}
-                      onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleTopicSubmit();
-                          }
-                      }}
-                      placeholder="手动添加考点..."
-                      />
-                      <button type="button" className={styles.tagAddButton} onClick={handleTopicSubmit}>添加</button>
-                  </div>
-              </div>
-            </div>
-
-            <div className={styles.formGrid}>
-                {/* Left Column */}
-                <div className={styles.formColumn}>
-                    <div className={styles.fieldGroup}>
-                        <label className={styles.fieldLabel}>基本设置</label>
-                        <div className={styles.inputRow}>
-                            <label htmlFor="title" className={styles.inlineLabel}>考试标题</label>
-                            <input
-                                type="text"
-                                id="title"
-                                className={styles.fieldInput}
-                                value={settings.title}
-                                onChange={e => updateSettings({ title: e.target.value })}
-                                placeholder="e.g., 期中复习"
-                            />
-                        </div>
-                        <div className={styles.inputRow}>
-                             <label htmlFor="subject" className={styles.inlineLabel}>学科</label>
-                            <input
-                                type="text"
-                                id="subject"
-                                className={styles.fieldInput}
-                                value={settings.subject}
-                                onChange={e => updateSettings({ subject: e.target.value })}
-                                placeholder="e.g., 计算机科学"
-                            />
-                        </div>
-                         <div className={styles.inputRow}>
-                             <label htmlFor="duration" className={styles.inlineLabel}>时长(分钟)</label>
-                            <input
-                                type="number"
-                                id="duration"
-                                className={styles.fieldInput}
-                                value={settings.duration}
-                                onChange={e => updateSettings({ duration: parseInt(e.target.value, 10) || 0 })}
-                            />
-                        </div>
-                    </div>
-                    <div className={styles.fieldGroup}>
-                        <label className={styles.fieldLabel}>难度重点</label>
-                         <select
-                            className={styles.fieldSelect}
-                            value={settings.difficulty_focus}
-                            onChange={e => updateSettings({ difficulty_focus: e.target.value as any })}
-                        >
-                            <option value="mixed">混合难度</option>
-                            <option value="easy">侧重简单</option>
-                            <option value="medium">侧重中等</option>
-                            <option value="hard">侧重困难</option>
-                        </select>
-                    </div>
-                </div>
-
-                {/* Right Column */}
-                <div className={styles.formColumn}>
-                    <div className={styles.fieldGroup}>
-                        <label className={styles.fieldLabel}>题型分布 (共 {totalQuestions} 题)</label>
-                        <div className={styles.questionTypeGrid}>
-                           <div className={styles.questionTypeRow}>
-                                <span className={styles.questionTypeLabel}>选择题</span>
-                                <div className={styles.stepper}>
-                                    <button type="button" onClick={() => updateQuestionType('multiple_choice', settings.question_types['multiple_choice'] - 1)}>-</button>
-                                    <span>{settings.question_types['multiple_choice']}</span>
-                                    <button type="button" onClick={() => updateQuestionType('multiple_choice', settings.question_types['multiple_choice'] + 1)}>+</button>
-                                </div>
-                            </div>
-                             <div className={styles.questionTypeRow}>
-                                <span className={styles.questionTypeLabel}>判断题</span>
-                                <div className={styles.stepper}>
-                                    <button type="button" onClick={() => updateQuestionType('true_false', settings.question_types['true_false'] - 1)}>-</button>
-                                    <span>{settings.question_types['true_false']}</span>
-                                    <button type="button" onClick={() => updateQuestionType('true_false', settings.question_types['true_false'] + 1)}>+</button>
-                                </div>
-                            </div>
-                            <div className={styles.questionTypeRow}>
-                                <span className={styles.questionTypeLabel}>填空题</span>
-                                <div className={styles.stepper}>
-                                    <button type="button" onClick={() => updateQuestionType('fill_blank', settings.question_types['fill_blank'] - 1)}>-</button>
-                                    <span>{settings.question_types['fill_blank']}</span>
-                                    <button type="button" onClick={() => updateQuestionType('fill_blank', settings.question_types['fill_blank'] + 1)}>+</button>
-                                </div>
-                            </div>
-                             <div className={styles.questionTypeRow}>
-                                <span className={styles.questionTypeLabel}>简答题</span>
-                                <div className={styles.stepper}>
-                                    <button type="button" onClick={() => updateQuestionType('short_answer', settings.question_types['short_answer'] - 1)}>-</button>
-                                    <span>{settings.question_types['short_answer']}</span>
-                                    <button type="button" onClick={() => updateQuestionType('short_answer', settings.question_types['short_answer'] + 1)}>+</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Professor Mode Toggle */}
-            <div className={`${styles.formGroupFull} ${styles.toggleContainer}`}>
-              <div className={styles.toggleLabel}>
-                <label htmlFor="professor-mode">开启教授模式</label>
-                <p>AI将生成更具挑战性的分析与应用题</p>
-              </div>
-              <label className={styles.switch}>
-                <input
-                  id="professor-mode"
-                  type="checkbox"
-                  checked={settings.isProfessorMode}
-                  onChange={e => updateSettings({ isProfessorMode: e.target.checked })}
-                />
-                <span className={styles.slider}></span>
-              </label>
-            </div>
-
-            <div className={styles.modalActions}>
-                <button type="button" className={styles.cancelButton} onClick={handleClose}>
-                取消
-                </button>
-                <button type="submit" className={styles.submitButton} disabled={isGenerating}>
-                {isGenerating ? '生成中...' : '开始生成考试'}
-                </button>
-            </div>
-        </form>
-    )
+  if (!isOpen) {
+    return null
   }
 
   return (
     <div className={styles.modalOverlay} onClick={handleClose}>
       <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <div className={styles.headerContent}>
-                <BrainCircuit size={24} />
-                <div className={styles.modalTitleContainer}>
                   <div>
-                    <h2 className={styles.modalTitle}>智能考试生成器</h2>
-                    <p className={styles.modalSubtitle}>基于 {selectedCardsCount} 张已选卡片</p>
+            <h2>智能考试生成器</h2>
+            {source === 'flashcards' 
+              ? <p>基于 {selectedCardsCount} 张已选闪卡</p>
+              : <p>基于上传的文档内容</p>
+            }
                   </div>
-                </div>
-              </div>
-              <button className={styles.closeButton} onClick={handleClose}>
-                ✕
+          <button onClick={handleClose} className={styles.closeButton}>
+            &times;
               </button>
             </div>
             {renderContent()}
+            
       </div>
     </div>
   )
