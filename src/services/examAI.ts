@@ -3,137 +3,17 @@
  * 智能生成个性化考试、自动评分和深度分析
  */
 
-import { getAIModel } from '../config/aiModel'
-import { FSRSCard } from '../types/SRSTypes'
+import mammoth from 'mammoth';
+import * as pdfjs from 'pdfjs-dist';
+import { getAIModel } from '../config/aiModel';
+import type { ExamConfiguration, ExamQuestion, ExamResponse, ExamResult, GeneratedExam } from '../types/examTypes';
+import { FSRSCard } from '../types/SRSTypes';
+// @ts-ignore
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
-export interface ExamQuestion {
-  id: string
-  type: 'multiple_choice' | 'true_false' | 'short_answer' | 'essay' | 'fill_blank' | 'matching'
-  question: string
-  options?: string[] // for multiple choice
-  correct_answer: string | string[]
-  points: number
-  difficulty: number // 1-10
-  estimated_time: number // 秒
-  cognitive_level: 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create'
-  subject_area: string
-  topic: string
-  hint?: string
-  explanation?: string
-  rubric?: {
-    excellent: string
-    good: string
-    satisfactory: string
-    needs_improvement: string
-  }
-}
+pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
-export interface ExamConfiguration {
-  title: string
-  subject: string
-  topics: string[]
-  duration: number // 分钟
-  total_points: number
-  question_distribution: {
-    type: ExamQuestion['type']
-    count: number
-    points_per_question: number
-  }[]
-  difficulty_distribution: {
-    difficulty_range: [number, number]
-    percentage: number
-  }[]
-  cognitive_distribution: {
-    level: ExamQuestion['cognitive_level']
-    percentage: number
-  }[]
-  learning_objectives: string[]
-  special_instructions?: string
-}
-
-export interface GeneratedExam {
-  id: string
-  config: ExamConfiguration
-  questions: ExamQuestion[]
-  metadata: {
-    generated_at: Date
-    total_questions: number
-    estimated_completion_time: number
-    difficulty_average: number
-    cognitive_level_distribution: Record<string, number>
-    ai_confidence: number
-  }
-  instructions: string
-  answer_key: {
-    question_id: string
-    correct_answer: string | string[]
-    explanation: string
-    points: number
-  }[]
-}
-
-export interface ExamResponse {
-  question_id: string
-  student_answer: string | string[]
-  response_time: number // 秒
-  confidence_level?: number // 1-5
-  flagged_for_review?: boolean
-}
-
-export interface ExamResult {
-  exam_id: string
-  student_responses: ExamResponse[]
-  scoring: {
-    total_score: number
-    max_possible_score: number
-    percentage: number
-    question_scores: {
-      question_id: string
-      earned_points: number
-      max_points: number
-      is_correct: boolean
-      partial_credit?: number
-    }[]
-  }
-  analysis: {
-    time_analysis: {
-      total_time: number
-      average_time_per_question: number
-      rushed_questions: string[] // question_ids
-      over_time_questions: string[]
-    }
-    difficulty_analysis: {
-      easy_questions_performance: number // 0-1
-      medium_questions_performance: number
-      hard_questions_performance: number
-    }
-    cognitive_analysis: {
-      remember_performance: number
-      understand_performance: number
-      apply_performance: number
-      analyze_performance: number
-      evaluate_performance: number
-      create_performance: number
-    }
-    topic_analysis: {
-      topic: string
-      performance: number
-      question_count: number
-    }[]
-    strengths: string[]
-    weaknesses: string[]
-    recommendations: string[]
-  }
-  grade_level: 'A' | 'B' | 'C' | 'D' | 'F'
-  feedback: {
-    overall_feedback: string
-    question_feedback: {
-      question_id: string
-      feedback: string
-      improvement_suggestions: string[]
-    }[]
-  }
-}
+export type { ExamConfiguration, ExamQuestion, ExamResponse, ExamResult, GeneratedExam };
 
 export interface AdaptiveExamSettings {
   initial_difficulty: number
@@ -162,10 +42,21 @@ class ExamAI {
    */
   async generateExamFromCards(
     cards: FSRSCard[],
-    config: ExamConfiguration
+    config: ExamConfiguration,
+    isProfessorMode: boolean = false
   ): Promise<GeneratedExam> {
+    const professorModeInstruction = isProfessorMode 
+      ? `**风格指示 (Professor Mode):** 
+请模仿一位顶尖大学教授的风格出题。避免简单的记忆性问题，侧重于考察学生的分析、评估和应用能力。问题应该更具深度和挑战性，可能需要结合多个知识点来回答。`
+      : '';
+
     const prompt = `
-作为考试设计专家，基于提供的学习卡片生成一份个性化考试：
+作为考试设计专家，基于提供的学习卡片数据和 FSRS 间隔重复算法信息，生成一份高度个性化的考试。
+
+**出题策略 (Question Selection Strategy):**
+请优先考察学生掌握不佳的知识点。选择题目时，请重点关注那些 **stability 值较低**、**lapses (错误次数) 较多**、或 **due (到期时间) 已到**的卡片，因为这些是学生的潜在弱点。利用这些数据来智能地选择题目，以最大化这份考试的复习效率。
+
+${professorModeInstruction}
 
 考试配置:
 - 标题: ${config.title}
@@ -189,11 +80,14 @@ ${config.cognitive_distribution.map(dist =>
   `- ${dist.level}: ${dist.percentage}%`
 ).join('\n')}
 
-可用学习卡片 (${cards.length}张):
-${cards.slice(0, 10).map((card, index) => 
-  `${index + 1}. 问题: ${card.question}\n   答案: ${card.answer}\n   难度: ${card.difficulty}`
-).join('\n')}
-${cards.length > 10 ? `... 和其他${cards.length - 10}张卡片` : ''}
+可用学习卡片 (${cards.length}张) - FSRS 数据:
+${cards.slice(0, 150).map((card, index) => {
+  const isDue = new Date(card.due) <= new Date();
+  return `${index + 1}. 问题: ${card.question.substring(0, 100)}...
+   答案: ${card.answer.substring(0, 100)}...
+   FSRS 数据: stability=${card.stability.toFixed(2)}, lapses=${card.lapses}, due=${new Date(card.due).toLocaleDateString()}, is_due=${isDue ? 'YES' : 'NO'}`
+}).join('\n')}
+${cards.length > 150 ? `\n... 和其他 ${cards.length - 150} 张卡片` : ''}
 
 学习目标:
 ${config.learning_objectives.join('\n')}
@@ -211,8 +105,9 @@ ${config.learning_objectives.join('\n')}
 
     try {
       const response = await this.callOpenAI(prompt, {
-        temperature: 0.6,
-        max_tokens: 1500
+        temperature: 0.5,
+        max_tokens: 4000,
+        response_format: { type: "json_object" },
       })
 
       return this.parseGeneratedExam(response, config)
@@ -230,68 +125,76 @@ ${config.learning_objectives.join('\n')}
     responses: ExamResponse[]
   ): Promise<ExamResult> {
     const prompt = `
-作为智能评分专家，对这份考试进行全面评分和分析：
+作为智能教育分析师，对这份考试进行全面评分和深度诊断分析。
 
-考试信息:
+**评分与分析要求 (Scoring & Analysis Requirements):**
+1.  **逐题评分 (Question-by-Question Scoring):** 根据提供的正确答案和评分规则，为每道题打分。对于主观题（如简答、论述），请根据答案质量给出合理的部分分。
+2.  **计算总分 (Calculate Total Score):** 汇总所有题目的得分，计算总分和百分比。
+3.  **深度诊断 (In-depth Diagnosis):** 这是最重要的部分。请仔细分析学生的**所有错题**，并总结出其核心优势、弱点和根本的错误模式。
+    -   **优势分析 (Strengths):** 学生在哪些知识点或题型上表现出色？
+    -   **弱点与错误模式分析 (Weaknesses & Error Patterns):**
+        -   学生是否混淆了某些关键概念？
+        -   在特定类型的认知任务上是否存在困难（例如，在所有需要'分析'或'应用'的问题上都表现不佳）？
+        -   是否存在系统性的知识空白？
+        -   请提供具体、可操作的诊断，而不仅仅是罗列错误的题目。例如，说"该学生似乎未完全理解React的useEffect依赖数组如何工作，导致在相关题目中出错"，而不是"学生答错了第5题"。
+4.  **提供反馈 (Provide Feedback):** 给出总体反馈和针对具体问题的改进建议。
+
+**JSON 输出格式:**
+请严格遵循 ExamResult 的 JSON 结构输出结果。请确保 'analysis.strengths' 和 'analysis.weaknesses' 字段填充上有洞察力的分析文本数组。
+
+---
+
+**考试信息:**
 - 标题: ${exam.config.title}
-- 总题数: ${exam.questions.length}
 - 总分: ${exam.config.total_points}
-- 时长: ${exam.config.duration}分钟
 
-学生答题情况:
-${responses.map((response, index) => {
-  const question = exam.questions.find(q => q.id === response.question_id)
-  const correct_answer = exam.answer_key.find(a => a.question_id === response.question_id)?.correct_answer
-  
-  return `题目${index + 1}: ${question?.question || '未知题目'}
-学生答案: ${Array.isArray(response.student_answer) ? response.student_answer.join(', ') : response.student_answer}
-正确答案: ${Array.isArray(correct_answer) ? correct_answer.join(', ') : correct_answer}
-用时: ${response.response_time}秒
-题型: ${question?.type}
-难度: ${question?.difficulty}
-认知层次: ${question?.cognitive_level}`
-}).join('\n\n')}
+**题目与正确答案:**
+${exam.questions.map(q => `
+- 问题ID: ${q.id}
+  - 问题: ${q.question}
+  - 正确答案: ${Array.isArray(q.correct_answer) ? q.correct_answer.join(', ') : q.correct_answer}
+  - 分数: ${q.points}
+  - 题目类型: ${q.type}
+  - 知识点: ${q.topic}
+`).join('')}
 
-请提供详细的评分和分析：
-
-1. **精确评分**
-   - 每题得分计算
-   - 部分分数评估 (适用时)
-   - 总分统计
-
-2. **时间分析**
-   - 总用时评估
-   - 各题用时分析
-   - 时间管理表现
-
-3. **能力分析**
-   - 不同难度表现
-   - 认知层次表现
-   - 主题掌握度
-
-4. **诊断反馈**
-   - 优势领域识别
-   - 薄弱环节诊断
-   - 具体改进建议
-
-5. **个性化反馈**
-   - 每题详细反馈
-   - 学习建议
-   - 后续学习路径
-
-用JSON格式输出完整的评分结果和分析。
+**学生答案:**
+${responses.map(r => `
+- 问题ID: ${r.question_id}
+  - 学生答案: ${Array.isArray(r.student_answer) ? r.student_answer.join(', ') : r.student_answer}
+  - 答题用时: ${r.response_time.toFixed(1)}s
+`).join('')}
 `
 
-    try {
-      const response = await this.callOpenAI(prompt, {
-        temperature: 0.4,
-        max_tokens: 1200
-      })
+    // AI anaylsis and scoring
+    const response = await this.callOpenAI(prompt, {
+      temperature: 0.4,
+      max_tokens: 4000,
+      response_format: { type: "json_object" },
+    })
 
-      return this.parseExamResult(response, exam, responses)
-    } catch (error) {
-      console.error('考试评分失败:', error)
-      return this.getFallbackExamResult(exam, responses)
+    try {
+      // Use robust JSON parsing
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("AI response did not contain a valid JSON object.");
+      }
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      if (
+        !parsed.analysis ||
+        typeof parsed.analysis.strengths !== 'string' ||
+        typeof parsed.analysis.weaknesses !== 'string' ||
+        !Array.isArray(parsed.scored_questions)
+      ) {
+        throw new Error(
+          "AI response is missing required fields for exam scoring (analysis, scored_questions)."
+        )
+      }
+      return parsed as ExamResult
+    } catch (error: any) {
+      console.error('Failed to parse scored exam from AI:', error, 'Raw response:', response);
+      throw new Error(`AI failed to return a valid scored exam. ${error.message}`);
     }
   }
 
@@ -445,6 +348,98 @@ ${available_questions.map((q, index) =>
     }
   }
 
+  /**
+   * Extracts key topics from a document file.
+   * Supports .pdf, .docx, and .txt files.
+   */
+  async extractTopicsFromDocument(file: File): Promise<string[]> {
+    let textContent = '';
+    
+    try {
+      if (file.type === 'application/pdf') {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+        const numPages = pdf.numPages;
+        let fullText = '';
+        for (let i = 1; i <= numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContentStream = await page.getTextContent();
+            const pageText = textContentStream.items.map((item: any) => item.str).join(' ');
+            fullText += pageText + '\n';
+        }
+        textContent = fullText;
+      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        textContent = result.value;
+      } else if (file.type === 'text/plain') {
+        textContent = await file.text();
+      } else {
+        throw new Error(`Unsupported file type: ${file.type}`);
+      }
+
+      if (!textContent.trim()) {
+        console.warn('Document is empty or contains no readable text.');
+        return [];
+      }
+    } catch (error) {
+      console.error('Error parsing document file:', error);
+      throw new Error('Failed to parse the document. It might be corrupted or in an unsupported format.');
+    }
+
+    const prompt = `
+      Analyze the following course material content and identify the top 10-15 most important core topics, concepts, or keywords. 
+      These topics should represent the key learning objectives and potential exam focus areas.
+      Return the result as a JSON array of strings.
+
+      Example output: ["React Hooks", "State Management", "Component Lifecycle", "Virtual DOM"]
+
+      Document Content:
+      ---
+      ${textContent.substring(0, 8000)}
+      ---
+    `;
+
+    try {
+      const response = await this.callOpenAI(prompt, {
+        temperature: 0.2,
+        max_tokens: 500,
+        response_format: { type: "json_object" },
+      });
+      
+      // The response can be a JSON object `{"topics": [...]}` or a raw JSON array `[...]`.
+      // It might also be wrapped in markdown.
+      const jsonMatch = response.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+      if (!jsonMatch) {
+        console.error("AI response did not contain a valid JSON object or array:", response);
+        throw new Error("AI response did not contain a valid JSON object or array.");
+      }
+      
+      const jsonString = jsonMatch[0];
+      const parsed = JSON.parse(jsonString);
+
+      let topics: string[] = [];
+
+      if (Array.isArray(parsed)) {
+        // Handle case where the AI returns a raw array
+        topics = parsed;
+      } else if (parsed && typeof parsed === 'object') {
+        // Handle case where the AI returns an object like {"topics": [...] }
+        topics = parsed.topics || parsed.result || parsed.keywords || [];
+      }
+
+      if (Array.isArray(topics) && topics.every(t => typeof t === 'string')) {
+        return topics;
+      } else {
+        console.error("AI response did not match expected format:", parsed);
+        throw new Error("AI failed to extract topics in the correct format.");
+      }
+    } catch (error) {
+      console.error('Failed to extract topics with AI:', error);
+      throw new Error('AI analysis of the document failed.');
+    }
+  }
+
   // === 私有辅助方法 ===
 
   private async callOpenAI(prompt: string, options: any = {}): Promise<string> {
@@ -467,60 +462,51 @@ ${available_questions.map((q, index) =>
     }
 
     const data = await response.json()
-    return data.choices[0]?.message?.content || ''
+    if (data.error) {
+      throw new Error(data.error.message)
+    }
+    return data.choices[0].message.content
   }
 
   private parseGeneratedExam(response: string, config: ExamConfiguration): GeneratedExam {
     try {
-      // Find the JSON part of the response, stripping markdown fences
-      const jsonMatch = response.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```|(\{[\s\S]*\})/);
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        throw new Error("No valid JSON object found in the AI response.");
+        throw new Error("AI response did not contain a valid JSON object.");
+      }
+      let parsed = JSON.parse(jsonMatch[0]);
+
+      // Handle cases where the response is wrapped in an "exam" object
+      if (parsed.exam) {
+        parsed = parsed.exam;
       }
 
-      // The actual JSON string is in one of the capturing groups
-      const jsonString = jsonMatch[1] || jsonMatch[2];
-      const parsed = JSON.parse(jsonString);
+      let allQuestions: ExamQuestion[] = [];
 
-      // Robust check for questions array
-      if (!parsed.questions || !Array.isArray(parsed.questions) || parsed.questions.length === 0) {
-        throw new Error("AI response did not contain a valid 'questions' array.");
+      if (Array.isArray(parsed.questions)) {
+        allQuestions = parsed.questions;
+      } else if (typeof parsed.questions === 'object' && parsed.questions !== null) {
+        allQuestions = Object.values(parsed.questions).flat() as ExamQuestion[];
       }
 
-      const exam: GeneratedExam = {
+      if (allQuestions.length === 0) {
+        console.error('Could not extract any questions from the AI response:', parsed);
+        throw new Error("AI response did not contain any valid questions.");
+      }
+
+      const generatedExam: GeneratedExam = {
         id: parsed.id || `exam_${Date.now()}`,
         config: config,
-        questions: parsed.questions,
-        metadata: parsed.metadata || {
-          generated_at: new Date(),
-          total_questions: parsed.questions.length,
-          estimated_completion_time: config.duration,
-          difficulty_average: 5,
-          cognitive_level_distribution: {},
-          ai_confidence: 0.7
-        },
-        instructions: parsed.instructions || "Please review the questions carefully.",
-        answer_key: parsed.answer_key || parsed.questions.map((q: ExamQuestion) => ({
-          question_id: q.id,
-          correct_answer: q.correct_answer,
-          explanation: q.explanation || "No explanation provided.",
-          points: q.points
-        }))
+        questions: allQuestions,
+        metadata: parsed.metadata || {},
+        instructions: parsed.instructions || "Please review the questions carefully and answer to the best of your ability.",
+        answer_key: parsed.answer_key || [],
       };
-      return exam;
-    } catch (error) {
-      console.error("Failed to parse generated exam from AI response:", error);
-      console.error("Original AI Response:", response); // Log the original response for debugging
-      // Re-throw the error to be caught by the calling function, which will trigger the fallback.
-      throw error;
-    }
-  }
 
-  private parseExamResult(response: string, exam: GeneratedExam, responses: ExamResponse[]): ExamResult {
-    try {
-      return JSON.parse(response)
-    } catch (error) {
-      return this.getFallbackExamResult(exam, responses)
+      return generatedExam;
+    } catch (error: any) {
+      console.error('Failed to parse generated exam from AI:', error, 'Raw response:', response);
+      throw new Error(`AI failed to return a valid exam structure. ${error.message}`);
     }
   }
 

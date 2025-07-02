@@ -4,11 +4,11 @@
  */
 
 import { AlertCircle, BrainCircuit } from 'lucide-react'
-import React, { useCallback, useState } from 'react'
-import { CreateFlashcardSetData } from '../api/flashcards'
+import React, { useCallback, useMemo, useState } from 'react'
+import { CreateFlashcardSetData, FlashcardSetWithStats, getFlashcardsBySetIds } from '../api/flashcards'
 import { examAI, ExamConfiguration, ExamQuestion, GeneratedExam } from '../services/examAI'
-import { FSRSCard } from '../types/SRSTypes'
-import styles from './CreateFlashcardSetModal.module.css'
+import ContentUploader from './ContentUploader'
+import styles from './ExamGeneratorModal.module.css'
 
 interface CreateFlashcardSetModalProps {
   isOpen: boolean
@@ -73,7 +73,7 @@ const DIFFICULTY_LEVELS = [
 interface ExamGeneratorModalProps {
   isOpen: boolean
   onClose: () => void
-  cards: FSRSCard[]
+  flashcardSets: FlashcardSetWithStats[]
   onExamGenerated: (exam: GeneratedExam) => void
 }
 
@@ -91,17 +91,20 @@ interface ExamSettings {
   }
   difficulty_focus: 'easy' | 'medium' | 'hard' | 'mixed'
   cognitive_focus: 'remember' | 'understand' | 'apply' | 'analyze' | 'mixed'
-  learning_objectives: string[]
+  selectedTopics: string[]
+  isProfessorMode: boolean
 }
 
 const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
   isOpen,
   onClose,
-  cards,
+  flashcardSets,
   onExamGenerated
 }) => {
   const [step, setStep] = useState<'settings' | 'generating' | 'error'>('settings')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [selectedSetIds, setSelectedSetIds] = useState<string[]>(() => flashcardSets.map(s => s.id));
+  const [extractedTopics, setExtractedTopics] = useState<string[]>([]);
   const [settings, setSettings] = useState<ExamSettings>({
     title: '复习测试',
     subject: '通用',
@@ -116,12 +119,35 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
     },
     difficulty_focus: 'mixed',
     cognitive_focus: 'mixed',
-    learning_objectives: ['测试知识掌握度', '巩固学习成果'],
+    selectedTopics: ['测试知识掌握度', '巩固学习成果'],
+    isProfessorMode: false,
   })
-  const [newObjective, setNewObjective] = useState('')
+  const [newTopic, setNewTopic] = useState('')
   const [error, setError] = useState<string>('')
 
   const totalQuestions = Object.values(settings.question_types).reduce((sum, count) => sum + count, 0)
+
+  const handleTopicsExtracted = (topics: string[]) => {
+    setExtractedTopics(topics);
+    // Automatically select the newly extracted topics
+    updateSettings({
+      selectedTopics: Array.from(new Set([...settings.selectedTopics, ...topics]))
+    });
+  };
+
+  const handleSetSelectionChange = (setId: string) => {
+    setSelectedSetIds(prev =>
+      prev.includes(setId)
+        ? prev.filter(id => id !== setId)
+        : [...prev, setId]
+    );
+  };
+
+  const selectedCardsCount = useMemo(() => {
+    return flashcardSets
+      .filter(set => selectedSetIds.includes(set.id))
+      .reduce((sum, set) => sum + (set.card_count || 0), 0);
+  }, [selectedSetIds, flashcardSets]);
 
   const handleClose = () => {
     // Reset state on close, but not if generation is in progress
@@ -139,6 +165,9 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
         count,
         points_per_question: Math.floor(settings.total_points / (totalQuestions || 1)),
       }))
+
+    // Use the new selectedTopics state directly
+    const finalTopics = settings.selectedTopics;
 
     const difficultyDistribution =
       settings.difficulty_focus === 'mixed'
@@ -172,20 +201,28 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
     return {
       title: settings.title,
       subject: settings.subject,
-      topics: Array.from(new Set(cards.map(card => card.tags || []).flat())).filter(Boolean),
+      topics: finalTopics,
       duration: settings.duration,
       total_points: settings.total_points,
       question_distribution: questionDistribution,
       difficulty_distribution: difficultyDistribution,
       cognitive_distribution: cognitiveDistribution,
-      learning_objectives: settings.learning_objectives,
+      learning_objectives: settings.selectedTopics, // learning_objectives is now an alias for selectedTopics
     }
-  }, [settings, cards, totalQuestions])
+  }, [settings, totalQuestions])
 
   const handleGenerateExam = useCallback(async () => {
     if (isGenerating) return
-    if (cards.length < 10) {
-      setError(`至少需要10张卡片才能生成考试，当前只有 ${cards.length} 张。`)
+
+    if (selectedSetIds.length === 0) {
+      setError('请至少选择一个闪卡集作为考试范围。')
+      setStep('error')
+      return
+    }
+
+    const availableCardsCount = selectedCardsCount;
+    if (availableCardsCount < 10) {
+      setError(`所选范围内至少需要10张卡片才能生成考试，当前只有 ${availableCardsCount} 张。`)
       setStep('error')
       return
     }
@@ -194,8 +231,8 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
       setStep('error')
       return
     }
-    if (totalQuestions > cards.length) {
-      setError(`题目总数 (${totalQuestions}) 不能超过可用闪卡数量 (${cards.length})。`)
+    if (totalQuestions > availableCardsCount) {
+      setError(`题目总数 (${totalQuestions}) 不能超过所选范围内的卡片数量 (${availableCardsCount})。`)
       setStep('error')
       return
     }
@@ -206,17 +243,18 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
 
     try {
       const examConfig = createExamConfig()
-      const exam = await examAI.generateExamFromCards(cards, examConfig)
-      onExamGenerated(exam)
-    } catch (err) {
-      console.error('❌ 考试生成失败:', err)
+      const cardsForExam = await getFlashcardsBySetIds(selectedSetIds);
+      const generatedExam = await examAI.generateExamFromCards(cardsForExam, examConfig, settings.isProfessorMode)
+      onExamGenerated(generatedExam)
+    } catch (err: any) {
+      console.error('Exam generation failed:', err)
       const errorMessage = err instanceof Error ? err.message : '发生未知错误，请稍后重试。'
       setError(`考试生成失败: ${errorMessage}`)
       setStep('error')
     } finally {
       setIsGenerating(false)
     }
-  }, [cards, totalQuestions, createExamConfig, onExamGenerated, isGenerating])
+  }, [selectedSetIds, selectedCardsCount, totalQuestions, createExamConfig, onExamGenerated, isGenerating, settings.isProfessorMode])
 
   const updateSettings = useCallback((updates: Partial<ExamSettings>) => {
     setSettings(prev => ({ ...prev, ...updates }))
@@ -235,23 +273,21 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
     []
   )
 
-  const handleObjectiveSubmit = () => {
-    if (newObjective.trim() && !settings.learning_objectives.includes(newObjective.trim())) {
+  const handleTopicSubmit = () => {
+    if (newTopic.trim() && !settings.selectedTopics.includes(newTopic.trim())) {
       updateSettings({
-        learning_objectives: [...settings.learning_objectives, newObjective.trim()],
+        selectedTopics: [...settings.selectedTopics, newTopic.trim()],
       })
     }
-    setNewObjective('')
+    setNewTopic('')
   }
 
-  const removeLearningObjective = useCallback(
-    (index: number) => {
-      updateSettings({
-        learning_objectives: settings.learning_objectives.filter((_, i) => i !== index),
-      })
-    },
-    [settings.learning_objectives, updateSettings]
-  )
+  const handleTopicToggle = (topic: string) => {
+    const newTopics = settings.selectedTopics.includes(topic)
+      ? settings.selectedTopics.filter(t => t !== topic)
+      : [...settings.selectedTopics, topic];
+    updateSettings({ selectedTopics: newTopics });
+  };
   
   if (!isOpen) return null
 
@@ -285,6 +321,45 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
 
     return (
         <form className={styles.modalForm} onSubmit={(e) => { e.preventDefault(); handleGenerateExam(); }}>
+            <div className={styles.formGridWide}>
+              <ContentUploader onTopicsExtracted={handleTopicsExtracted} />
+            </div>
+
+            <div className={styles.fieldGroupFull}>
+              <label className={styles.fieldLabel}>考试重点 (Topics)</label>
+              <div className={styles.tagContainer}>
+                  <div className={styles.tagsList}>
+                      {Array.from(new Set([...settings.selectedTopics, ...extractedTopics])).map((topic) => (
+                      <button 
+                        type="button" 
+                        key={topic} 
+                        className={`${styles.tag} ${settings.selectedTopics.includes(topic) ? styles.tagSelected : ''} ${extractedTopics.includes(topic) ? styles.tagAI : ''}`}
+                        onClick={() => handleTopicToggle(topic)}
+                      >
+                          {extractedTopics.includes(topic) && <BrainCircuit size={14} className={styles.aiIcon} />}
+                          {topic}
+                      </button>
+                      ))}
+                  </div>
+                  <div className={styles.tagInputWrapper}>
+                      <input
+                      type="text"
+                      className={styles.tagInput}
+                      value={newTopic}
+                      onChange={e => setNewTopic(e.target.value)}
+                      onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleTopicSubmit();
+                          }
+                      }}
+                      placeholder="手动添加考点..."
+                      />
+                      <button type="button" className={styles.tagAddButton} onClick={handleTopicSubmit}>添加</button>
+                  </div>
+              </div>
+            </div>
+
             <div className={styles.formGrid}>
                 {/* Left Column */}
                 <div className={styles.formColumn}>
@@ -336,35 +411,6 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
                             <option value="hard">侧重困难</option>
                         </select>
                     </div>
-                     <div className={styles.fieldGroup}>
-                        <label className={styles.fieldLabel}>学习目标</label>
-                        <div className={styles.tagContainer}>
-                            <div className={styles.tagsList}>
-                                {settings.learning_objectives.map((obj, index) => (
-                                <div key={index} className={styles.tag}>
-                                    {obj}
-                                    <button type="button" className={styles.tagRemove} onClick={() => removeLearningObjective(index)}>✕</button>
-                                </div>
-                                ))}
-                            </div>
-                            <div className={styles.tagInputWrapper}>
-                                <input
-                                type="text"
-                                className={styles.tagInput}
-                                value={newObjective}
-                                onChange={e => setNewObjective(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        handleObjectiveSubmit();
-                                    }
-                                }}
-                                placeholder="添加一个学习目标..."
-                                />
-                                <button type="button" className={styles.tagAddButton} onClick={handleObjectiveSubmit}>添加</button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 {/* Right Column */}
@@ -409,6 +455,23 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
                 </div>
             </div>
 
+            {/* Professor Mode Toggle */}
+            <div className={`${styles.formGroupFull} ${styles.toggleContainer}`}>
+              <div className={styles.toggleLabel}>
+                <label htmlFor="professor-mode">开启教授模式</label>
+                <p>AI将生成更具挑战性的分析与应用题</p>
+              </div>
+              <label className={styles.switch}>
+                <input
+                  id="professor-mode"
+                  type="checkbox"
+                  checked={settings.isProfessorMode}
+                  onChange={e => updateSettings({ isProfessorMode: e.target.checked })}
+                />
+                <span className={styles.slider}></span>
+              </label>
+            </div>
+
             <div className={styles.modalActions}>
                 <button type="button" className={styles.cancelButton} onClick={handleClose}>
                 取消
@@ -427,9 +490,11 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
             <div className={styles.modalHeader}>
               <div className={styles.headerContent}>
                 <BrainCircuit size={24} />
-                <div>
-                  <h2 className={styles.modalTitle}>智能考试生成器</h2>
-                  <p className={styles.modalSubtitle}>基于 {cards.length} 张闪卡</p>
+                <div className={styles.modalTitleContainer}>
+                  <div>
+                    <h2 className={styles.modalTitle}>智能考试生成器</h2>
+                    <p className={styles.modalSubtitle}>基于 {selectedCardsCount} 张已选卡片</p>
+                  </div>
                 </div>
               </div>
               <button className={styles.closeButton} onClick={handleClose}>

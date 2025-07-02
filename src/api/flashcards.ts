@@ -4,6 +4,7 @@
  * Integrates with FSRS-5 algorithm for spaced repetition
  */
 
+import { ExamQuestion } from '@/types/examTypes';
 import { FlashcardSet, FSRSCard, FSRSParameters, ReviewRating } from '../types/SRSTypes';
 import { FSRS } from '../utils/fsrsAlgorithm';
 import { supabase } from './supabase';
@@ -109,7 +110,7 @@ export const getFlashcardSets = async (): Promise<FlashcardSetWithStats[]> => {
       const stats = await getFlashcardSetStats(set.id);
       return {
         ...set,
-        ...stats
+        ...stats,
       };
     })
   );
@@ -753,4 +754,84 @@ export const getAllUserFlashcards = async (): Promise<FSRSCard[]> => {
   }
 
   return allCards
-} 
+}
+
+/**
+ * Get all flashcards from a list of set IDs
+ */
+export const getFlashcardsBySetIds = async (setIds: string[]): Promise<FSRSCard[]> => {
+  if (!setIds || setIds.length === 0) {
+    return [];
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const { data, error } = await supabase
+    .from('flashcards')
+    .select('*')
+    .in('set_id', setIds)
+    .order('created_at', { ascending: true });
+    
+  if (error) {
+    console.error('Error fetching flashcards by set IDs:', error);
+    throw error;
+  }
+  
+  return data.map(convertToFSRSCard);
+};
+
+/**
+ * Create a new flashcard set from exam mistakes
+ */
+export const createSetFromMistakes = async (
+  title: string,
+  questions: ExamQuestion[]
+): Promise<FlashcardSet> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  // 1. Create the new flashcard set
+  const newSetData: CreateFlashcardSetData = {
+    title,
+    description: `A collection of incorrect answers from the exam taken on ${new Date().toLocaleDateString()}.`,
+    subject: questions.length > 0 ? questions[0].subject_area : 'General',
+    tags: ['mistake-collection', 'exam-review'],
+  };
+  
+  const { data: newSet, error: setError } = await supabase
+    .from('flashcard_sets')
+    .insert({ ...newSetData, user_id: user.id })
+    .select()
+    .single();
+
+  if (setError) {
+    console.error('Error creating new set from mistakes:', setError);
+    throw setError;
+  }
+
+  // 2. Prepare the new flashcards (the mistakes)
+  const cardsToCreate: CreateFlashcardData[] = questions.map(q => ({
+    set_id: newSet.id,
+    question: q.question,
+    answer: Array.isArray(q.correct_answer) ? q.correct_answer.join('; ') : q.correct_answer,
+    card_type: 'basic',
+    tags: q.topic ? [q.topic] : [],
+  }));
+
+  // 3. Insert the new flashcards
+  if (cardsToCreate.length > 0) {
+    const { error: cardsError } = await supabase
+      .from('flashcards')
+      .insert(cardsToCreate);
+
+    if (cardsError) {
+      console.error('Error inserting mistake flashcards:', cardsError);
+      // Optional: Clean up by deleting the newly created set if cards fail to insert
+      await supabase.from('flashcard_sets').delete().eq('id', newSet.id);
+      throw cardsError;
+    }
+  }
+
+  return newSet;
+}; 

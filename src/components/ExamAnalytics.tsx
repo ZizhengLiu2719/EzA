@@ -11,18 +11,16 @@ import {
     Calendar,
     CheckCircle,
     Clock,
-    Download,
     Lightbulb,
+    Loader2,
     PieChart,
-    RefreshCw,
-    Share2,
     Target,
     TrendingUp,
     XCircle
 } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
-import { GeneratedExam } from '../services/examAI'
-import { ExamResult, ExamSession } from '../types'
+import { createSetFromMistakes } from '../api/flashcards'
+import type { ExamQuestion, ExamResult, ExamSession, GeneratedExam } from '../types/examTypes'
 
 interface ExamAnalyticsProps {
   exam: GeneratedExam
@@ -53,15 +51,50 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'detailed' | 'recommendations' | 'comparison'>('overview')
   const [showExplanations, setShowExplanations] = useState<string[]>([])
+  const [isCreatingSet, setIsCreatingSet] = useState(false);
+  const [creationStatus, setCreationStatus] = useState<'idle' | 'success' | 'error' | 'loading'>('idle');
+
+  // Destructure for easier access in JSX
+  const { analysis, scoring, grade_level } = result;
+  const { strengths, weaknesses, recommendations } = analysis;
+  const { question_scores } = scoring;
+
+  const handleCreateMistakeSet = async () => {
+    setCreationStatus('loading');
+    setIsCreatingSet(true);
+
+    const incorrectQuestions = question_scores
+      .filter(score => !score.is_correct)
+      .map(score => exam.questions.find(q => q.id === score.question_id))
+      .filter((q): q is ExamQuestion => q !== undefined);
+
+    if (incorrectQuestions.length === 0) {
+      setCreationStatus('success');
+      setIsCreatingSet(false);
+      return;
+    }
+    
+    const setTitle = `错题集 - ${exam.config.title} (${new Date().toLocaleDateString()})`;
+
+    try {
+      await createSetFromMistakes(setTitle, incorrectQuestions);
+      setCreationStatus('success');
+    } catch (error) {
+      console.error("Failed to create mistake set:", error);
+      setCreationStatus('error');
+    } finally {
+      setIsCreatingSet(false);
+    }
+  };
 
   // 计算性能指标
   const metrics = useMemo((): PerformanceMetrics => {
     const totalQuestions = exam.questions.length
-    const correctAnswers = result.question_results.filter(q => q.is_correct).length
+    const correctAnswers = question_scores.filter(q => q.is_correct).length
     const accuracy = (correctAnswers / totalQuestions) * 100
 
     const totalTime = session.end_time && session.start_time 
-      ? (session.end_time.getTime() - session.start_time.getTime()) / 1000 / 60
+      ? (new Date(session.end_time).getTime() - new Date(session.start_time).getTime()) / 1000 / 60
       : exam.config.duration
     const speed = totalQuestions / totalTime
 
@@ -90,7 +123,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
     Object.entries(difficultyGroups).forEach(([level, questions]) => {
       if (questions.length > 0) {
         const correct = questions.filter(q => 
-          result.question_results.find(r => r.question_id === q.id)?.is_correct
+          question_scores.find(r => r.question_id === q.id)?.is_correct
         ).length
         difficultyPerformance[level] = (correct / questions.length) * 100
       }
@@ -102,7 +135,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
     topics.forEach(topic => {
       const topicQuestions = exam.questions.filter(q => q.topic === topic)
       const correct = topicQuestions.filter(q => 
-        result.question_results.find(r => r.question_id === q.id)?.is_correct
+        question_scores.find(r => r.question_id === q.id)?.is_correct
       ).length
       if (topicQuestions.length > 0) {
         topicPerformance[topic] = (correct / topicQuestions.length) * 100
@@ -115,7 +148,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
     cognitiveLevels.forEach(level => {
       const levelQuestions = exam.questions.filter(q => q.cognitive_level === level)
       const correct = levelQuestions.filter(q => 
-        result.question_results.find(r => r.question_id === q.id)?.is_correct
+        question_scores.find(r => r.question_id === q.id)?.is_correct
       ).length
       if (levelQuestions.length > 0) {
         cognitivePerformance[level] = (correct / levelQuestions.length) * 100
@@ -171,21 +204,21 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
             <div>
               <h1 className="text-2xl font-bold text-gray-800">{exam.config.title} - 成绩分析</h1>
               <p className="text-gray-600 mt-1">
-                完成时间: {session.end_time?.toLocaleString()} • 
-                用时: {Math.floor(result.time_taken / 60)}分{result.time_taken % 60}秒
+                完成时间: {new Date(session.end_time || Date.now()).toLocaleString()} • 
+                用时: {Math.floor(analysis.time_analysis.total_time / 60)}分{Math.round(analysis.time_analysis.total_time) % 60}秒
               </p>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className={`px-4 py-2 rounded-xl font-bold text-2xl ${getGradeColor(result.grade)}`}>
-                {result.grade}
+              <div className={`px-4 py-2 rounded-xl font-bold text-2xl ${getGradeColor(grade_level)}`}>
+                {grade_level}
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-gray-800">
-                  {result.percentage.toFixed(1)}%
+                  {scoring.percentage.toFixed(1)}%
                 </div>
                 <div className="text-sm text-gray-500">
-                  {result.total_score}/{result.max_possible_score}分
+                  {scoring.total_score}/{scoring.max_possible_score}分
                 </div>
               </div>
             </div>
@@ -230,6 +263,48 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
           >
+            {/* AI Smart Diagnosis */}
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <Brain className="w-6 h-6 text-blue-500" />
+                <h2 className="text-xl font-bold text-gray-800">AI 智能诊断</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-semibold text-green-600 mb-2">✅ 优势分析 (Strengths)</h3>
+                  <ul className="list-disc list-inside space-y-1 text-gray-700">
+                    {strengths.map((item, index) => (
+                      <li key={`strength-${index}`}>{item}</li>
+                    ))}
+                    {strengths.length === 0 && <li>本次考试未发现明显的优势领域。</li>}
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-red-600 mb-2">⚠️ 弱点与错误模式 (Weaknesses)</h3>
+                  <ul className="list-disc list-inside space-y-1 text-gray-700">
+                    {weaknesses.map((item, index) => (
+                      <li key={`weakness-${index}`}>{item}</li>
+                    ))}
+                    {weaknesses.length === 0 && <li>恭喜！本次考试没有发现明显的弱点。</li>}
+                  </ul>
+                </div>
+              </div>
+              <div className="mt-6 text-center">
+                <button
+                  onClick={handleCreateMistakeSet}
+                  disabled={isCreatingSet || creationStatus === 'success'}
+                  className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all flex items-center justify-center mx-auto"
+                >
+                  {isCreatingSet && <Loader2 className="w-5 h-5 mr-2 animate-spin" />}
+                  {creationStatus === 'idle' && '一键创建错题集'}
+                  {creationStatus === 'loading' && '正在创建...'}
+                  {creationStatus === 'success' && '✅ 创建成功!'}
+                  {creationStatus === 'error' && '创建失败, 请重试'}
+                </button>
+                {creationStatus === 'error' && <p className="text-red-500 text-sm mt-2">创建失败，请检查网络或稍后重试。</p>}
+              </div>
+            </div>
+
             {/* 关键指标卡片 */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -350,7 +425,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                   优势领域
                 </h3>
                 <div className="space-y-2">
-                  {result.strengths.map((strength, index) => (
+                  {strengths.map((strength, index) => (
                     <div key={index} className="flex items-start gap-2">
                       <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
                       <span className="text-green-700 text-sm">{strength}</span>
@@ -365,7 +440,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                   待改进领域
                 </h3>
                 <div className="space-y-2">
-                  {result.weaknesses.map((weakness, index) => (
+                  {weaknesses.map((weakness, index) => (
                     <div key={index} className="flex items-start gap-2">
                       <XCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
                       <span className="text-red-700 text-sm">{weakness}</span>
@@ -395,7 +470,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
 
               <div className="p-6 space-y-4">
                 {exam.questions.map((question, index) => {
-                  const questionResult = result.question_results.find(r => r.question_id === question.id)
+                  const questionResult = question_scores.find(r => r.question_id === question.id)
                   const response = session.responses.find(r => r.question_id === question.id)
                   const isCorrect = questionResult?.is_correct || false
                   const showExplanation = showExplanations.includes(question.id)
@@ -498,57 +573,15 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
             className="space-y-6"
           >
             <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-yellow-500" />
-                个性化学习建议
-              </h3>
-
-              <div className="space-y-4">
-                {result.recommendations.map((recommendation, index) => (
-                  <div key={index} className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-medium text-yellow-700">{index + 1}</span>
-                    </div>
-                    <p className="text-yellow-800">{recommendation}</p>
-                  </div>
+              <h2 className="text-xl font-bold text-gray-800 mb-4">学习建议</h2>
+              <ul className="space-y-3">
+                {recommendations.map((recommendation, index) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <Lightbulb className="w-5 h-5 text-yellow-500 mt-1 flex-shrink-0" />
+                    <span className="text-gray-700">{recommendation}</span>
+                  </li>
                 ))}
-              </div>
-
-              {/* 操作按钮 */}
-              <div className="flex gap-4 mt-6 pt-4 border-t border-gray-200">
-                {onRetake && (
-                  <button
-                    onClick={onRetake}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    重新考试
-                  </button>
-                )}
-                {onContinueStudy && (
-                  <button
-                    onClick={onContinueStudy}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg"
-                  >
-                    <Brain className="w-4 h-4" />
-                    继续学习
-                  </button>
-                )}
-                <button
-                  onClick={() => {/* TODO: 实现分享功能 */}}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg"
-                >
-                  <Share2 className="w-4 h-4" />
-                  分享成绩
-                </button>
-                <button
-                  onClick={() => {/* TODO: 实现导出功能 */}}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg"
-                >
-                  <Download className="w-4 h-4" />
-                  导出报告
-                </button>
-              </div>
+              </ul>
             </div>
           </motion.div>
         )}

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { GeneratedExam } from '../services/examAI'
-import { ExamResponse, ExamSession } from '../types'
+import { ExamResponse, ExamSession } from '../types/examTypes'
 import styles from './ExamRunner.module.css'
 import QuestionRenderer from './QuestionRenderer'
 
@@ -39,7 +39,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
   onExit,
   className = ''
 }) => {
-  const [session, setSession] = useState<ExamSession>({
+  const [session, setSession] = useState<ExamSession>(() => ({
     id: `session_${Date.now()}`,
     user_id: 'current_user', // TODO: 从context获取
     exam_id: exam.id,
@@ -49,7 +49,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     responses: [],
     time_remaining: exam.config.duration * 60, // 转换为秒
     created_at: new Date()
-  })
+  }))
 
   const [timer, setTimer] = useState<TimerState>({
     timeRemaining: exam.config.duration * 60,
@@ -87,11 +87,11 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
   useEffect(() => {
     if (timer.isRunning && timer.timeRemaining > 0) {
       timerRef.current = setInterval(() => {
-        setTimer(prev => {
+        setTimer((prev: TimerState) => {
           const newTimeRemaining = prev.timeRemaining - 1
           
           // 更新session
-          setSession(s => ({
+          setSession((s: ExamSession) => ({
             ...s,
             time_remaining: newTimeRemaining
           }))
@@ -162,10 +162,10 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
       timestamp: new Date()
     }
 
-    setSession(prev => {
-      const existingResponseIndex = prev.responses.findIndex(r => r.question_id === currentQuestion.id)
+    setSession((prev: ExamSession) => {
+      const existingResponseIndex = prev.responses.findIndex((r: ExamResponse) => r.question_id === currentQuestion.id)
       const updatedResponses = existingResponseIndex >= 0
-        ? prev.responses.map((r, i) => i === existingResponseIndex ? newResponse : r)
+        ? prev.responses.map((r: ExamResponse, i: number) => i === existingResponseIndex ? newResponse : r)
         : [...prev.responses, newResponse]
 
       return {
@@ -184,7 +184,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
   // 导航到指定题目
   const navigateToQuestion = useCallback((index: number) => {
     if (index >= 0 && index < exam.questions.length) {
-      setSession(prev => ({ ...prev, current_question_index: index }))
+      setSession((prev: ExamSession) => ({ ...prev, current_question_index: index }))
       setQuestionStartTime(Date.now())
       setShowReviewPanel(false)
     }
@@ -206,7 +206,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
 
   // 标记题目
   const toggleFlag = useCallback((questionId: string) => {
-    setFlaggedQuestions(prev => {
+    setFlaggedQuestions((prev: Set<string>) => {
       const newSet = new Set(prev)
       if (newSet.has(questionId)) {
         newSet.delete(questionId)
@@ -248,9 +248,9 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
 
   // 获取当前题目的答案
   const getCurrentAnswer = useCallback(() => {
-    const response = session.responses.find(r => r.question_id === currentQuestion.id)
-    return response?.student_answer
-  }, [session.responses, currentQuestion.id])
+    const response = session.responses.find((r: ExamResponse) => r.question_id === currentQuestion.id)
+    return response ? response.student_answer : undefined
+  }, [session.responses, currentQuestion])
 
   // 初始化题目开始时间
   useEffect(() => {
@@ -271,6 +271,9 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
       </div>
     )
   }
+
+  // Final, robust check for the hint text
+  const hintText = (currentQuestion && currentQuestion.hint) ? currentQuestion.hint.replace(/hint:/i, '').trim() : '';
 
   return (
     <div className={styles.examRunner}>
@@ -309,7 +312,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
                     
                     return (
                         <button
-                            key={q.id}
+                            key={q.id || index}
                             onClick={() => navigateToQuestion(index)}
                             className={`${styles.questionGridItem} ${isCurrent ? styles.current : ''} ${isAnswered ? styles.answered : ''}`}
                         >
