@@ -72,7 +72,7 @@ export interface UseAIRecommendationsReturn {
   // 核心推荐功能
   generateRecommendations: (session: LearningSession, preferences: UserPreferences) => Promise<void>
   getPersonalizedHints: (card: FSRSCard, options: HintGenerationOptions) => Promise<AIHint[]>
-  getDifficultyRecommendation: (card: FSRSCard, context: LearningContext) => Promise<DifficultyRecommendation>
+  getDifficultyRecommendation: (card: FSRSCard, context: LearningContext) => Promise<DifficultyRecommendation | null>
   generateAdditionalContent: (topic: string, options: ContentGenerationOptions) => Promise<GeneratedQuestion[]>
   
   // 推荐管理
@@ -307,19 +307,23 @@ export function useAIRecommendations(
     card: FSRSCard,
     options: HintGenerationOptions
   ): Promise<AIHint[]> => {
+    setState(prev => ({ ...prev, loading: true }))
     try {
-      return await aiHintService.generateHintsForCard(card, options)
-    } catch (error) {
-      console.error('提示生成失败:', error)
+      const hints = await aiHintService.generateHintsForCard(card, options)
+      setState(prev => ({ ...prev, loading: false }))
+      return hints
+    } catch (error: any) {
+      setState(prev => ({ ...prev, loading: false, error: error.message }))
       return []
     }
   }, [])
 
   // 获取难度推荐
   const getDifficultyRecommendation = useCallback(async (
-    card: FSRSCard,
+    card: FSRSCard, 
     context: LearningContext
   ): Promise<DifficultyRecommendation | null> => {
+    setState(prev => ({ ...prev, loading: true }))
     try {
       // 创建用户学习档案（简化版）
       const userProfile = {
@@ -341,9 +345,12 @@ export function useAIRecommendations(
       }
 
       const cognitiveLoad = await difficultyAI.assessCognitiveLoad([card], context)
-      return await difficultyAI.generateDifficultyRecommendation(card, context, userProfile, cognitiveLoad)
-    } catch (error) {
-      console.error('难度推荐生成失败:', error)
+      const recommendation = await difficultyAI.generateDifficultyRecommendation(card, context, userProfile, cognitiveLoad)
+      
+      setState(prev => ({ ...prev, loading: false }))
+      return recommendation
+    } catch (error: any) {
+      setState(prev => ({ ...prev, loading: false, error: error.message }))
       return null
     }
   }, [userId, preferences])

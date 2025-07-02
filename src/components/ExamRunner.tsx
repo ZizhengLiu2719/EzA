@@ -58,13 +58,29 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
   })
 
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set())
-  const [showReviewPanel, setShowReviewPanel] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now())
 
   const timerRef = useRef<NodeJS.Timeout>()
   
+  const handleSubmitExam = useCallback(async () => {
+    setIsSubmitting(true)
+    
+    try {
+      const completedSession: ExamSession = {
+        ...session,
+        status: 'completed',
+        end_time: new Date()
+      }
+      onComplete(completedSession)
+    } catch (error) {
+      console.error('❌ 考试提交失败:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }, [session, onComplete])
+
   // Primary defense against invalid exam data
   if (!exam || !exam.questions || exam.questions.length === 0) {
     return (
@@ -110,7 +126,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
         clearInterval(timerRef.current)
       }
     }
-  }, [timer.isRunning])
+  }, [timer.isRunning, handleSubmitExam])
 
   const toggleTimer = useCallback(() => {
     setTimer(prev => ({ ...prev, isRunning: !prev.isRunning }))
@@ -136,14 +152,9 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     return `${secs}秒`;
   }, []);
 
-  const getTimeColor = useCallback((timeRemaining: number, totalTime: number): string => {
-    const ratio = timeRemaining / totalTime
-    if (ratio > 0.5) return 'text-green-600'
-    if (ratio > 0.25) return 'text-yellow-600'
-    return 'text-red-600'
-  }, [])
-
   const handleAnswerSubmit = useCallback((answer: string | string[], confidence?: number) => {
+    if (!currentQuestion) return;
+
     const now = Date.now()
     const responseTime = now - questionStartTime
 
@@ -173,7 +184,6 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     if (index >= 0 && index < exam.questions.length) {
       setSession((prev: ExamSession) => ({ ...prev, current_question_index: index }))
       setQuestionStartTime(Date.now())
-      setShowReviewPanel(false)
     }
   }, [exam.questions.length])
 
@@ -201,51 +211,18 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     })
   }, [])
 
-  const handleSubmitExam = useCallback(async () => {
-    setIsSubmitting(true)
-    
-    try {
-      const completedSession: ExamSession = {
-        ...session,
-        status: 'completed',
-        end_time: new Date()
-      }
-      onComplete(completedSession)
-    } catch (error) {
-      console.error('❌ 考试提交失败:', error)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }, [session, onComplete])
+  useEffect(() => {
+    setQuestionStartTime(Date.now())
+  }, [session.current_question_index])
 
   const answeredCount = session.responses.length
   const progressPercentage = (answeredCount / exam.questions.length) * 100
 
   const getCurrentAnswer = useCallback(() => {
+    if (!currentQuestion) return undefined;
     const response = session.responses.find((r: ExamResponse) => r.question_id === currentQuestion.id)
     return response ? response.student_answer : undefined
   }, [session.responses, currentQuestion])
-
-  useEffect(() => {
-    setQuestionStartTime(Date.now())
-  }, [session.current_question_index])
-
-  if (!currentQuestion) {
-    return (
-      <div className={styles.confirmOverlay}>
-        <div className={styles.confirmModal}>
-            <h3>加载题目失败</h3>
-            <p>无法加载当前题目。可能是考试数据有误或已全部完成。</p>
-            <div className={styles.confirmActions}>
-              <button onClick={onExit} style={{ flex: '1' }}>返回</button>
-            </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Final, robust check for the hint text
-  const hintText = (currentQuestion && currentQuestion.hint) ? currentQuestion.hint.replace(/hint:/i, '').trim() : '';
 
   return (
     <div className={styles.examRunner}>
@@ -284,7 +261,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
                     
                     return (
                         <button
-                            key={q.id || index}
+                            key={q?.id || index}
                             onClick={() => navigateToQuestion(index)}
                             className={`${styles.questionGridItem} ${isCurrent ? styles.current : ''} ${isAnswered ? styles.answered : ''}`}
                         >
@@ -310,6 +287,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
 
       <div className={styles.mainContent}>
         <AnimatePresence mode="wait">
+          {currentQuestion ? (
             <motion.div
                 key={currentQuestion.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -320,11 +298,12 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
             >
                 <div className={styles.questionHeader}>
                     <div className={styles.questionMeta}>
-                        <span>{currentQuestion.type.replace('_', ' ')}</span>
+                        {/* ABSOLUTELY ROBUST RENDERING */}
+                        <span>{currentQuestion.type?.replace('_', ' ') ?? '未知题型'}</span>
                         <span>&bull;</span>
-                        <span>{currentQuestion.points} 分</span>
+                        <span>{currentQuestion.points ?? '?'} 分</span>
                         <span>&bull;</span>
-                        <span>难度: {currentQuestion.difficulty}/10</span>
+                        <span>难度: {currentQuestion.difficulty ?? '?'}/10</span>
                         <span>&bull;</span>
                         <span>预计: {formatTimeWithUnits(currentQuestion.estimated_time)}</span>
                     </div>
@@ -340,10 +319,10 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
                     answer={getCurrentAnswer()}
                 />
 
-                {hintText && (
+                {currentQuestion.hint && (
                     <div className={styles.hintBox}>
                         <strong>💡 提示:</strong>
-                        <p>{hintText}</p>
+                        <p>{currentQuestion.hint.replace(/hint:/i, '').trim()}</p>
                     </div>
                 )}
 
@@ -364,6 +343,17 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
                     </div>
                 </div>
             </motion.div>
+          ) : (
+            <div className={styles.confirmOverlay}>
+              <div className={styles.confirmModal}>
+                  <h3>加载题目失败</h3>
+                  <p>无法加载当前题目。可能是考试数据有误或已全部完成。</p>
+                  <div className={styles.confirmActions}>
+                    <button onClick={onExit} style={{ flex: '1' }}>返回</button>
+                  </div>
+              </div>
+            </div>
+          )}
         </AnimatePresence>
       </div>
 
