@@ -8,7 +8,7 @@ import AIFlashcardGenerator from '../components/AIFlashcardGenerator'
 import BatchImportModal from '../components/BatchImportModal'
 import CreateFlashcardSetModal from '../components/CreateFlashcardSetModal'
 import FlashcardsList from '../components/FlashcardsList'
-import QuizBattle from '../components/QuizBattle'
+import StemSolver from '../components/StemSolver'
 import StudyMode from '../components/StudyMode'
 import StudyResults from '../components/StudyResults'
 import { FSRSCard } from '../types/SRSTypes'
@@ -87,7 +87,7 @@ const Review = () => {
   })
   
   // State management
-  const [activeTab, setActiveTab] = useState<'flashcards' | 'study' | 'exams' | 'analytics'>('flashcards')
+  const [activeTab, setActiveTab] = useState<'flashcards' | 'solver' | 'exams' | 'analytics'>('flashcards')
   const [selectedSet, setSelectedSet] = useState<FlashcardSet | null>(null)
   const [studyMode, setStudyMode] = useState<'none' | 'studying' | 'results'>('none')
   const [focusMode, setFocusMode] = useState(false)
@@ -523,7 +523,7 @@ const Review = () => {
 
       {/* Tab Navigation */}
       <div className={styles.tabNavigation}>
-        {(['flashcards', 'study', 'exams', 'analytics'] as const).map(tab => (
+        {(['flashcards', 'solver', 'exams', 'analytics'] as const).map(tab => (
           <button
             key={tab}
             className={`${styles.tabBtn} ${activeTab === tab ? styles.active : ''}`}
@@ -531,12 +531,12 @@ const Review = () => {
           >
             <span className={styles.tabIcon}>
               {tab === 'flashcards' && '🃏'}
-              {tab === 'study' && '🕹️'}
+              {tab === 'solver' && '🔬'}
               {tab === 'exams' && '📝'}
               {tab === 'analytics' && '📊'}
             </span>
             <span className={styles.tabLabel}>
-              {tab === 'study' ? 'Quiz Battle' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'solver' ? 'Problem Solver' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </span>
             {/* Notification badges */}
             {tab === 'flashcards' && studyStats.dueForReview > 0 && (
@@ -771,10 +771,10 @@ const Review = () => {
           </div>
         )}
 
-        {/* Study Tab - Redesigned with Cyberpunk Aesthetic */}
-        {activeTab === 'study' && (
-          <div className={styles.studyTab}>
-            <QuizBattle />
+        {/* Problem Solver Tab - Redesigned with Cyberpunk Aesthetic */}
+        {activeTab === 'solver' && (
+          <div className={styles.solverTab}>
+            <StemSolver />
           </div>
         )}
 
