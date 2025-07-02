@@ -148,30 +148,6 @@ export interface AdaptiveExamSettings {
   ability_estimation_method: 'irt' | 'cat' | 'hybrid'
 }
 
-export interface StudyRecommendations {
-  immediate_actions: string[];
-  short_term_plan: {
-    duration: string;
-    daily_tasks: string[];
-    focus_areas: string[];
-    practice_suggestions: string[];
-  };
-  long_term_strategy: {
-    duration: string;
-    milestones: string[];
-    skill_development: string[];
-    assessment_schedule: string[];
-  };
-  personalized_tips: string[];
-  resource_recommendations: {
-    type: 'reading' | 'practice' | 'video' | 'interactive';
-    title: string;
-    description: string;
-    estimated_time: number;
-    priority: 'high' | 'medium' | 'low';
-  }[];
-}
-
 class ExamAI {
   private apiKey: string
   private baseUrl: string
@@ -186,69 +162,52 @@ class ExamAI {
    */
   async generateExamFromCards(
     cards: FSRSCard[],
-    config: ExamConfiguration,
-    isProfessorMode: boolean = false
+    config: ExamConfiguration
   ): Promise<GeneratedExam> {
-    const cardContextLimit = 50; // Limit the number of cards sent in the prompt
-    const priorityCards = [...cards]
-      .sort((a, b) => {
-        const scoreA = (a.lapses ?? 0) * 10 - (a.stability ?? 1000); // Prioritize high lapses, low stability
-        const scoreB = (b.lapses ?? 0) * 10 - (b.stability ?? 1000);
-        return scoreB - scoreA;
-      })
-      .slice(0, cardContextLimit);
-
-    const professorModeInstruction = isProfessorMode
-      ? `**Style Instruction:** Emulate the style of a top-tier university professor. Avoid simple recall questions and focus on assessing the student's ability to analyze, evaluate, and apply knowledge. The questions should be deep and challenging.`
-      : '';
-
     const prompt = `
-You are an expert exam designer, tasked with creating a personalized exam based on the provided flashcards and configuration.
+作为考试设计专家，基于提供的学习卡片生成一份个性化考试：
 
-**Exam Configuration:**
-- Title: ${config.title}
-- Subject: ${config.subject}
-- Duration: ${config.duration} minutes
-- Total Points: ${config.total_points}
-- Core Topics: ${config.topics.join(', ')}
-${professorModeInstruction}
+考试配置:
+- 标题: ${config.title}
+- 学科: ${config.subject}
+- 时长: ${config.duration}分钟
+- 总分: ${config.total_points}分
+- 主题: ${config.topics.join(', ')}
 
-**Question Distribution Requirements:**
+问题分布要求:
 ${config.question_distribution.map(dist => 
-  `- ${dist.type}: ${dist.count} questions, ${dist.points_per_question} points each`
+  `- ${dist.type}: ${dist.count}题, 每题${dist.points_per_question}分`
 ).join('\n')}
 
-**Difficulty Distribution:**
+难度分布:
 ${config.difficulty_distribution.map(dist => 
-  `- Difficulty ${dist.difficulty_range[0]}-${dist.difficulty_range[1]}: ${dist.percentage}% of questions`
+  `- 难度${dist.difficulty_range[0]}-${dist.difficulty_range[1]}: ${dist.percentage}%`
 ).join('\n')}
 
-**Cognitive Level Distribution:**
+认知层次分布:
 ${config.cognitive_distribution.map(dist => 
-  `- ${dist.level}: ${dist.percentage}% of questions`
+  `- ${dist.level}: ${dist.percentage}%`
 ).join('\n')}
 
-**Question Selection Strategy:** Please prioritize testing the student's weaknesses. When selecting topics, focus on cards with low 'stability', high 'lapses' (mistakes), or those that are 'due' for review, as these represent the student's potential weak points.
-
-**Available Learning Flashcards (${priorityCards.length} most relevant cards provided):**
-${priorityCards.map((card, index) => 
-  `${index + 1}. Question: ${card.question}\n   Answer: ${card.answer}\n   Tags: ${card.tags?.join(', ')}\n   FSRS Stats: { stability: ${card.stability?.toFixed(2)}, difficulty: ${card.difficulty?.toFixed(2)}, lapses: ${card.lapses}, due: ${new Date(card.due).toLocaleDateString()} }`
+可用学习卡片 (${cards.length}张):
+${cards.slice(0, 10).map((card, index) => 
+  `${index + 1}. 问题: ${card.question}\n   答案: ${card.answer}\n   难度: ${card.difficulty}`
 ).join('\n')}
-${cards.length > cardContextLimit ? `... and ${cards.length - cardContextLimit} other cards.` : ''}
+${cards.length > 10 ? `... 和其他${cards.length - 10}张卡片` : ''}
 
-**Learning Objectives:**
+学习目标:
 ${config.learning_objectives.join('\n')}
 
-Please generate a complete exam with the following:
-1. A diverse mix of question types.
-2. Adherence to the specified difficulty and cognitive distributions.
-3. Clear and unambiguous question phrasing.
-4. Accurate answers and scoring rubrics.
-5. Helpful hints and explanations where appropriate.
-6. Detailed answer explanations.
+请生成包含以下内容的完整考试：
+1. 多样化的题型组合
+2. 符合指定的难度和认知分布
+3. 清晰的问题表述
+4. 准确的答案和评分标准
+5. 有用的提示和解释
+6. 详细的答案解析
 
-Output the entire exam structure as a single, valid JSON object.
-`;
+用JSON格式输出完整的考试结构。
+`
 
     try {
       const response = await this.callOpenAI(prompt, {
@@ -271,32 +230,57 @@ Output the entire exam structure as a single, valid JSON object.
     responses: ExamResponse[]
   ): Promise<ExamResult> {
     const prompt = `
-You are an intelligent scoring expert. Please conduct a comprehensive scoring and analysis for this exam.
+作为智能评分专家，对这份考试进行全面评分和分析：
 
-**Exam Information:**
-- Title: ${exam.config.title}
-- Total Questions: ${exam.questions.length}
-- Total Points: ${exam.config.total_points}
+考试信息:
+- 标题: ${exam.config.title}
+- 总题数: ${exam.questions.length}
+- 总分: ${exam.config.total_points}
+- 时长: ${exam.config.duration}分钟
 
-**Student Responses:**
+学生答题情况:
 ${responses.map((response, index) => {
-  const question = exam.questions.find(q => q.id === response.question_id);
-  const correctAnswer = exam.answer_key.find(a => a.question_id === response.question_id)?.correct_answer;
+  const question = exam.questions.find(q => q.id === response.question_id)
+  const correct_answer = exam.answer_key.find(a => a.question_id === response.question_id)?.correct_answer
   
-  return `Question ${index + 1}: ${question?.question || 'Unknown Question'}
-Student's Answer: ${Array.isArray(response.student_answer) ? response.student_answer.join(', ') : response.student_answer}
-Correct Answer: ${Array.isArray(correctAnswer) ? correctAnswer.join(', ') : correctAnswer}
-Time Spent: ${response.response_time} seconds
-Question Type: ${question?.type}
-Points: ${question?.points}
-`;
-}).join('\n')}
+  return `题目${index + 1}: ${question?.question || '未知题目'}
+学生答案: ${Array.isArray(response.student_answer) ? response.student_answer.join(', ') : response.student_answer}
+正确答案: ${Array.isArray(correct_answer) ? correct_answer.join(', ') : correct_answer}
+用时: ${response.response_time}秒
+题型: ${question?.type}
+难度: ${question?.difficulty}
+认知层次: ${question?.cognitive_level}`
+}).join('\n\n')}
 
-**Analysis Requirements:**
-In addition to scoring, please perform a deep analysis. Identify the student's **core weaknesses** and **error patterns**. For example: "The student seems to confuse concept A and concept B" or "Struggles with all questions requiring calculation." Also identify their strengths. Place these summaries in the 'strengths' and 'weaknesses' fields of the 'analysis' object in your response.
+请提供详细的评分和分析：
 
-Please return a single, valid JSON object representing the full ExamResult structure, including scoring, detailed analysis, and constructive feedback.
-`;
+1. **精确评分**
+   - 每题得分计算
+   - 部分分数评估 (适用时)
+   - 总分统计
+
+2. **时间分析**
+   - 总用时评估
+   - 各题用时分析
+   - 时间管理表现
+
+3. **能力分析**
+   - 不同难度表现
+   - 认知层次表现
+   - 主题掌握度
+
+4. **诊断反馈**
+   - 优势领域识别
+   - 薄弱环节诊断
+   - 具体改进建议
+
+5. **个性化反馈**
+   - 每题详细反馈
+   - 学习建议
+   - 后续学习路径
+
+用JSON格式输出完整的评分结果和分析。
+`
 
     try {
       const response = await this.callOpenAI(prompt, {
@@ -366,7 +350,7 @@ ${available_questions.map((q, index) =>
       return this.parseAdaptiveSelection(response, available_questions)
     } catch (error) {
       console.error('自适应题目选择失败:', error)
-      return this.getFallbackAdaptiveSelection(5, available_questions)
+      return this.getFallbackAdaptiveSelection(current_ability_estimate, available_questions)
     }
   }
 
@@ -381,7 +365,29 @@ ${available_questions.map((q, index) =>
       time_availability: number // 每日可用学习时间(分钟)
       goal_performance: number // 目标分数百分比
     }
-  ): Promise<StudyRecommendations> {
+  ): Promise<{
+    immediate_actions: string[]
+    short_term_plan: {
+      duration: string
+      daily_tasks: string[]
+      focus_areas: string[]
+      practice_suggestions: string[]
+    }
+    long_term_strategy: {
+      duration: string
+      milestones: string[]
+      skill_development: string[]
+      assessment_schedule: string[]
+    }
+    personalized_tips: string[]
+    resource_recommendations: {
+      type: 'reading' | 'practice' | 'video' | 'interactive'
+      title: string
+      description: string
+      estimated_time: number
+      priority: 'high' | 'medium' | 'low'
+    }[]
+  }> {
     const performanceGap = student_learning_profile.goal_performance - exam_result.scoring.percentage
     
     const prompt = `
@@ -436,32 +442,6 @@ ${available_questions.map((q, index) =>
     } catch (error) {
       console.error('学习建议生成失败:', error)
       return this.getFallbackStudyRecommendations(exam_result, student_learning_profile)
-    }
-  }
-
-  /**
-   * Extracts key topics from a document (e.g., syllabus, notes).
-   */
-  async extractTopicsFromDocument(documentText: string): Promise<string[]> {
-    const prompt = `
-Analyze the following text from a course document. Identify and extract the most important key topics, concepts, or keywords.
-Return these topics as a single, valid JSON array of strings. For example: ["Photosynthesis", "Cellular Respiration", "Mendelian Genetics"].
-
-Document Text:
----
-${documentText.substring(0, 8000)}
----
-`;
-    try {
-      const response = await this.callOpenAI(prompt, {
-        temperature: 0.2,
-        max_tokens: 500,
-      });
-      const topics = JSON.parse(response);
-      return Array.isArray(topics) ? topics : [];
-    } catch (error) {
-      console.error('Failed to extract topics from document:', error);
-      return [];
     }
   }
 
@@ -561,7 +541,7 @@ ${documentText.substring(0, 8000)}
     }
   }
 
-  private parseStudyRecommendations(response: string): StudyRecommendations {
+  private parseStudyRecommendations(response: string): any {
     try {
       return JSON.parse(response)
     } catch (error) {
@@ -699,7 +679,7 @@ ${documentText.substring(0, 8000)}
     }
   }
 
-  private getFallbackStudyRecommendations(result: ExamResult, profile: any): StudyRecommendations {
+  private getFallbackStudyRecommendations(result: ExamResult, profile: any): any {
     return {
       immediate_actions: [
         '复习考试中的错误题目',
