@@ -90,14 +90,12 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
         setTimer((prev: TimerState) => {
           const newTimeRemaining = prev.timeRemaining - 1
           
-          // 更新session
           setSession((s: ExamSession) => ({
             ...s,
             time_remaining: newTimeRemaining
           }))
 
           if (newTimeRemaining <= 0) {
-            // 时间到，自动提交
             handleSubmitExam()
             return { ...prev, timeRemaining: 0, isRunning: false }
           }
@@ -114,12 +112,10 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     }
   }, [timer.isRunning])
 
-  // 暂停/恢复计时器
   const toggleTimer = useCallback(() => {
     setTimer(prev => ({ ...prev, isRunning: !prev.isRunning }))
   }, [])
 
-  // 格式化时间显示
   const formatTime = useCallback((seconds: number): string => {
     if (isNaN(seconds) || seconds < 0) {
       return '0:00'
@@ -140,7 +136,6 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     return `${secs}秒`;
   }, []);
 
-  // 获取时间颜色
   const getTimeColor = useCallback((timeRemaining: number, totalTime: number): string => {
     const ratio = timeRemaining / totalTime
     if (ratio > 0.5) return 'text-green-600'
@@ -148,7 +143,6 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     return 'text-red-600'
   }, [])
 
-  // 记录答案
   const handleAnswerSubmit = useCallback((answer: string | string[], confidence?: number) => {
     const now = Date.now()
     const responseTime = now - questionStartTime
@@ -173,15 +167,8 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
         responses: updatedResponses
       }
     })
-
-    console.log('📝 答案已记录:', {
-      question: currentQuestion.question.substring(0, 50),
-      answer: Array.isArray(answer) ? answer.join(', ') : answer,
-      responseTime: (responseTime / 1000).toFixed(1) + 's'
-    })
   }, [currentQuestion, questionStartTime, flaggedQuestions])
 
-  // 导航到指定题目
   const navigateToQuestion = useCallback((index: number) => {
     if (index >= 0 && index < exam.questions.length) {
       setSession((prev: ExamSession) => ({ ...prev, current_question_index: index }))
@@ -190,21 +177,18 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     }
   }, [exam.questions.length])
 
-  // 下一题
   const handleNextQuestion = useCallback(() => {
     if (session.current_question_index < exam.questions.length - 1) {
       navigateToQuestion(session.current_question_index + 1)
     }
   }, [session.current_question_index, exam.questions.length, navigateToQuestion])
 
-  // 上一题
   const handlePreviousQuestion = useCallback(() => {
     if (session.current_question_index > 0) {
       navigateToQuestion(session.current_question_index - 1)
     }
   }, [session.current_question_index, navigateToQuestion])
 
-  // 标记题目
   const toggleFlag = useCallback((questionId: string) => {
     setFlaggedQuestions((prev: Set<string>) => {
       const newSet = new Set(prev)
@@ -217,7 +201,6 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     })
   }, [])
 
-  // 提交考试
   const handleSubmitExam = useCallback(async () => {
     setIsSubmitting(true)
     
@@ -227,37 +210,26 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
         status: 'completed',
         end_time: new Date()
       }
-
-      console.log('🎯 考试提交:', {
-        totalQuestions: exam.questions.length,
-        answeredQuestions: session.responses.length,
-        timeUsed: formatTime(timer.totalTime - timer.timeRemaining)
-      })
-
       onComplete(completedSession)
     } catch (error) {
       console.error('❌ 考试提交失败:', error)
     } finally {
       setIsSubmitting(false)
     }
-  }, [session, onComplete, exam.questions.length, timer, formatTime])
+  }, [session, onComplete])
 
-  // 获取已答题目数量
   const answeredCount = session.responses.length
   const progressPercentage = (answeredCount / exam.questions.length) * 100
 
-  // 获取当前题目的答案
   const getCurrentAnswer = useCallback(() => {
     const response = session.responses.find((r: ExamResponse) => r.question_id === currentQuestion.id)
     return response ? response.student_answer : undefined
   }, [session.responses, currentQuestion])
 
-  // 初始化题目开始时间
   useEffect(() => {
     setQuestionStartTime(Date.now())
   }, [session.current_question_index])
 
-  // 安全检查：如果题目不存在，则不渲染主要内容 - This is now a secondary check
   if (!currentQuestion) {
     return (
       <div className={styles.confirmOverlay}>
@@ -368,6 +340,13 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
                     answer={getCurrentAnswer()}
                 />
 
+                {hintText && (
+                    <div className={styles.hintBox}>
+                        <strong>💡 提示:</strong>
+                        <p>{hintText}</p>
+                    </div>
+                )}
+
                 <div className={styles.questionFooter}>
                      <div className={styles.confidenceSlider}>
                         <label>答题置信度</label>
@@ -404,4 +383,4 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
   )
 }
 
-export default ExamRunner
+export default ExamRunner 

@@ -125,36 +125,62 @@ ${config.learning_objectives.join('\n')}
     responses: ExamResponse[]
   ): Promise<ExamResult> {
     const prompt = `
-作为智能教育分析师，对这份考试进行全面评分和深度诊断分析。
+作为一名经验丰富的AI教育分析师，请对以下考试会话进行严格、详细的评分和深度诊断。
 
-**评分与分析要求 (Scoring & Analysis Requirements):**
-1.  **逐题评分 (Question-by-Question Scoring):** 根据提供的正确答案和评分规则，为每道题打分。对于主观题（如简答、论述），请根据答案质量给出合理的部分分。
-2.  **计算总分 (Calculate Total Score):** 汇总所有题目的得分，计算总分和百分比。
-3.  **深度诊断 (In-depth Diagnosis):** 这是最重要的部分。请仔细分析学生的**所有错题**，并总结出其核心优势、弱点和根本的错误模式。
-    -   **优势分析 (Strengths):** 学生在哪些知识点或题型上表现出色？
-    -   **弱点与错误模式分析 (Weaknesses & Error Patterns):**
-        -   学生是否混淆了某些关键概念？
-        -   在特定类型的认知任务上是否存在困难（例如，在所有需要'分析'或'应用'的问题上都表现不佳）？
-        -   是否存在系统性的知识空白？
-        -   请提供具体、可操作的诊断，而不仅仅是罗列错误的题目。例如，说"该学生似乎未完全理解React的useEffect依赖数组如何工作，导致在相关题目中出错"，而不是"学生答错了第5题"。
-4.  **提供反馈 (Provide Feedback):** 给出总体反馈和针对具体问题的改进建议。
+### 任务要求 (Critical Task Requirements)
 
-**JSON 输出格式:**
-请严格遵循 ExamResult 的 JSON 结构输出结果。请确保 'analysis.strengths' 和 'analysis.weaknesses' 字段填充上有洞察力的分析文本数组。
+1.  **逐题评分 (Mandatory Per-Question Scoring)**:
+    -   你 **必须** 评估学生的每一个答案。
+    -   根据提供的标准答案，为每道题给出 \\\`is_correct\\\` (true/false) 和一个具体得分 \\\`score\\\`。
+    -   对于主观题，根据答案的质量和完整性给出合理的部分分。
+    -   为每道题提供简短、有针对性的反馈 \\\`feedback\\\`。
+
+2.  **深度诊断分析 (In-depth Diagnostic Analysis)**:
+    -   **优势 (Strengths)**: 总结学生表现好的地方。
+    -   **弱点 (Weaknesses & Error Patterns)**: **这是最重要的部分。** 深入分析学生的错误模式。不要只说"第5题错了"，而要解释 **为什么** 错。例如："学生似乎混淆了'mutation'和'side effect'的概念，导致在所有相关的React Hooks题目中都出现了错误。" 指出其知识体系中的根本性缺陷。
+    -   **总体反馈 (Overall Feedback)**: 提供可操作的、全局性的改进建议。
+
+3.  **计算总分 (Calculate Totals)**:
+    -   汇总所有得分，计算 \\\`totalScore\\\` 和 \\\`percentage\\\`。
+
+### **JSON 输出格式 (Strict Output Format)**
+
+你 **必须** 严格按照下面的JSON结构返回结果。**任何字段都不能省略**，尤其是 \\\`scored_questions\\\` 数组。
+
+\\\`\\\`\\\`json
+{
+  "totalScore": 100,
+  "percentage": 85.5,
+  "analysis": {
+    "strengths": ["对核心概念A的理解很到位。"],
+    "weaknesses": ["在应用B知识点时出现混淆。"]
+  },
+  "feedback": ["整体表现良好，建议多练习C类型的题目。"],
+  "scored_questions": [
+    {
+      "question_id": "q_12345",
+      "is_correct": true,
+      "score": 10,
+      "feedback": "回答正确，分析深入。"
+    }
+  ]
+}
+\\\`\\\`\\\`
 
 ---
+### 考试数据 (Exam Data)
 
 **考试信息:**
 - 标题: ${exam.config.title}
 - 总分: ${exam.config.total_points}
 
-**题目与正确答案:**
+**题目与标准答案:**
 ${exam.questions.map(q => `
 - 问题ID: ${q.id}
   - 问题: ${q.question}
   - 正确答案: ${Array.isArray(q.correct_answer) ? q.correct_answer.join(', ') : q.correct_answer}
   - 分数: ${q.points}
-  - 题目类型: ${q.type}
+  - 题型: ${q.type}
   - 知识点: ${q.topic}
 `).join('')}
 
@@ -162,13 +188,13 @@ ${exam.questions.map(q => `
 ${responses.map(r => `
 - 问题ID: ${r.question_id}
   - 学生答案: ${Array.isArray(r.student_answer) ? r.student_answer.join(', ') : r.student_answer}
-  - 答题用时: ${r.response_time.toFixed(1)}s
 `).join('')}
+---
+Now, please provide the complete analysis in the specified JSON format.
 `
 
-    // AI anaylsis and scoring
     const response = await this.callOpenAI(prompt, {
-      temperature: 0.4,
+      temperature: 0.2, // Lower temperature for more deterministic scoring
       max_tokens: 4000,
       response_format: { type: "json_object" },
     })
@@ -179,12 +205,18 @@ ${responses.map(r => `
       if (!jsonMatch) {
         throw new Error("AI response did not contain a valid JSON object.");
       }
-      const parsed = JSON.parse(jsonMatch[0]);
+      let parsed = JSON.parse(jsonMatch[0]);
 
+      // Handle cases where the response is nested under a key like "ExamResult"
+      if (parsed.ExamResult) {
+        parsed = parsed.ExamResult;
+      }
+
+      // Stricter validation based on the ExamResult type
       if (
         !parsed.analysis ||
-        typeof parsed.analysis.strengths !== 'string' ||
-        typeof parsed.analysis.weaknesses !== 'string' ||
+        !Array.isArray(parsed.analysis.strengths) ||
+        !Array.isArray(parsed.analysis.weaknesses) ||
         !Array.isArray(parsed.scored_questions)
       ) {
         throw new Error(

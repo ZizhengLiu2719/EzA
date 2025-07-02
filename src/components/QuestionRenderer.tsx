@@ -14,7 +14,7 @@ import {
     X
 } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
-import { ExamQuestion } from '../types'
+import { ExamQuestion } from '../types/examTypes'
 
 interface QuestionRendererProps {
   question: ExamQuestion
@@ -56,42 +56,67 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
   // 渲染多选题
   const renderMultipleChoice = () => {
-    const selectedOption = Array.isArray(currentAnswer) ? currentAnswer[0] : currentAnswer
+    // 统一处理单选和多选的答案
+    const handleSelect = (option: string) => {
+      if (disabled) return;
+      
+      if (question.type === 'multiple_choice') {
+        const currentAnswers = Array.isArray(currentAnswer) ? [...currentAnswer] : [];
+        const optionIndex = currentAnswers.indexOf(option);
+        if (optionIndex > -1) {
+          currentAnswers.splice(optionIndex, 1);
+        } else {
+          currentAnswers.push(option);
+        }
+        handleAnswerSubmit(currentAnswers);
+      } else { // single_choice
+        handleAnswerSubmit(option);
+      }
+    };
+
+    // 检查选项是否被选中
+    const isSelected = (option: string) => {
+      if (question.type === 'multiple_choice') {
+        return Array.isArray(currentAnswer) && currentAnswer.includes(option);
+      }
+      return currentAnswer === option;
+    };
 
     return (
       <div className="space-y-3">
         <h3 className="text-lg font-medium text-gray-800 mb-4">
           {question.question}
         </h3>
+        {question.type === 'multiple_choice' && <p className="text-sm text-gray-500 -mt-2 mb-3">请选择所有适用选项。</p>}
         
         <div className="space-y-2">
           {question.options?.map((option, index) => {
             const optionLetter = String.fromCharCode(65 + index) // A, B, C, D...
-            const isSelected = selectedOption === option
+            const selected = isSelected(option);
             
             return (
               <motion.button
                 key={index}
-                onClick={() => !disabled && handleAnswerSubmit(option)}
+                onClick={() => handleSelect(option)}
                 disabled={disabled}
                 whileHover={!disabled ? { scale: 1.01 } : {}}
                 whileTap={!disabled ? { scale: 0.99 } : {}}
                 className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
-                  isSelected
+                  selected
                     ? 'border-blue-500 bg-blue-50 text-blue-800'
                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                 } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-sm font-medium ${
-                    isSelected 
+                    selected 
                       ? 'border-blue-500 bg-blue-500 text-white' 
                       : 'border-gray-400 text-gray-600'
                   }`}>
-                    {optionLetter}
+                    {selected && question.type === 'multiple_choice' ? <Check size={14} /> : optionLetter}
                   </div>
                   <span className="flex-1">{option}</span>
-                  {isSelected && <Check className="w-5 h-5 text-blue-500" />}
+                  {selected && question.type !== 'multiple_choice' && <Check className="w-5 h-5 text-blue-500" />}
                 </div>
               </motion.button>
             )
@@ -103,8 +128,6 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
   // 渲染判断题
   const renderTrueFalse = () => {
-    const selectedAnswer = Array.isArray(currentAnswer) ? currentAnswer[0] : currentAnswer
-
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-gray-800 mb-4">
@@ -114,7 +137,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
         <div className="flex gap-4 justify-center">
           {['正确', '错误'].map((option, index) => {
             const value = index === 0 ? 'true' : 'false'
-            const isSelected = selectedAnswer === value || selectedAnswer === option
+            const isSelected = currentAnswer === value;
             
             return (
               <motion.button
