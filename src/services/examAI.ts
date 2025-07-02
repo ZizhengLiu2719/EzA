@@ -625,65 +625,61 @@ ${available_questions.map((q, index) =>
   }
 
   private getFallbackExamResult(exam: GeneratedExam, responses: ExamResponse[]): ExamResult {
-    const totalScore = responses.length * 8 // 假设平均8分
-    const maxScore = exam.config.total_points
+    const totalScore = responses.reduce((sum, r) => sum + (r.confidence_level || 3) * 2, 0); // Simple scoring based on confidence
+    const maxScore = exam.config.total_points;
+    const total_time_secs = responses.reduce((sum, r) => sum + r.response_time, 0);
 
     return {
-      exam_id: exam.id,
-      student_responses: responses,
-      scoring: {
-        total_score: totalScore,
-        max_possible_score: maxScore,
-        percentage: (totalScore / maxScore) * 100,
-        question_scores: responses.map(r => ({
+      totalScore,
+      percentage: (totalScore / maxScore) * 100,
+      grade_level: 'B',
+
+      scored_questions: responses.map(r => {
+        const question = exam.questions.find(q => q.id === r.question_id);
+        return {
           question_id: r.question_id,
-          earned_points: 8,
-          max_points: 10,
-          is_correct: true
-        }))
-      },
+          is_correct: (r.confidence_level || 0) > 2, // Assume high confidence is correct
+          score: (r.confidence_level || 3) * 2,
+          feedback: 'AI评分服务不可用，此为备用反馈。',
+        };
+      }),
+
       analysis: {
+        strengths: ['基础概念掌握良好'],
+        weaknesses: ['应用能力需要提升 (备用分析)'],
+        recommendations: ['多做与实际应用相关的练习题 (备用分析)'],
         time_analysis: {
-          total_time: responses.reduce((sum, r) => sum + r.response_time, 0),
-          average_time_per_question: 120,
+          total_time: total_time_secs,
+          average_time_per_question: total_time_secs / (responses.length || 1),
           rushed_questions: [],
-          over_time_questions: []
+          over_time_questions: [],
         },
         difficulty_analysis: {
           easy_questions_performance: 0.9,
           medium_questions_performance: 0.8,
-          hard_questions_performance: 0.7
+          hard_questions_performance: 0.7,
         },
         cognitive_analysis: {
           remember_performance: 0.85,
           understand_performance: 0.8,
           apply_performance: 0.75,
-          analyze_performance: 0.7,
-          evaluate_performance: 0.65,
-          create_performance: 0.6
         },
         topic_analysis: exam.config.topics.map(topic => ({
           topic,
           performance: 0.8,
-          question_count: 2
+          question_count: Math.floor(exam.questions.length / (exam.config.topics.length || 1)),
         })),
-        strengths: ['基础概念掌握良好'],
-        weaknesses: ['应用能力需要提升'],
-        recommendations: ['多做实践练习']
       },
-      grade_level: 'B',
-      feedback: {
-        overall_feedback: '整体表现良好，继续保持。',
-        question_feedback: responses.map(r => ({
-          question_id: r.question_id,
-          feedback: '回答正确',
-          improvement_suggestions: []
-        }))
-      }
-    }
+
+      feedback: [
+        '整体表现良好，但部分细节需注意 (备用分析)。',
+        'AI评分服务暂时不可用，部分高级分析可能不准确。'
+      ],
+    };
   }
 
   private getFallbackAdaptiveSelection(ability: number, questions: ExamQuestion[]): any {
+    // Basic fallback: return a medium-difficulty question
     const suitableQuestions = questions.filter(q => 
       Math.abs(q.difficulty - ability) <= 2
     )

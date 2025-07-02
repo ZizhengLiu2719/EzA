@@ -54,18 +54,17 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
   const [isCreatingSet, setIsCreatingSet] = useState(false);
   const [creationStatus, setCreationStatus] = useState<'idle' | 'success' | 'error' | 'loading'>('idle');
 
-  // Destructure for easier access in JSX
-  const { analysis, scoring, grade_level } = result;
+  // Destructure for easier access in JSX, now aligning with AI response
+  const { analysis, grade_level, scored_questions, totalScore, percentage } = result;
   const { strengths, weaknesses, recommendations } = analysis;
-  const { question_scores } = scoring;
 
   const handleCreateMistakeSet = async () => {
     setCreationStatus('loading');
     setIsCreatingSet(true);
 
-    const incorrectQuestions = question_scores
-      .filter(score => !score.is_correct)
-      .map(score => exam.questions.find(q => q.id === score.question_id))
+    const incorrectQuestions = scored_questions
+      .filter((score: { is_correct: boolean; }) => !score.is_correct)
+      .map((score: { question_id: string; }) => exam.questions.find(q => q.id === score.question_id))
       .filter((q): q is ExamQuestion => q !== undefined);
 
     if (incorrectQuestions.length === 0) {
@@ -90,7 +89,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
   // 计算性能指标
   const metrics = useMemo((): PerformanceMetrics => {
     const totalQuestions = exam.questions.length
-    const correctAnswers = question_scores.filter(q => q.is_correct).length
+    const correctAnswers = scored_questions.filter((q: { is_correct: boolean; }) => q.is_correct).length
     const accuracy = (correctAnswers / totalQuestions) * 100
 
     const totalTime = session.end_time && session.start_time 
@@ -123,7 +122,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
     Object.entries(difficultyGroups).forEach(([level, questions]) => {
       if (questions.length > 0) {
         const correct = questions.filter(q => 
-          question_scores.find(r => r.question_id === q.id)?.is_correct
+          scored_questions.find((r: { question_id: string; }) => r.question_id === q.id)?.is_correct
         ).length
         difficultyPerformance[level] = (correct / questions.length) * 100
       }
@@ -135,7 +134,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
     topics.forEach(topic => {
       const topicQuestions = exam.questions.filter(q => q.topic === topic)
       const correct = topicQuestions.filter(q => 
-        question_scores.find(r => r.question_id === q.id)?.is_correct
+        scored_questions.find((r: { question_id: string; }) => r.question_id === q.id)?.is_correct
       ).length
       if (topicQuestions.length > 0) {
         topicPerformance[topic] = (correct / topicQuestions.length) * 100
@@ -148,7 +147,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
     cognitiveLevels.forEach(level => {
       const levelQuestions = exam.questions.filter(q => q.cognitive_level === level)
       const correct = levelQuestions.filter(q => 
-        question_scores.find(r => r.question_id === q.id)?.is_correct
+        scored_questions.find((r: { question_id: string; }) => r.question_id === q.id)?.is_correct
       ).length
       if (levelQuestions.length > 0) {
         cognitivePerformance[level] = (correct / levelQuestions.length) * 100
@@ -210,15 +209,15 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
             </div>
 
             <div className="flex items-center gap-3">
-              <div className={`px-4 py-2 rounded-xl font-bold text-2xl ${getGradeColor(grade_level)}`}>
-                {grade_level}
+              <div className={`px-4 py-2 rounded-xl font-bold text-2xl ${getGradeColor(grade_level || 'N/A')}`}>
+                {grade_level || 'N/A'}
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-gray-800">
-                  {scoring.percentage.toFixed(1)}%
+                  {(percentage || 0).toFixed(1)}%
                 </div>
                 <div className="text-sm text-gray-500">
-                  {scoring.total_score}/{scoring.max_possible_score}分
+                  {totalScore || 0}/{exam.config.total_points}分
                 </div>
               </div>
             </div>
@@ -470,7 +469,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
 
               <div className="p-6 space-y-4">
                 {exam.questions.map((question, index) => {
-                  const questionResult = question_scores.find(r => r.question_id === question.id)
+                  const questionResult = scored_questions.find(r => r.question_id === question.id)
                   const response = session.responses.find(r => r.question_id === question.id)
                   const isCorrect = questionResult?.is_correct || false
                   const showExplanation = showExplanations.includes(question.id)
@@ -520,7 +519,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                             <div>
                               <span className="text-gray-500">得分: </span>
                               <span className={isCorrect ? 'text-green-700' : 'text-red-700'}>
-                                {questionResult?.earned_points || 0}/{questionResult?.max_points || question.points}分
+                                {questionResult?.score || 0}/{question.points}分
                               </span>
                             </div>
                           </div>
@@ -575,7 +574,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h2 className="text-xl font-bold text-gray-800 mb-4">学习建议</h2>
               <ul className="space-y-3">
-                {recommendations.map((recommendation, index) => (
+                {(recommendations || []).map((recommendation: string, index: number) => (
                   <li key={index} className="flex items-start gap-3">
                     <Lightbulb className="w-5 h-5 text-yellow-500 mt-1 flex-shrink-0" />
                     <span className="text-gray-700">{recommendation}</span>

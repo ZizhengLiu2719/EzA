@@ -5,13 +5,13 @@
 
 import { motion } from 'framer-motion'
 import {
-    AlertCircle,
-    ArrowUpDown,
-    BookOpen,
-    Check,
-    HelpCircle,
-    Lightbulb,
-    X
+  AlertCircle,
+  ArrowUpDown,
+  BookOpen,
+  Check,
+  HelpCircle,
+  Lightbulb,
+  X
 } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
 import { ExamQuestion } from '../types/examTypes'
@@ -248,7 +248,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     // 解析题目中的空格 (假设用 ___ 表示空格)
     const questionParts = question.question.split('___')
     const answers = Array.isArray(currentAnswer) ? currentAnswer : [currentAnswer]
-
+    
     const handleBlankChange = (index: number, value: string) => {
       if (disabled) return
       
@@ -411,7 +411,18 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
   // 根据题型渲染对应组件
   const renderQuestionContent = () => {
+    if (!question.type) {
+      return (
+        <div className="text-center py-8 text-gray-500">
+          <AlertCircle className="w-8 h-8 mx-auto mb-2" />
+          <p className="font-semibold">AI返回了无效的题目格式</p>
+          <p className="text-sm text-gray-400 mt-1">缺少必要的"题型"信息，请尝试重新生成考试。</p>
+        </div>
+      )
+    }
+
     switch (question.type) {
+      case 'single_choice':
       case 'multiple_choice':
         return renderMultipleChoice()
       case 'true_false':

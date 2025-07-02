@@ -4,7 +4,7 @@
 
 export interface ExamQuestion {
   id: string
-  type: 'multiple_choice' | 'true_false' | 'short_answer' | 'essay' | 'fill_blank' | 'matching'
+  type: 'single_choice' | 'multiple_choice' | 'true_false' | 'short_answer' | 'essay' | 'fill_blank' | 'matching'
   question: string
   options?: string[] // for multiple choice
   correct_answer: string | string[]
@@ -91,56 +91,21 @@ export interface ExamSession {
 }
 
 export interface ExamResult {
-  exam_id: string
-  student_responses: ExamResponse[]
-  scoring: {
-    total_score: number
-    max_possible_score: number
-    percentage: number
-    question_scores: {
-      question_id: string
-      earned_points: number
-      max_points: number
-      is_correct: boolean
-      partial_credit?: number
-    }[]
-  }
+  totalScore: number
+  percentage: number
   analysis: {
-    time_analysis: {
-      total_time: number
-      average_time_per_question: number
-      rushed_questions: string[] // question_ids
-      over_time_questions: string[]
-    }
-    difficulty_analysis: {
-      easy_questions_performance: number // 0-1
-      medium_questions_performance: number
-      hard_questions_performance: number
-    }
-    cognitive_analysis: {
-      remember_performance: number
-      understand_performance: number
-      apply_performance: number
-      analyze_performance: number
-      evaluate_performance: number
-      create_performance: number
-    }
-    topic_analysis: {
-      topic: string
-      performance: number
-      question_count: number
-    }[]
     strengths: string[]
     weaknesses: string[]
-    recommendations: string[]
+    recommendations?: string[]
+    [key: string]: any // Allow other analysis fields
   }
-  grade_level: 'A' | 'B' | 'C' | 'D' | 'F'
-  feedback: {
-    overall_feedback: string
-    question_feedback: {
-      question_id: string
-      feedback: string
-      improvement_suggestions: string[]
-    }[]
-  }
+  feedback: string[]
+  scored_questions: {
+    question_id: string
+    is_correct: boolean
+    score: number
+    feedback: string
+  }[]
+  grade_level?: 'A' | 'B' | 'C' | 'D' | 'F'
+  [key: string]: any // Allow other top-level fields
 } 
