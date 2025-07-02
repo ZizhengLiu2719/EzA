@@ -3,7 +3,6 @@
  * 提供详细的考试结果分析、可视化图表和学习建议
  */
 
-import BackToDashboardButton from '@/components/BackToDashboardButton'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
     BarChart3,
@@ -210,7 +209,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
 
   return (
     <div className={`${styles.analyticsContainer} ${className}`}>
-      <BackToDashboardButton />
+      {/* <BackToDashboardButton /> */}
       {/* 头部 */}
       <motion.div 
         className={styles.header}
