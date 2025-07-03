@@ -29,8 +29,8 @@ interface GeneratedCard {
   explanation?: string;
   tags: string[];
   card_type: 'basic' | 'cloze';
-  confidence: number; // AI生成置信度
-  isSelected: boolean; // 是否选中保存
+  confidence: number; // AI generation confidence
+  isSelected: boolean; // Whether it is selected for saving
 }
 
 interface GenerationProgress {
@@ -63,171 +63,171 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
   const [progress, setProgress] = useState<GenerationProgress>({ total: 0, completed: 0, current: '' });
   const [error, setError] = useState<string | null>(null);
 
-  // 预设主题扩展
+  // Preset topic expansion
   const presetTopics = useMemo(() => [
     { 
-      label: '编程基础', 
+      label: 'Programming Basics', 
       value: 'programming-basics', 
-      tags: ['编程', '计算机科学', '软件开发'],
-      focusAreas: ['变量和数据类型', '控制结构', '函数', '面向对象', '算法思维']
+      tags: ['Programming', 'Computer Science', 'Software Development'],
+      focusAreas: ['Variables and Data Types', 'Control Structures', 'Functions', 'Object-Oriented Programming', 'Algorithmic Thinking']
     },
     { 
       label: 'JavaScript', 
       value: 'javascript', 
-      tags: ['JavaScript', 'Web开发', '前端'],
-      focusAreas: ['语法基础', '异步编程', 'DOM操作', 'ES6+特性', 'Node.js']
+      tags: ['JavaScript', 'Web Development', 'Frontend'],
+      focusAreas: ['Basic Syntax', 'Asynchronous Programming', 'DOM Manipulation', 'ES6+ Features', 'Node.js']
     },
     { 
       label: 'React', 
       value: 'react', 
-      tags: ['React', '前端框架', 'JavaScript'],
-      focusAreas: ['组件', '状态管理', 'Hooks', '生命周期', '性能优化']
+      tags: ['React', 'Frontend Framework', 'JavaScript'],
+      focusAreas: ['Components', 'State Management', 'Hooks', 'Lifecycle', 'Performance Optimization']
     },
     { 
-      label: '数据结构与算法', 
+      label: 'Data Structures & Algorithms', 
       value: 'algorithms', 
-      tags: ['数据结构', '算法', '计算机科学'],
-      focusAreas: ['数组', '链表', '栈和队列', '树', '图算法', '排序算法']
+      tags: ['Data Structures', 'Algorithms', 'Computer Science'],
+      focusAreas: ['Arrays', 'Linked Lists', 'Stacks and Queues', 'Trees', 'Graph Algorithms', 'Sorting Algorithms']
     },
     { 
-      label: '高等数学', 
+      label: 'Calculus', 
       value: 'calculus', 
-      tags: ['数学', '微积分', '代数'],
-      focusAreas: ['极限', '导数', '积分', '微分方程', '级数']
+      tags: ['Math', 'Calculus', 'Algebra'],
+      focusAreas: ['Limits', 'Derivatives', 'Integrals', 'Differential Equations', 'Series']
     },
     { 
-      label: '大学物理', 
+      label: 'University Physics', 
       value: 'physics', 
-      tags: ['物理', '科学', '自然规律'],
-      focusAreas: ['力学', '热学', '电磁学', '光学', '量子物理']
+      tags: ['Physics', 'Science', 'Natural Laws'],
+      focusAreas: ['Mechanics', 'Thermodynamics', 'Electromagnetism', 'Optics', 'Quantum Physics']
     },
     { 
-      label: '有机化学', 
+      label: 'Organic Chemistry', 
       value: 'organic-chemistry', 
-      tags: ['化学', '有机化合物', '化学反应'],
-      focusAreas: ['烷烃', '芳香化合物', '醇酚醚', '羰基化合物', '反应机理']
+      tags: ['Chemistry', 'Organic Compounds', 'Chemical Reactions'],
+      focusAreas: ['Alkanes', 'Aromatic Compounds', 'Alcohols, Phenols, Ethers', 'Carbonyl Compounds', 'Reaction Mechanisms']
     },
     { 
-      label: '世界历史', 
+      label: 'World History', 
       value: 'world-history', 
-      tags: ['历史', '文化', '事件'],
-      focusAreas: ['古代文明', '中世纪', '文艺复兴', '工业革命', '现代史']
+      tags: ['History', 'Culture', 'Events'],
+      focusAreas: ['Ancient Civilizations', 'Middle Ages', 'Renaissance', 'Industrial Revolution', 'Modern History']
     },
     { 
-      label: '英语词汇', 
+      label: 'English Vocabulary', 
       value: 'english-vocabulary', 
-      tags: ['英语', '词汇', '语言学习'],
-      focusAreas: ['基础词汇', '学术词汇', '商务英语', '习语表达', '词根词缀']
+      tags: ['English', 'Vocabulary', 'Language Learning'],
+      focusAreas: ['Basic Vocabulary', 'Academic Vocabulary', 'Business English', 'Idiomatic Expressions', 'Roots and Affixes']
     },
     { 
-      label: '心理学', 
+      label: 'Psychology', 
       value: 'psychology', 
-      tags: ['心理学', '认知科学', '行为科学'],
-      focusAreas: ['认知心理学', '发展心理学', '社会心理学', '异常心理学', '研究方法']
+      tags: ['Psychology', 'Cognitive Science', 'Behavioral Science'],
+      focusAreas: ['Cognitive Psychology', 'Developmental Psychology', 'Social Psychology', 'Abnormal Psychology', 'Research Methods']
     }
   ], []);
 
-  // 生成提示词
+  // Build prompt
   const buildPrompt = useCallback((config: GenerationConfig, cardType: 'basic' | 'cloze', index: number) => {
     const selectedTopic = presetTopics.find(t => t.value === config.topic);
     const topicName = selectedTopic?.label || config.topic.replace('custom-', '');
     
     const difficultyMap = {
-      beginner: '初级',
-      intermediate: '中级', 
-      advanced: '高级'
+      beginner: 'Beginner',
+      intermediate: 'Intermediate', 
+      advanced: 'Advanced'
     };
 
     const styleMap = {
-      formal: '正式严谨的',
-      conversational: '对话式通俗易懂的',
-      academic: '学术性专业的'
+      formal: 'formal and rigorous',
+      conversational: 'conversational and easy to understand',
+      academic: 'academic and professional'
     };
 
-    let prompt = `请生成一张${difficultyMap[config.difficulty]}难度的${topicName}学习闪卡。
+    let prompt = `Please generate a ${difficultyMap[config.difficulty]} difficulty ${topicName} learning flashcard.
 
-要求：
-- 语言：${config.language === 'zh' ? '中文' : '英文'}
-- 风格：${styleMap[config.style]}
-- 卡片类型：${cardType === 'basic' ? '问答题' : '填空题'}`;
+Requirements:
+- Language: ${config.language === 'zh' ? 'Chinese' : 'English'}
+- Style: ${styleMap[config.style]}
+- Card Type: ${cardType === 'basic' ? 'Question/Answer' : 'Cloze Deletion'}`;
 
     if (config.focusAreas.length > 0) {
-      prompt += `\n- 重点关注：${config.focusAreas.join('、')}`;
+      prompt += `\n- Focus on: ${config.focusAreas.join(', ')}`;
     }
 
     if (cardType === 'basic') {
-      prompt += `\n\n格式要求：
-- 问题要具体明确，避免过于宽泛
-- 答案要准确完整，包含关键要点
-- 问题应该测试核心概念的理解`;
+      prompt += `\n\nFormatting requirements:
+- The question should be specific and clear, avoiding being too broad.
+- The answer should be accurate and complete, including key points.
+- The question should test the understanding of core concepts.`;
     } else {
-      prompt += `\n\n格式要求：
-- 用"____"表示需要填空的部分
-- 填空应该是关键概念或术语
-- 题目要有足够的上下文信息`;
+      prompt += `\n\nFormatting requirements:
+- Use "____" to indicate the part to be filled in.
+- The blank should be a key concept or term.
+- The question should have enough context.`;
     }
 
     if (config.includeHints) {
-      prompt += `\n- 提供简短的提示，引导思考方向`;
+      prompt += `\n- Provide a short hint to guide thinking.`;
     }
 
     if (config.includeExplanations) {
-      prompt += `\n- 提供详细解释，说明答案的原理或背景`;
+      prompt += `\n- Provide a detailed explanation of the principle or background of the answer.`;
     }
 
     if (config.customPrompt) {
-      prompt += `\n\n用户特殊要求：${config.customPrompt}`;
+      prompt += `\n\nUser's special request: ${config.customPrompt}`;
     }
 
-    prompt += `\n\n请返回JSON格式：
+    prompt += `\n\nPlease return in JSON format:
 {
-  "question": "问题内容",
-  "answer": "答案内容",
-  ${config.includeHints ? '"hint": "提示内容",' : ''}
-  ${config.includeExplanations ? '"explanation": "解释内容",' : ''}
-  "tags": ["标签1", "标签2"],
+  "question": "Question content",
+  "answer": "Answer content",
+  ${config.includeHints ? '"hint": "Hint content",' : ''}
+  ${config.includeExplanations ? '"explanation": "Explanation content",' : ''}
+  "tags": ["Tag1", "Tag2"],
   "confidence": 0.95
 }`;
 
     return prompt;
   }, [presetTopics]);
 
-  // 模拟AI生成（实际项目中替换为真正的AI API调用）
+  // Simulate AI generation (replace with a real AI API call in a real project)
   const generateSingleCard = async (cardType: 'basic' | 'cloze', index: number): Promise<GeneratedCard> => {
     const prompt = buildPrompt(config, cardType, index);
     
-    // 模拟API调用
+    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200));
     
-    // 模拟AI生成（这里应该替换为真实的AI API调用）
+    // Simulate AI generation (this should be replaced with a real AI API call)
     const mockCard = generateMockCard(config, cardType, index);
     
     return {
       ...mockCard,
       id: `card-${Date.now()}-${index}`,
       isSelected: true,
-      confidence: 0.85 + Math.random() * 0.15 // 模拟置信度
+      confidence: 0.85 + Math.random() * 0.15 // Simulate confidence
     };
   };
 
-  // 改进的模拟生成函数（用更好的算法）
+  // Improved mock generation function (with a better algorithm)
   const generateMockCard = (config: GenerationConfig, cardType: 'basic' | 'cloze', index: number): Omit<GeneratedCard, 'id' | 'isSelected' | 'confidence'> => {
     const selectedTopic = presetTopics.find(t => t.value === config.topic);
     const topicName = selectedTopic?.label || config.topic.replace('custom-', '');
     
-    // 使用更智能的模板生成系统
+    // Use a smarter template generation system
     const templates = getEnhancedTemplates(config.topic, config.difficulty, cardType);
     const template = templates[index % templates.length];
     
-    // 根据配置调整内容
+    // Adjust content based on configuration
     let question = template.question.replace('{topic}', topicName);
     let answer = template.answer;
     
-    // 根据难度调整复杂度
+    // Adjust complexity based on difficulty
     if (config.difficulty === 'advanced') {
-      question = question.replace('什么是', '详细分析') + '，并说明其应用场景。';
+      question = question.replace('What is', 'Analyze in detail') + ', and explain its application scenarios.';
     } else if (config.difficulty === 'beginner') {
-      question = '简单说明：' + question;
+      question = 'Briefly explain: ' + question;
     }
 
     return {
@@ -240,69 +240,75 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
     };
   };
 
-  // 增强的模板系统
+  // Enhanced template system
   const getEnhancedTemplates = (topic: string, difficulty: string, cardType: 'basic' | 'cloze') => {
     const baseTemplates = {
       'javascript': {
         basic: [
           {
-            question: 'JavaScript中什么是闭包？请举例说明',
-            answer: '闭包是指一个函数可以访问其外部作用域中的变量，即使在外部函数已经执行完毕后。例如：function outer() { let x = 1; return function inner() { console.log(x); }; }',
-            hint: '考虑函数作用域和变量访问',
-            explanation: '闭包是JavaScript中的核心概念，它使得内部函数能够"记住"它被创建时的环境，常用于数据封装和模块模式。'
+            question: 'What is a closure in JavaScript? Please provide an example.',
+            answer: 'A closure is a function that can access variables from its outer scope, even after the outer function has finished executing. For example: function outer() { let x = 1; return function inner() { console.log(x); }; }',
+            hint: 'Think about function scope and lexical environment.',
+            explanation: 'When a function is created, it creates a closure, which saves the variables in its creation scope. This is why `inner` can access `x`.'
           },
           {
-            question: '解释JavaScript中的原型链机制',
-            answer: '原型链是JavaScript对象继承的机制。每个对象都有一个__proto__属性指向其原型对象，形成链式结构，直到Object.prototype。',
-            hint: '对象如何继承属性和方法',
-            explanation: '原型链允许对象继承其原型的属性和方法，是JavaScript面向对象编程的基础。'
+            question: 'Explain the difference between `let`, `const`, and `var`.',
+            answer: '`var` is function-scoped, can be re-declared and updated. `let` is block-scoped, cannot be re-declared but can be updated. `const` is block-scoped, cannot be re-declared or updated, and must be initialized at declaration.',
+            hint: 'Consider scope, hoisting, and re-assignability.',
+            explanation: '`let` and `const` were introduced in ES6 to solve problems with `var`, such as variable hoisting and lack of block scope, making the code more predictable and less prone to errors.'
           }
         ],
         cloze: [
           {
-            question: 'JavaScript中使用 ____ 关键字可以声明块级作用域变量',
-            answer: 'let',
-            hint: 'ES6引入的新特性',
-            explanation: 'let声明的变量具有块级作用域，不同于var的函数作用域。'
+            question: 'In asynchronous JavaScript, `____` is a new feature in ES2017 that makes asynchronous code look and behave more like synchronous code.',
+            answer: 'async/await',
+            hint: 'A pair of keywords used with Promises.',
+            explanation: '`async/await` is syntactic sugar built on top of Promises, making complex asynchronous logic easier to write and read, avoiding "callback hell".'
+          }
+        ]
+      },
+      'react': {
+        basic: [
+          {
+            question: 'What is the function of the `key` prop in React?',
+            answer: 'The `key` prop is a special string attribute you need to include when creating lists of elements. Keys help React identify which items have changed, are added, or are removed. Keys should be stable, predictable, and unique.',
+            hint: 'How does React efficiently update the UI when a list changes?',
+            explanation: 'Using `key` allows React to perform more efficient diffing algorithms, minimizing DOM manipulations and improving performance. Using array indices as keys is generally not recommended as it can lead to bugs with re-ordering.'
           }
         ]
       }
-      // 可以扩展更多主题...
     };
 
-    const fallbackTemplates = {
-      basic: [
-        {
-          question: '{topic}的基本概念是什么？',
-          answer: '这是一个关于{topic}的基础知识点，需要理解其核心原理和应用场景。',
-          hint: '从定义和特点入手',
-          explanation: '理解基础概念是学习任何学科的第一步。'
-        }
-      ],
-      cloze: [
-        {
-          question: '{topic}中的关键术语是 ____',
-          answer: '核心概念',
-          hint: '考虑最重要的术语',
-          explanation: '掌握关键术语有助于深入理解学科内容。'
-        }
-      ]
+    // Fallback for custom topics
+    const defaultTemplates = {
+      basic: [{
+        question: 'What is the core concept of {topic}?',
+        answer: 'The core concept of {topic} is...',
+        hint: 'Think about the most fundamental idea.',
+        explanation: 'This concept is central to understanding the entire subject.'
+      }],
+      cloze: [{
+        question: 'In {topic}, the term `____` refers to a key principle.',
+        answer: 'key principle',
+        hint: 'It is a foundational term.',
+        explanation: 'Understanding this term is crucial for further study.'
+      }]
     };
 
-    return baseTemplates[topic as keyof typeof baseTemplates]?.[cardType] || fallbackTemplates[cardType];
+    // @ts-ignore
+    return (baseTemplates[topic] || defaultTemplates)[cardType];
   };
 
-  // 生成卡片的主函数
   const generateCards = async () => {
     if (!config.topic) {
-      setError('请选择一个学习主题');
+      setError('Please choose a learning topic');
       return;
     }
 
     setLoading(true);
     setStep('generating');
     setError(null);
-    setProgress({ total: config.count, completed: 0, current: '准备生成...' });
+    setProgress({ total: config.count, completed: 0, current: 'Preparing to generate...' });
 
     try {
       const cards: GeneratedCard[] = [];
@@ -311,10 +317,10 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
         setProgress(prev => ({ 
           ...prev, 
           completed: i, 
-          current: `正在生成第 ${i + 1} 张卡片...` 
+          current: `Generating card ${i + 1}...` 
         }));
 
-        // 根据配置决定卡片类型
+        // According to configuration, decide card type
         let cardType: 'basic' | 'cloze';
         if (config.cardType === 'mixed') {
           cardType = Math.random() > 0.4 ? 'basic' : 'cloze';
@@ -328,22 +334,21 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
 
       setGeneratedCards(cards);
       setStep('preview');
-      setProgress(prev => ({ ...prev, completed: config.count, current: '生成完成！' }));
+      setProgress(prev => ({ ...prev, completed: config.count, current: 'Generation completed!' }));
     } catch (error) {
-      console.error('生成失败:', error);
-      setError('AI生成失败，请检查网络连接后重试');
+      console.error('Generation failed:', error);
+      setError('AI generation failed, please check network connection and try again');
       setStep('config');
     } finally {
       setLoading(false);
     }
   };
 
-  // 保存选中的卡片
   const saveCards = async () => {
     const selectedCards = generatedCards.filter(card => card.isSelected);
     
     if (selectedCards.length === 0) {
-      setError('请至少选择一张卡片保存');
+      setError('Please select at least one card to save');
       return;
     }
 
@@ -365,15 +370,12 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
       await createFlashcards(cardsToCreate);
       onGenerated(selectedCards.length);
     } catch (error) {
-      console.error('保存失败:', error);
-      setError('保存卡片失败，请重试');
+      console.error('Saving failed:', error);
+      setError('Saving cards failed, please try again');
       setStep('preview');
-    } finally {
-      setLoading(false);
     }
   };
 
-  // 切换卡片选中状态
   const toggleCardSelection = (cardId: string) => {
     setGeneratedCards(prev => 
       prev.map(card => 
@@ -384,7 +386,6 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
     );
   };
 
-  // 全选/取消全选
   const toggleSelectAll = () => {
     const allSelected = generatedCards.every(card => card.isSelected);
     setGeneratedCards(prev => 
@@ -392,7 +393,6 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
     );
   };
 
-  // 编辑卡片内容
   const updateCard = (cardId: string, updates: Partial<GeneratedCard>) => {
     setGeneratedCards(prev => 
       prev.map(card => 
@@ -403,41 +403,36 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
     );
   };
 
-  // 重新生成单张卡片
   const regenerateCard = async (cardId: string) => {
     const cardIndex = generatedCards.findIndex(card => card.id === cardId);
     if (cardIndex === -1) return;
 
-    setLoading(true);
+    const originalCard = generatedCards[cardIndex];
+    
+    // Set a temporary "regenerating" state on the card
+    updateCard(cardId, { question: 'Regenerating...', answer: '' });
+
     try {
-      const existingCard = generatedCards[cardIndex];
-      const newCard = await generateSingleCard(existingCard.card_type, cardIndex);
-      
-      setGeneratedCards(prev => 
-        prev.map(card => 
-          card.id === cardId 
-            ? { ...newCard, id: cardId, isSelected: card.isSelected }
-            : card
-        )
+      const newCard = await generateSingleCard(originalCard.card_type, cardIndex);
+      setGeneratedCards(prev =>
+        prev.map(c => c.id === cardId ? { ...newCard, id: cardId } : c)
       );
     } catch (error) {
-      console.error('重新生成失败:', error);
-      setError('重新生成失败，请重试');
-    } finally {
-      setLoading(false);
+      console.error('Error regenerating card:', error);
+      // Restore original card on failure
+      setGeneratedCards(prev =>
+        prev.map(c => c.id === cardId ? originalCard : c)
+      );
     }
   };
 
-  // 获取当前选中主题的焦点区域
   const getCurrentFocusAreas = () => {
-    const selectedTopic = presetTopics.find(t => t.value === config.topic);
-    return selectedTopic?.focusAreas || [];
+    return presetTopics.find(p => p.value === config.topic)?.focusAreas || [];
   };
 
-  // 渲染配置步骤（增强版）
   const renderConfigStep = () => (
     <div className={styles.configContainer}>
-      <h2 className={styles.stepTitle}>🤖 AI 闪卡生成配置</h2>
+      <h2 className={styles.stepTitle}>AI Flashcard Generator</h2>
       
       {error && (
         <div className={styles.errorMessage}>
@@ -445,287 +440,246 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
         </div>
       )}
       
-      {/* 主题选择 */}
       <div className={styles.formGroup}>
-        <label className={styles.label}>学习主题</label>
+        <label className={styles.label}>1. Choose a Topic</label>
         <div className={styles.topicGrid}>
-          {presetTopics.map(topic => (
+          {presetTopics.map(p => (
             <button
-              key={topic.value}
-              onClick={() => {
-                setConfig(prev => ({ 
-                  ...prev, 
-                  topic: topic.value,
-                  focusAreas: [] // 重置焦点区域
-                }));
-              }}
-              className={`${styles.topicButton} ${config.topic === topic.value ? styles.selected : ''}`}
+              key={p.value}
+              className={`${styles.topicButton} ${config.topic === p.value ? styles.selected : ''}`}
+              onClick={() => setConfig(prev => ({ ...prev, topic: p.value }))}
             >
-              {topic.label}
+              {p.label}
             </button>
           ))}
         </div>
-        
-        <input
-          type="text"
-          placeholder="或输入自定义主题..."
-          value={config.topic.startsWith('custom-') ? config.topic.slice(7) : ''}
-          onChange={(e) => setConfig(prev => ({ 
-            ...prev, 
-            topic: e.target.value ? `custom-${e.target.value}` : '',
-            focusAreas: [] // 重置焦点区域
-          }))}
+        <input 
+          type="text" 
           className={styles.customTopicInput}
+          placeholder="Or enter a custom topic..."
+          onChange={(e) => setConfig(prev => ({ ...prev, topic: `custom-${e.target.value}` }))}
         />
       </div>
 
-      {/* 焦点区域选择 */}
-      {getCurrentFocusAreas().length > 0 && (
-        <div className={styles.formGroup}>
-          <label className={styles.label}>重点关注领域（可多选）</label>
-          <div className={styles.focusAreasGrid}>
-            {getCurrentFocusAreas().map(area => (
-              <button
-                key={area}
-                onClick={() => {
-                  setConfig(prev => ({
-                    ...prev,
-                    focusAreas: prev.focusAreas.includes(area)
-                      ? prev.focusAreas.filter(item => item !== area)
-                      : [...prev.focusAreas, area]
-                  }));
-                }}
-                className={`${styles.focusAreaButton} ${config.focusAreas.includes(area) ? styles.selected : ''}`}
-              >
-                {area}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 难度和风格 */}
-      <div className={styles.formRow}>
-        <div className={styles.formGroup}>
-          <label className={styles.label}>难度级别</label>
-          <div className={styles.buttonGroup}>
-            {[
-              { value: 'beginner', label: '初级', color: '#00ff7f' },
-              { value: 'intermediate', label: '中级', color: '#ff9f0a' },
-              { value: 'advanced', label: '高级', color: '#ff453a' }
-            ].map(difficulty => (
-              <button
-                key={difficulty.value}
-                onClick={() => setConfig(prev => ({ ...prev, difficulty: difficulty.value as any }))}
-                className={`${styles.difficultyButton} ${config.difficulty === difficulty.value ? styles.selected : ''}`}
-                style={{ '--accent-color': difficulty.color } as React.CSSProperties}
-              >
-                {difficulty.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className={styles.formGroup}>
-          <label className={styles.label}>生成风格</label>
-          <div className={styles.buttonGroup}>
-            {[
-              { value: 'conversational', label: '对话式', icon: '💬' },
-              { value: 'formal', label: '正式', icon: '📋' },
-              { value: 'academic', label: '学术', icon: '🎓' }
-            ].map(style => (
-              <button
-                key={style.value}
-                onClick={() => setConfig(prev => ({ ...prev, style: style.value as any }))}
-                className={`${styles.styleButton} ${config.style === style.value ? styles.selected : ''}`}
-              >
-                <span>{style.icon}</span>
-                <span>{style.label}</span>
-              </button>
-            ))}
-          </div>
+      <div className={styles.formGroup}>
+        <label className={styles.label}>2. Set Difficulty</label>
+        <div className={styles.buttonGroup}>
+          <button 
+            className={`${styles.difficultyButton} ${config.difficulty === 'beginner' ? styles.selected : ''}`}
+            onClick={() => setConfig(prev => ({ ...prev, difficulty: 'beginner' }))}
+            style={{ '--accent-color': '#00ff7f' } as React.CSSProperties}
+          >
+            Beginner
+          </button>
+          <button 
+            className={`${styles.difficultyButton} ${config.difficulty === 'intermediate' ? styles.selected : ''}`}
+            onClick={() => setConfig(prev => ({ ...prev, difficulty: 'intermediate' }))}
+            style={{ '--accent-color': '#ff9f0a' } as React.CSSProperties}
+          >
+            Intermediate
+          </button>
+          <button 
+            className={`${styles.difficultyButton} ${config.difficulty === 'advanced' ? styles.selected : ''}`}
+            onClick={() => setConfig(prev => ({ ...prev, difficulty: 'advanced' }))}
+            style={{ '--accent-color': '#ff453a' } as React.CSSProperties}
+          >
+            Advanced
+          </button>
         </div>
       </div>
 
-      {/* 数量和类型 */}
-      <div className={styles.formRow}>
-        <div className={styles.formGroup}>
-          <label className={styles.label}>生成数量</label>
-          <input
+      <div className={`${styles.formGroup} ${styles.formRow}`}>
+        <div>
+          <label className={styles.label}>3. Number of Cards</label>
+          <input 
             type="number"
+            className={styles.numberInput}
+            value={config.count}
+            onChange={(e) => setConfig(prev => ({ ...prev, count: Math.max(1, parseInt(e.target.value) || 1) }))}
             min="1"
             max="50"
-            value={config.count}
-            onChange={(e) => setConfig(prev => ({ ...prev, count: parseInt(e.target.value) || 10 }))}
-            className={styles.numberInput}
           />
         </div>
-
-        <div className={styles.formGroup}>
-          <label className={styles.label}>卡片类型</label>
-          <select
+        <div>
+          <label className={styles.label}>4. Card Type</label>
+          <select 
+            className={styles.select}
             value={config.cardType}
             onChange={(e) => setConfig(prev => ({ ...prev, cardType: e.target.value as any }))}
-            className={styles.select}
           >
-            <option value="mixed">混合类型</option>
-            <option value="basic">基础问答</option>
-            <option value="cloze">填空题</option>
+            <option value="mixed">Mixed</option>
+            <option value="basic">Question/Answer</option>
+            <option value="cloze">Cloze (Fill-in-the-blank)</option>
           </select>
         </div>
       </div>
 
-      {/* 高级选项 */}
       <div className={styles.formGroup}>
-        <label className={styles.label}>高级选项</label>
+        <label className={styles.label}>5. Focus Areas (Optional)</label>
+        <div className={styles.focusAreasGrid}>
+          {getCurrentFocusAreas().map(area => (
+            <button
+              key={area}
+              className={`${styles.focusAreaButton} ${config.focusAreas.includes(area) ? styles.selected : ''}`}
+              onClick={() => {
+                const newFocus = config.focusAreas.includes(area)
+                  ? config.focusAreas.filter(f => f !== area)
+                  : [...config.focusAreas, area];
+                setConfig(prev => ({ ...prev, focusAreas: newFocus }));
+              }}
+            >
+              {area}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.formGroup}>
+        <label className={styles.label}>6. Output Style</label>
+        <div className={styles.buttonGroup}>
+          <button 
+            className={`${styles.styleButton} ${config.style === 'conversational' ? styles.selected : ''}`}
+            onClick={() => setConfig(prev => ({ ...prev, style: 'conversational' }))}
+          >
+            <span>💬</span>
+            <span>Conversational</span>
+          </button>
+          <button 
+            className={`${styles.styleButton} ${config.style === 'academic' ? styles.selected : ''}`}
+            onClick={() => setConfig(prev => ({ ...prev, style: 'academic' }))}
+          >
+            <span>🎓</span>
+            <span>Academic</span>
+          </button>
+          <button 
+            className={`${styles.styleButton} ${config.style === 'formal' ? styles.selected : ''}`}
+            onClick={() => setConfig(prev => ({ ...prev, style: 'formal' }))}
+          >
+            <span>👔</span>
+            <span>Formal</span>
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.formGroup}>
+        <label className={styles.label}>7. Advanced Options</label>
         <div className={styles.checkboxGroup}>
           <label className={styles.checkbox}>
-            <input
-              type="checkbox"
-              checked={config.includeExplanations}
-              onChange={(e) => setConfig(prev => ({ ...prev, includeExplanations: e.target.checked }))}
-            />
-            包含详细解释
-          </label>
-          <label className={styles.checkbox}>
-            <input
+            <input 
               type="checkbox"
               checked={config.includeHints}
               onChange={(e) => setConfig(prev => ({ ...prev, includeHints: e.target.checked }))}
             />
-            包含提示信息
+            Include Hints
           </label>
           <label className={styles.checkbox}>
-            <input
+            <input 
               type="checkbox"
-              checked={config.language === 'en'}
-              onChange={(e) => setConfig(prev => ({ ...prev, language: e.target.checked ? 'en' : 'zh' }))}
+              checked={config.includeExplanations}
+              onChange={(e) => setConfig(prev => ({ ...prev, includeExplanations: e.target.checked }))}
             />
-            使用英文生成
+            Include Explanations
           </label>
+          <div>
+            <label className={styles.label} style={{ marginTop: '1rem' }}>Custom Instructions (Optional)</label>
+            <textarea
+              className={styles.textarea}
+              placeholder="e.g., 'Focus on real-world examples', 'Use simple language', 'Make questions challenging'"
+              value={config.customPrompt}
+              onChange={(e) => setConfig(prev => ({ ...prev, customPrompt: e.target.value }))}
+            />
+          </div>
         </div>
       </div>
 
-      {/* 自定义提示词 */}
-      <div className={styles.formGroup}>
-        <label className={styles.label}>自定义提示词（可选）</label>
-        <textarea
-          value={config.customPrompt}
-          onChange={(e) => setConfig(prev => ({ ...prev, customPrompt: e.target.value }))}
-          placeholder="为AI提供额外的生成指导，如特定的学习重点或风格要求..."
-          className={styles.textarea}
-          rows={3}
-        />
-      </div>
-
       <div className={styles.actions}>
-        <button onClick={onClose} className={styles.cancelButton}>
-          取消
-        </button>
+        <button className={styles.cancelButton} onClick={onClose}>Cancel</button>
         <button 
-          onClick={generateCards}
-          disabled={!config.topic || loading}
           className={styles.generateButton}
+          onClick={generateCards}
+          disabled={loading || !config.topic}
         >
-          🚀 开始生成
+          {loading ? 'Generating...' : `Generate ${config.count} Cards`}
         </button>
       </div>
     </div>
   );
 
-  // 渲染生成中步骤（增强版）
   const renderGeneratingStep = () => (
     <div className={styles.generatingContainer}>
       <div className={styles.loadingAnimation}>
-        <div className={styles.aiIcon}>🤖</div>
-        <div className={styles.loadingText}>{progress.current}</div>
-        <div className={styles.progressBar}>
-          <div 
-            className={styles.progressFill} 
-            style={{ width: `${(progress.completed / progress.total) * 100}%` }}
-          ></div>
-        </div>
-        <div className={styles.progressStats}>
-          {progress.completed} / {progress.total} 张卡片
-        </div>
+        <span className={styles.aiIcon}>✨</span>
       </div>
-      
+      <h2 className={styles.loadingText}>AI is crafting your flashcards...</h2>
+      <div className={styles.progressStats}>
+        <span>{progress.completed} / {progress.total}</span>
+      </div>
+      <div className={styles.progressBar}>
+        <div 
+          className={styles.progressFill}
+          style={{ width: `${(progress.completed / progress.total) * 100}%` }}
+        ></div>
+      </div>
+      <p className={styles.progressCurrent}>{progress.current}</p>
+
       <div className={styles.generatingTips}>
-        <h3>💡 AI生成过程</h3>
+        <h3>💡 Pro Tip:</h3>
         <ul>
-          <li>📊 分析您的主题和难度设置</li>
-          <li>🎯 根据焦点区域优化问题方向</li>
-          <li>🧠 应用认知科学原理构造问题</li>
-          <li>✨ 根据您选择的风格调整表述</li>
-          <li>🔍 确保答案准确性和完整性</li>
+          <li>The more specific your topic and focus areas, the better the results.</li>
+          <li>For complex subjects, start with a smaller batch of cards to check quality.</li>
+          <li>You can edit, delete, or regenerate any card in the next step.</li>
         </ul>
       </div>
     </div>
   );
 
-  // 渲染预览步骤
   const renderPreviewStep = () => {
-    const selectedCards = generatedCards.filter(card => card.isSelected);
-    const allSelected = generatedCards.every(card => card.isSelected);
-    
+    const selectedCount = generatedCards.filter(c => c.isSelected).length;
     return (
       <div className={styles.previewContainer}>
-        <h2 className={styles.stepTitle}>📝 预览生成的闪卡</h2>
-        
-        {error && (
-          <div className={styles.errorMessage}>
-            ⚠️ {error}
-          </div>
-        )}
-        
         <div className={styles.previewHeader}>
-          <div className={styles.previewStats}>
-            <span>共生成 {generatedCards.length} 张闪卡</span>
-            <span>{generatedCards.filter(c => c.card_type === 'basic').length} 张问答</span>
-            <span>{generatedCards.filter(c => c.card_type === 'cloze').length} 张填空</span>
-            <span>已选择 {selectedCards.length} 张</span>
-          </div>
-          
+          <h2 className={styles.stepTitle}>Review & Refine Generated Cards</h2>
           <div className={styles.previewActions}>
-            <button 
-              onClick={toggleSelectAll}
-              className={styles.selectAllButton}
-            >
-              {allSelected ? '取消全选' : '全选'}
+            <div className={styles.previewStats}>
+              <span>Total: {generatedCards.length}</span>
+              <span className={styles.selectedCount}>Selected: {selectedCount}</span>
+            </div>
+            <button className={styles.selectAllButton} onClick={toggleSelectAll}>
+              {selectedCount === generatedCards.length ? 'Deselect All' : 'Select All'}
             </button>
-            <span className={styles.qualityIndicator}>
-              平均质量: {(generatedCards.reduce((sum, card) => sum + card.confidence, 0) / generatedCards.length * 100).toFixed(0)}%
-            </span>
           </div>
         </div>
 
+        {error && <p className={styles.errorMessage}>{error}</p>}
+        
         <div className={styles.cardsPreview}>
           {generatedCards.map((card, index) => (
-            <div key={card.id} className={`${styles.cardPreview} ${card.isSelected ? styles.selected : ''}`}>
+            <div 
+              key={card.id} 
+              className={`${styles.cardPreview} ${card.isSelected ? styles.selected : ''}`}
+            >
               <div className={styles.cardHeader}>
+                <div className={styles.cardIndex}>{index + 1}</div>
                 <div className={styles.cardMeta}>
-                  <span className={styles.cardIndex}>#{index + 1}</span>
-                  <span className={`${styles.cardType} ${styles[card.card_type]}`}>
-                    {card.card_type === 'basic' ? '问答' : '填空'}
-                  </span>
-                  <span className={styles.cardConfidence}>
-                    质量: {(card.confidence * 100).toFixed(0)}%
-                  </span>
+                  <div className={`${styles.cardType} ${styles[card.card_type]}`}>
+                    {card.card_type === 'basic' ? 'Q&A' : 'Cloze'}
+                  </div>
+                  <div className={styles.cardConfidence} title={`AI Confidence: ${(card.confidence * 100).toFixed(0)}%`}>
+                    <div className={styles.qualityIndicator} style={{ width: `${card.confidence * 100}%` }}></div>
+                  </div>
                 </div>
-                
                 <div className={styles.cardControls}>
-                  <button
-                    onClick={() => toggleCardSelection(card.id)}
+                  <button 
                     className={`${styles.selectButton} ${card.isSelected ? styles.selected : ''}`}
-                    title={card.isSelected ? '取消选择' : '选择此卡片'}
+                    onClick={() => toggleCardSelection(card.id)}
+                    title={card.isSelected ? 'Deselect this card' : 'Select this card'}
                   >
                     {card.isSelected ? '✓' : '○'}
                   </button>
-                  <button
+                  <button 
+                    className={styles.regenerateButton} 
                     onClick={() => regenerateCard(card.id)}
-                    className={styles.regenerateButton}
-                    disabled={loading}
-                    title="重新生成此卡片"
+                    title="Regenerate this card"
                   >
                     🔄
                   </button>
@@ -734,28 +688,26 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
               
               <div className={styles.cardContent}>
                 <div className={styles.editableField}>
-                  <label><strong>问题:</strong></label>
+                  <label>Question</label>
                   <textarea
                     value={card.question}
                     onChange={(e) => updateCard(card.id, { question: e.target.value })}
                     className={styles.editableTextarea}
-                    rows={2}
+                    rows={3}
                   />
                 </div>
-                
                 <div className={styles.editableField}>
-                  <label><strong>答案:</strong></label>
+                  <label>Answer</label>
                   <textarea
                     value={card.answer}
                     onChange={(e) => updateCard(card.id, { answer: e.target.value })}
                     className={styles.editableTextarea}
-                    rows={2}
+                    rows={3}
                   />
                 </div>
-                
                 {card.hint && (
                   <div className={styles.editableField}>
-                    <label><strong>提示:</strong></label>
+                    <label>Hint</label>
                     <input
                       type="text"
                       value={card.hint}
@@ -764,101 +716,89 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
                     />
                   </div>
                 )}
-                
                 {card.explanation && (
                   <div className={styles.editableField}>
-                    <label><strong>解释:</strong></label>
+                    <label>Explanation</label>
                     <textarea
                       value={card.explanation}
                       onChange={(e) => updateCard(card.id, { explanation: e.target.value })}
                       className={styles.editableTextarea}
-                      rows={2}
+                      rows={4}
                     />
                   </div>
                 )}
-                
                 <div className={styles.tagsSection}>
-                  <label><strong>标签:</strong></label>
+                  <label>Tags</label>
                   <div className={styles.tags}>
-                    {card.tags.map((tag, tagIndex) => (
-                      <span key={tagIndex} className={styles.tag}>
+                    {card.tags.map((tag, i) => (
+                      <span key={i} className={styles.tag}>
                         {tag}
-                        <button
+                        <button 
+                          className={styles.removeTag}
                           onClick={() => {
-                            const newTags = card.tags.filter((_, i) => i !== tagIndex);
+                            const newTags = card.tags.filter((_, tagIndex) => i !== tagIndex);
                             updateCard(card.id, { tags: newTags });
                           }}
-                          className={styles.removeTag}
                         >
                           ×
                         </button>
                       </span>
                     ))}
-                                         <input
-                       type="text"
-                       placeholder="添加标签..."
-                       className={styles.addTagInput}
-                       onKeyPress={(e) => {
-                         if (e.key === 'Enter' && (e.target as HTMLInputElement).value.trim()) {
-                           const newTag = (e.target as HTMLInputElement).value.trim();
-                           if (!card.tags.includes(newTag)) {
-                             updateCard(card.id, { tags: [...card.tags, newTag] });
-                           }
-                           (e.target as HTMLInputElement).value = '';
-                         }
-                       }}
-                     />
+                    <input 
+                      type="text"
+                      className={styles.addTagInput}
+                      placeholder="Add tag..."
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.currentTarget.value) {
+                          const newTags = [...card.tags, e.currentTarget.value];
+                          updateCard(card.id, { tags: newTags });
+                          e.currentTarget.value = '';
+                          e.preventDefault();
+                        }
+                      }}
+                    />
                   </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
-
+        
         <div className={styles.actions}>
+          <button className={styles.backButton} onClick={() => setStep('config')}>Back to Config</button>
           <button 
-            onClick={() => setStep('config')} 
-            className={styles.backButton}
-          >
-            ← 重新配置
-          </button>
-          <button 
-            onClick={saveCards}
-            disabled={loading || selectedCards.length === 0}
             className={styles.saveButton}
+            onClick={saveCards}
+            disabled={selectedCount === 0}
           >
-            💾 保存选中的卡片 ({selectedCards.length})
+            Save {selectedCount} Selected Cards
           </button>
         </div>
       </div>
     );
   };
 
-  // 渲染保存中步骤
   const renderSavingStep = () => (
     <div className={styles.savingContainer}>
       <div className={styles.loadingAnimation}>
-        <div className={styles.saveIcon}>💾</div>
-        <div className={styles.loadingText}>正在保存闪卡到卡片集...</div>
-        <div className={styles.savingProgress}>
-          <div className={styles.progressDots}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
+        <span className={styles.saveIcon}>💾</span>
+      </div>
+      <h2 className={styles.loadingText}>Saving your new flashcards...</h2>
+      <div className={styles.savingProgress}>
+        <div className={styles.progressDots}>
+          <span></span><span></span><span></span>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className={styles.overlay}>
-      <div className={styles.modal}>
+    <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h1 className={styles.title}>AI 闪卡生成器</h1>
-          <button onClick={onClose} className={styles.closeButton}>✕</button>
+          <h1 className={styles.title}>AI-Powered Flashcard Generator</h1>
+          <button className={styles.closeButton} onClick={onClose}>×</button>
         </div>
-
         <div className={styles.content}>
           {step === 'config' && renderConfigStep()}
           {step === 'generating' && renderGeneratingStep()}
