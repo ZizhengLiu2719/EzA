@@ -548,20 +548,42 @@ Now, provide the list of key topics in a JSON array format.
       let allQuestions: ExamQuestion[] = [];
 
       if (Array.isArray(parsed.questions)) {
+        // Handles the case where "questions" is a flat array
         allQuestions = parsed.questions;
       } else if (typeof parsed.questions === 'object' && parsed.questions !== null) {
-        allQuestions = Object.values(parsed.questions).flat() as ExamQuestion[];
+        // Handles the case where "questions" is an object grouping questions by type
+        for (const type in parsed.questions) {
+          if (Object.prototype.hasOwnProperty.call(parsed.questions, type)) {
+            const questionsOfType = parsed.questions[type as keyof typeof parsed.questions];
+            if (Array.isArray(questionsOfType)) {
+              const questionsWithTypes = questionsOfType.map((q: any) => ({
+                ...q,
+                type: type 
+              }));
+              allQuestions.push(...questionsWithTypes);
+            }
+          }
+        }
       }
+      
+      const validQuestions = allQuestions
+        .filter(q => 
+          q && q.type && q.question && q.correct_answer
+        )
+        .map((q, index) => ({
+          ...q,
+          id: q.id || `gen_q_${Date.now()}_${index}` 
+        }));
 
-      if (allQuestions.length === 0) {
-        console.error('Could not extract any questions from the AI response:', parsed);
+      if (validQuestions.length === 0) {
+        console.error('Could not extract any valid questions from the AI response:', parsed);
         throw new Error("AI response did not contain any valid questions.");
       }
 
       const generatedExam: GeneratedExam = {
         id: parsed.id || `exam_${Date.now()}`,
         config: config,
-        questions: allQuestions,
+        questions: validQuestions,
         metadata: parsed.metadata || {},
         instructions: parsed.instructions || "Please review the questions carefully and answer to the best of your ability.",
         answer_key: parsed.answer_key || [],
@@ -622,9 +644,9 @@ Now, provide the list of key topics in a JSON array format.
     // Create a basic exam structure from cards as a fallback
     const fallbackQuestions: ExamQuestion[] = cards.slice(0, 10).map((card, index) => ({
       id: `fallback_q_${index + 1}`,
-      type: 'short_answer',
-      question: card.question,
-      correct_answer: card.answer,
+      type: 'short_answer', // Ensure this type is always valid
+      question: card.question || "Missing question content",
+      correct_answer: card.answer || "Missing answer content",
       points: 10,
       difficulty: card.difficulty || 5,
       estimated_time: 60,
