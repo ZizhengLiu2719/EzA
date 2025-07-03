@@ -26,6 +26,7 @@ const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, on
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
   const [generatedCards, setGeneratedCards] = useState<GeneratedAICard[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
+  const [generationCount, setGenerationCount] = useState<number>(10);
 
   const handleContentExtracted = async (content: string, fileName: string) => {
     setStep('generating')
@@ -53,7 +54,7 @@ const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, on
     setIsProcessing(true)
     setError('')
     try {
-      const cards = await flashcardAI.generateFlashcardsFromDocument(extractedContent, selectedTopics)
+      const cards = await flashcardAI.generateFlashcardsFromDocument(extractedContent, selectedTopics, generationCount)
       setGeneratedCards(cards)
       setStep('preview')
     } catch (e: any) {
@@ -106,6 +107,7 @@ const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, on
     setSelectedTopics([])
     setGeneratedCards([])
     setIsProcessing(false)
+    setGenerationCount(10)
     onClose()
   }
   
@@ -146,6 +148,30 @@ const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, on
                 </label>
               ))}
             </div>
+
+            <div className={styles.configSection}>
+              <h3 className={styles.configTitle}>Number of Cards to Generate</h3>
+              <div className={styles.countSelector}>
+                {[10, 25, 50].map(num => (
+                  <button
+                    key={num}
+                    className={`${styles.countButton} ${generationCount === num ? styles.active : ''}`}
+                    onClick={() => setGenerationCount(num)}
+                  >
+                    {num}
+                  </button>
+                ))}
+                <input
+                  type="number"
+                  className={styles.countInput}
+                  value={generationCount}
+                  onChange={(e) => setGenerationCount(Math.min(100, Math.max(1, parseInt(e.target.value, 10) || 1)))}
+                  min="1"
+                  max="100"
+                />
+              </div>
+            </div>
+
             <div className={styles.footer}>
               <button onClick={handleClose} className={styles.secondaryButton}>Cancel</button>
               <button 
