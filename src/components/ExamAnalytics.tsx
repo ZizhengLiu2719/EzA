@@ -7,12 +7,10 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
     BarChart3,
     Brain,
-    Calendar,
     CheckCircle,
     Clock,
     Lightbulb,
     Target,
-    TrendingUp,
     XCircle
 } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
@@ -49,7 +47,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
   className = ''
 }) => {
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'detailed' | 'recommendations' | 'comparison'
+    'overview' | 'detailed' | 'recommendations'
   >('overview')
   const [showExplanations, setShowExplanations] = useState<string[]>([])
   const [isCreatingSet, setIsCreatingSet] = useState(false)
@@ -216,12 +214,68 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
     { id: 'overview', label: 'Overview', icon: BarChart3 },
     { id: 'detailed', label: 'Detailed Analysis', icon: Clock },
     { id: 'recommendations', label: 'Recommendations', icon: Lightbulb },
-    { id: 'comparison', label: 'Comparison', icon: TrendingUp },
   ]
+
+  const renderRecommendations = () => {
+    // Mocked AI-generated recommendations based on exam analysis
+    const aiRecommendations = [
+      {
+        icon: Target,
+        title: `Focus on: ${weaknesses[0] || 'Core Concepts'}`,
+        description: `Your performance in ${weaknesses[0] || 'this area'} was lower. Spend extra time reviewing related flashcards and lecture notes.`,
+        type: 'focus'
+      },
+      {
+        icon: Brain,
+        title: 'Strengthen via Spaced Repetition',
+        description: 'We have identified several key concepts from your incorrect answers. Create a new flashcard set from your mistakes to reinforce your learning.',
+        type: 'action'
+      },
+      {
+        icon: Clock,
+        title: 'Improve Time Management on Problem-Solving questions',
+        description: 'Your response time for problem-solving questions was higher than average. Practice with timed quizzes to improve your speed and confidence.',
+        type: 'skill'
+      }
+    ];
+
+    if (!recommendations || recommendations.length === 0) {
+      return (
+        <div className={styles.card}>
+          <div className={styles.placeholder}>
+            <Lightbulb size={48} />
+            <h3>Generating AI Learning Recommendations...</h3>
+            <p>Please wait a moment while our AI analyzes your performance.</p>
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <div className={styles.recommendationsGrid}>
+        {aiRecommendations.map((rec, index) => (
+          <motion.div 
+            key={index}
+            className={`${styles.card} ${styles.recommendationCard}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <div className={styles.recommendationIcon} data-type={rec.type}>
+              <rec.icon size={24} />
+            </div>
+            <div className={styles.recommendationContent}>
+              <h4 className={styles.recommendationTitle}>{rec.title}</h4>
+              <p className={styles.recommendationDesc}>{rec.description}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className={`${styles.analyticsContainer} ${className}`}>
-      <BackToDashboardButton />
       {/* Header */}
       <motion.div 
         className={styles.header}
@@ -237,18 +291,19 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
               Time taken: {Math.floor((analysis?.time_analysis?.total_time || 0) / 60)}m {Math.round(analysis?.time_analysis?.total_time || 0) % 60}s
             </p>
           </div>
+          <BackToDashboardButton />
+        </div>
 
-          <div className={styles.scoreContainer}>
-            <div className={`${styles.gradeBadge} ${getGradeColor(grade_level || 'N/A')}`}>
-              {grade_level || 'N/A'}
+        <div className={styles.scoreContainer}>
+          <div className={`${styles.gradeBadge} ${getGradeColor(grade_level || 'N/A')}`}>
+            {grade_level || 'N/A'}
+          </div>
+          <div className={styles.scoreText}>
+            <div className={styles.percentage}>
+              {(percentage || 0).toFixed(1)}%
             </div>
-            <div className={styles.scoreText}>
-              <div className={styles.percentage}>
-                {(percentage || 0).toFixed(1)}%
-              </div>
-              <div className={styles.scoreDetail}>
-                {totalScore || 0}/{exam.config.total_points} Points
-              </div>
+            <div className={styles.scoreDetail}>
+              {totalScore || 0}/{exam.config.total_points} Points
             </div>
           </div>
         </div>
@@ -541,39 +596,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
             exit={{ opacity: 0, y: -20 }}
             className={styles.tabContent}
           >
-            <div className={`${styles.card} ${styles.recommendationsCard}`}>
-              <h2 className={styles.cardTitle}>
-                <Lightbulb size={20} /> AI Learning Recommendations
-              </h2>
-              <ul className={styles.recommendationsList}>
-                {(recommendations || []).map(
-                  (recommendation: string, index: number) => (
-                    <li key={`rec-${index}`}>
-                      <CheckCircle size={16} />
-                      <span>{recommendation}</span>
-                    </li>
-                  )
-                )}
-              </ul>
-            </div>
-          </motion.div>
-        )}
-
-        {activeTab === 'comparison' && (
-          <motion.div
-            key="comparison"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className={styles.tabContent}
-          >
-            <div className={styles.card}>
-               <div className={styles.placeholder}>
-                 <Calendar size={48} />
-                 <h3>Performance Comparison (Coming Soon)</h3>
-                 <p>Compare your results against class averages and your own past performance.</p>
-              </div>
-            </div>
+            {renderRecommendations()}
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,6 +1,15 @@
+import { Edit3, Trash2 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
-import { createFlashcard, CreateFlashcardData, deleteFlashcard, getFlashcards } from '../api/flashcards'
+import {
+    createFlashcard,
+    CreateFlashcardData,
+    deleteFlashcard,
+    getFlashcards,
+    updateFlashcard,
+    UpdateFlashcardData
+} from '../api/flashcards'
 import { FSRSCard } from '../types/SRSTypes'
+import ConfirmModal from './ConfirmModal'
 import FlashcardEditor from './FlashcardEditor'
 import styles from './FlashcardsList.module.css'
 
@@ -19,7 +28,10 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isEditorOpen, setIsEditorOpen] = useState(false)
-  const [isCreating, setIsCreating] = useState(false)
+  const [editingCard, setEditingCard] = useState<FSRSCard | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const [cardIdToDelete, setCardIdToDelete] = useState<string | null>(null)
 
   useEffect(() => {
     if (setId && setId !== 'test-set-id') {
@@ -147,30 +159,60 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
     }
   }
 
-  const handleCreateCard = async (cardData: CreateFlashcardData) => {
+  const handleOpenEditorForCreate = () => {
+    setEditingCard(null)
+    setIsEditorOpen(true)
+  }
+
+  const handleOpenEditorForEdit = (card: FSRSCard) => {
+    setEditingCard(card)
+    setIsEditorOpen(true)
+  }
+
+  const handleCloseEditor = () => {
+    setEditingCard(null)
+    setIsEditorOpen(false)
+  }
+
+  const handleSaveCard = async (cardData: CreateFlashcardData, cardId?: string) => {
     try {
-      setIsCreating(true)
-      await createFlashcard(cardData)
+      setIsSubmitting(true)
+      if (cardId) {
+        // Update existing card
+        await updateFlashcard(cardId, cardData as UpdateFlashcardData)
+      } else {
+        // Create new card
+        await createFlashcard(cardData)
+      }
       await loadFlashcards()
     } catch (err) {
-      console.error('Error creating card:', err)
-      throw err
+      console.error('Error saving card:', err)
+      // Potentially set an error state to show in the UI
+      throw err // Re-throw to be caught by the editor if needed
     } finally {
-      setIsCreating(false)
+      setIsSubmitting(false)
     }
   }
 
-  const handleDeleteCard = async (cardId: string) => {
-    if (!confirm('Are you sure you want to delete this card?')) {
-      return
-    }
+  const handleDeleteCard = (cardId: string) => {
+    setCardIdToDelete(cardId)
+    setIsConfirmOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!cardIdToDelete) return
 
     try {
-      await deleteFlashcard(cardId)
-      setFlashcards(prev => prev.filter(card => card.id !== cardId))
+      setIsSubmitting(true)
+      await deleteFlashcard(cardIdToDelete)
+      setFlashcards(prev => prev.filter(card => card.id !== cardIdToDelete))
     } catch (err) {
       console.error('Error deleting card:', err)
       setError(err instanceof Error ? err.message : 'Failed to delete card')
+    } finally {
+      setIsSubmitting(false)
+      setIsConfirmOpen(false)
+      setCardIdToDelete(null)
     }
   }
 
@@ -212,7 +254,7 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
         <div className={styles.headerActions}>
           <button 
             className={styles.createButton}
-            onClick={() => setIsEditorOpen(true)}
+            onClick={handleOpenEditorForCreate}
           >
             + Add Card
           </button>
@@ -232,7 +274,6 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
           
           return (
             <div key={card.id} className={styles.cardItem}>
-              
               <div className={styles.cardContent}>
                 <div className={styles.cardQuestion}>
                   {card.question}
@@ -256,26 +297,29 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
                 )}
               </div>
 
-              <div className={styles.cardStats}>
-                <div className={`${styles.stateBadge} ${stateBadge.className}`}>
-                  {stateBadge.label}
-                </div>
-                <div className={styles.cardMeta}>
-                  <span>Reps: {card.reps}</span>
-                  <span>Success: {Math.round(card.success_rate * 100)}%</span>
+              <div className={styles.cardFooter}>
+                <div className={styles.cardStats}>
+                  <span className={stateBadge.className}>{stateBadge.label}</span>
+                  <span className={styles.reps}>Reps: {card.reps}</span>
                 </div>
               </div>
 
               <div className={styles.cardActions}>
-                <button 
+                <button
+                  className={styles.editButton}
+                  onClick={() => handleOpenEditorForEdit(card)}
+                  title="Edit Card"
+                >
+                  <Edit3 size={16} />
+                </button>
+                <button
                   className={styles.deleteButton}
                   onClick={() => handleDeleteCard(card.id)}
-                  title="Delete card"
+                  title="Delete Card"
                 >
-                  🗑️
+                  <Trash2 size={16} />
                 </button>
               </div>
-
             </div>
           )
         })}
@@ -285,7 +329,7 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
             <p>No cards in this set yet</p>
             <button 
               className={styles.createFirstCard}
-              onClick={() => setIsEditorOpen(true)}
+              onClick={handleOpenEditorForCreate}
             >
               Create your first card
             </button>
@@ -294,12 +338,25 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
 
       </div>
 
-      <FlashcardEditor
-        isOpen={isEditorOpen}
-        onClose={() => setIsEditorOpen(false)}
-        onSave={handleCreateCard}
-        setId={setId}
-        isLoading={isCreating}
+      {isEditorOpen && (
+        <FlashcardEditor
+          isOpen={isEditorOpen}
+          onClose={handleCloseEditor}
+          onSave={handleSaveCard}
+          setId={setId}
+          isLoading={isSubmitting}
+          cardToEdit={editingCard}
+        />
+      )}
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Confirm Deletion"
+        message="Are you sure you want to delete this flashcard? This action cannot be undone."
+        confirmText="Delete"
+        isLoading={isSubmitting}
       />
 
     </div>

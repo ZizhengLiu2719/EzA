@@ -36,16 +36,36 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 32px 16px;
-  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+  padding-bottom: 16px;
+  margin-bottom: 24px;
 }
 
 .modalTitle {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: #00ffff;
-  margin: 0;
   text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.closeButton {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.closeButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  transform: rotate(90deg);
 }
 
 .cardForm {

@@ -1,7 +1,9 @@
+import { X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { CreateFlashcardData, createFlashcards } from '../api/flashcards';
 import { flashcardAI } from '../services/flashcardAI';
 import styles from './AIFlashcardGenerator.module.css';
+import AlertModal from './AlertModal';
 
 interface AIFlashcardGeneratorProps {
   setId: string;
@@ -63,6 +65,8 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
   const [step, setStep] = useState<'config' | 'generating' | 'preview' | 'saving'>('config');
   const [progress, setProgress] = useState<GenerationProgress>({ total: 0, completed: 0, current: '' });
   const [error, setError] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Preset topic expansion
   const presetTopics = useMemo(() => [
@@ -259,16 +263,12 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
 
   const saveCards = async () => {
     const selectedCards = generatedCards.filter(card => card.isSelected);
-    
     if (selectedCards.length === 0) {
-      setError('Please select at least one card to save');
+      setError("Please select at least one card to save.");
       return;
     }
 
-    setLoading(true);
     setStep('saving');
-    setError(null);
-
     try {
       const cardsToCreate: CreateFlashcardData[] = selectedCards.map(card => ({
         set_id: setId,
@@ -282,11 +282,20 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
 
       await createFlashcards(cardsToCreate);
       onGenerated(selectedCards.length);
+      
+      setSuccessMessage(`🎉 Successfully generated and saved ${selectedCards.length} flashcards!`);
+      setShowSuccessModal(true);
+
     } catch (error) {
       console.error('Saving failed:', error);
-      setError('Saving cards failed, please try again');
+      setError(error instanceof Error ? error.message : 'An unknown error occurred while saving.');
       setStep('preview');
     }
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    onClose(); // Close the entire generator
   };
 
   const toggleCardSelection = (cardId: string) => {
@@ -709,8 +718,14 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h1 className={styles.title}>AI-Powered Flashcard Generator</h1>
-          <button className={styles.closeButton} onClick={onClose}>×</button>
+          <h2 className={styles.title}>AI-Powered Flashcard Generator</h2>
+          <button 
+            className={styles.closeButton} 
+            onClick={onClose}
+            disabled={step === 'generating' || step === 'saving'}
+          >
+            <X size={24} />
+          </button>
         </div>
         <div className={styles.content}>
           {step === 'config' && renderConfigStep()}
@@ -719,6 +734,13 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
           {step === 'saving' && renderSavingStep()}
         </div>
       </div>
+      <AlertModal
+        isOpen={showSuccessModal}
+        onClose={handleCloseSuccessModal}
+        title="Generation Complete"
+        message={successMessage}
+        buttonText="Done"
+      />
     </div>
   );
 };

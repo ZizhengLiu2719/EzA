@@ -1,0 +1,84 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(10, 15, 30, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001; /* Higher than other modals if needed */
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalContent {
+  background: linear-gradient(135deg, #1A1F3D, #101528);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  width: 90%;
+  max-width: 450px;
+  padding: 24px 32px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: slideIn 0.4s ease-out;
+  text-align: center;
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(-30px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modalHeader {
+  margin-bottom: 16px;
+}
+
+.modalTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: #00ffff;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+}
+
+.modalBody {
+  margin-bottom: 24px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: center;
+}
+
+.okButton {
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #00ffff 0%, #0099cc 100%);
+  color: #000000;
+  min-width: 120px;
+  box-shadow: 0 4px 12px rgba(0, 255, 255, 0.3);
+}
+
+.okButton:hover {
+  background: linear-gradient(135deg, #33ffff 0%, #00ccff 100%);
+  box-shadow: 0 6px 16px rgba(0, 255, 255, 0.4);
+  transform: translateY(-1px);
+} 

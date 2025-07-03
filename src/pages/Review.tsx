@@ -87,7 +87,7 @@ const Review = () => {
   })
   
   // State management
-  const [activeTab, setActiveTab] = useState<'flashcards' | 'solver' | 'exams' | 'analytics'>('flashcards')
+  const [activeTab, setActiveTab] = useState<'flashcards' | 'solver' | 'exams'>('flashcards')
   const [selectedSet, setSelectedSet] = useState<FlashcardSet | null>(null)
   const [studyMode, setStudyMode] = useState<'none' | 'studying' | 'results'>('none')
   const [focusMode, setFocusMode] = useState(false)
@@ -146,7 +146,7 @@ const Review = () => {
       masteryLevel: Math.round(set.mastery_level * 100), // Convert to percentage
       estimatedStudyTime: Math.max(5, Math.round(set.card_count * 0.5)), // Estimated study time
       tags: set.tags || [],
-      dueForReview: (set.due_cards_count || 0) > 0,
+      dueForReview: false,
       nextReview: undefined
     }))
   }, [flashcardSets])
@@ -155,7 +155,6 @@ const Review = () => {
   const studyStats = useMemo(() => {
     const totalSets = flashcardSets.length
     const totalCards = flashcardSets.reduce((sum, set) => sum + set.card_count, 0)
-    const totalDueCards = flashcardSets.reduce((sum, set) => sum + (set.due_cards_count || 0), 0)
     const averageMastery = flashcardSets.length > 0 
       ? flashcardSets.reduce((sum, set) => sum + set.mastery_level, 0) / flashcardSets.length 
       : 0
@@ -165,7 +164,7 @@ const Review = () => {
       totalCards,
       averageMastery: Math.round(averageMastery * 100),
       streak: currentStreak,
-      dueForReview: totalDueCards
+      dueForReview: 0
     }
   }, [flashcardSets, currentStreak])
 
@@ -433,20 +432,13 @@ const Review = () => {
   };
 
   const handleCardsGeneratedAndSaved = (count: number) => {
-    console.log(`${count} cards generated and saved. Refreshing flashcard sets.`);
-    setIsCreatingSetSubflow(false); // The subflow is successfully completed
-    loadFlashcardSets(); // Now refresh the list to show the new set with its cards
+    // We want to fully close the sub-flow
+    setShowAIGenerator(false)
+    setPendingSetData(null)
+    setIsCreatingSetSubflow(false)
     
-    if (showBatchImportModal) {
-      setShowBatchImportModal(false);
-    }
-    if (showAIGenerator) {
-      setShowAIGenerator(false);
-    }
-
-    setSelectedSet(null);
-    setPendingSetData(null);
-    alert(`🎉 Successfully generated and saved ${count} flashcards!`);
+    // And refresh the main list
+    loadFlashcardSets()
   }
 
   // Start study mode
@@ -525,57 +517,23 @@ const Review = () => {
 
   return (
     <div className={styles.review} style={{ position: 'relative' }}>
-      <BackToDashboardButton />
-      
-      {/* Header Section */}
       <div className={styles.header}>
         <div className={styles.headerContent}>
           <h1>Review & Exam Prep</h1>
-          <p>AI-powered study system combining the best of Quizlet, Anki, Khan Academy, and more</p>
+          <p>Your AI-powered study arsenal. Forge intelligent flashcards with spaced repetition, decode complex STEM problems, and conquer any test with hyper-realistic exam simulations.</p>
           
-          {/* Quick Stats Dashboard */}
-          <div className={styles.quickStats}>
-            <div className={styles.statCard}>
-              <span className={styles.statValue}>{studyStats.totalSets}</span>
-              <span className={styles.statLabel}>Study Sets</span>
+          <div className={styles.headerRight}>
+            <BackToDashboardButton />
             </div>
-            <div className={styles.statCard}>
-              <span className={styles.statValue}>{studyStats.totalCards}</span>
-              <span className={styles.statLabel}>Total Cards</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statValue}>{studyStats.averageMastery}%</span>
-              <span className={styles.statLabel}>Avg Mastery</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statValue}>{studyStats.streak}</span>
-              <span className={styles.statLabel}>Day Streak 🔥</span>
-            </div>
-            {studyStats.dueForReview > 0 && (
-              <div className={styles.statCard + ' ' + styles.alertCard}>
-                <span className={styles.statValue}>{studyStats.dueForReview}</span>
-                <span className={styles.statLabel}>Due for Review ⏰</span>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Forest-inspired Focus Mode Toggle */}
-        <div className={styles.focusControls}>
-          <button 
-            className={`${styles.focusBtn} ${focusMode ? styles.focusActive : ''}`}
-            onClick={() => setFocusMode(!focusMode)}
-          >
-            <span className={styles.focusIcon}>🌲</span>
-            <span>{focusMode ? 'Focus Active' : 'Start Focus'}</span>
-            {focusMode && <span className={styles.focusTimer}>25:00</span>}
-          </button>
-        </div>
-      </div>
-
+      <div className={styles.content}>
+        {studyMode === 'none' && !examFlowOpen && (
+          <>
       {/* Tab Navigation */}
       <div className={styles.tabNavigation}>
-        {(['flashcards', 'solver', 'exams', 'analytics'] as const).map(tab => (
+              {(['flashcards', 'solver', 'exams'] as const).map(tab => (
           <button
             key={tab}
             className={`${styles.tabBtn} ${activeTab === tab ? styles.active : ''}`}
@@ -585,7 +543,6 @@ const Review = () => {
               {tab === 'flashcards' && '🃏'}
               {tab === 'solver' && '🔬'}
               {tab === 'exams' && '📝'}
-              {tab === 'analytics' && '📊'}
             </span>
             <span className={styles.tabLabel}>
               {tab === 'solver' ? 'Problem Solver' : tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -598,11 +555,12 @@ const Review = () => {
         ))}
       </div>
 
-      {/* Main Content Area */}
-      <div className={styles.mainContent}>
-        
-        {/* Flashcards Tab - Redesigned to Match Modern Style */}
-        {activeTab === 'flashcards' && (
+            {/* Tab Content */}
+            <div className={styles.tabContent}>
+              {(() => {
+                switch (activeTab) {
+                  case 'flashcards':
+                    return (
           <div className={styles.flashcardsTab}>
             
             {/* Modern Tab Header */}
@@ -821,17 +779,26 @@ const Review = () => {
             </div>
 
           </div>
-        )}
-
-        {/* Problem Solver Tab - Redesigned with Cyberpunk Aesthetic */}
-        {activeTab === 'solver' && (
+                    )
+                  case 'solver':
+                    return (
           <div className={styles.solverTab}>
+                        <div className={styles.modernTabHeader}>
+                          <div className={styles.headerLeft}>
+                            <h2 className={styles.modernTabTitle}>
+                              <span className={styles.titleIcon}>🔬</span>
+                              STEM Problem Solver
+                            </h2>
+                            <p className={styles.modernTabSubtitle}>
+                              Get step-by-step solutions and explanations for complex problems
+                            </p>
+                          </div>
+                        </div>
             <StemSolver />
           </div>
-        )}
-
-        {/* Exams Tab - Completely Redesigned */}
-        {activeTab === 'exams' && (
+                    )
+                  case 'exams':
+                    return (
           <div className={styles.examsTab}>
             {/* Enhanced Header */}
             <div className={styles.modernTabHeader}>
@@ -853,43 +820,6 @@ const Review = () => {
                   <div className={styles.examStatItem}>
                     <span className={styles.statNumber}>87%</span>
                     <span className={styles.statLabel}>Avg Score</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Exam Generator */}
-            <div className={styles.quickExamSection}>
-              <div className={styles.quickExamCard}>
-                <div className={styles.quickExamHeader}>
-                  <span className={styles.quickIcon}>⚡</span>
-                  <h3>Quick Exam Generator</h3>
-                </div>
-                <div className={styles.quickExamForm}>
-                  <div className={styles.formRow}>
-                    <select className={styles.modernSelect}>
-                      <option>Select Subject</option>
-                      <option>Mathematics</option>
-                      <option>Chemistry</option>
-                      <option>Physics</option>
-                      <option>History</option>
-                    </select>
-                    <select className={styles.modernSelect}>
-                      <option>Difficulty</option>
-                      <option>Easy</option>
-                      <option>Medium</option>
-                      <option>Hard</option>
-                    </select>
-                    <input 
-                      type="number" 
-                      className={styles.modernInput} 
-                      placeholder="Questions" 
-                      defaultValue={25} 
-                    />
-                    <button className={styles.generateBtn}>
-                      <span>Generate</span>
-                      <span className={styles.sparkles}>✨</span>
-                    </button>
                   </div>
                 </div>
               </div>
@@ -957,341 +887,11 @@ const Review = () => {
               ))}
             </div>
           </div>
-        )}
-
-        {/* Analytics Tab - Completely Redesigned */}
-        {activeTab === 'analytics' && (
-          <div className={styles.analyticsTab}>
-            {/* Enhanced Header */}
-            <div className={styles.modernTabHeader}>
-              <div className={styles.headerLeft}>
-                <h2 className={styles.modernTabTitle}>
-                  <span className={styles.titleIcon}>📊</span>
-                  Learning Analytics
-                </h2>
-                <p className={styles.modernTabSubtitle}>
-                  AI-powered insights into your study patterns and performance
-                </p>
+                    )
+                }
+              })()}
               </div>
-              <div className={styles.headerActions}>
-                <div className={styles.timeRangeSelector}>
-                  <button className={styles.timeRange + ' ' + styles.active}>Week</button>
-                  <button className={styles.timeRange}>Month</button>
-                  <button className={styles.timeRange}>Year</button>
-                </div>
-              </div>
-            </div>
-
-            {/* Analytics Dashboard Grid */}
-            <div className={styles.modernAnalyticsGrid}>
-              
-              {/* Performance Overview - Hero Card */}
-              <div className={styles.heroAnalyticsCard}>
-                <div className={styles.heroCardHeader}>
-                  <h3 className={styles.heroTitle}>Performance Overview</h3>
-                  <div className={styles.heroTrend}>
-                    <span className={styles.trendIcon}>↗️</span>
-                    <span className={styles.trendText}>+12% this week</span>
-                  </div>
-                </div>
-                
-                <div className={styles.heroMetrics}>
-                  <div className={styles.heroMetric}>
-                    <div className={styles.metricCircle}>
-                      <svg className={styles.progressRing} viewBox="0 0 100 100">
-                        <circle 
-                          cx="50" cy="50" r="45" 
-                          fill="none" 
-                          stroke="rgba(79, 70, 229, 0.2)" 
-                          strokeWidth="8"
-                        />
-                        <circle 
-                          cx="50" cy="50" r="45" 
-                          fill="none" 
-                          stroke="url(#gradient1)" 
-                          strokeWidth="8"
-                          strokeDasharray="283"
-                          strokeDashoffset="85"
-                          transform="rotate(-90 50 50)"
-                        />
-                      </svg>
-                      <div className={styles.metricValue}>85%</div>
-                    </div>
-                    <span className={styles.metricLabel}>Study Efficiency</span>
-                  </div>
-                  
-                  <div className={styles.heroMetric}>
-                    <div className={styles.metricCircle}>
-                      <svg className={styles.progressRing} viewBox="0 0 100 100">
-                        <circle 
-                          cx="50" cy="50" r="45" 
-                          fill="none" 
-                          stroke="rgba(6, 182, 212, 0.2)" 
-                          strokeWidth="8"
-                        />
-                        <circle 
-                          cx="50" cy="50" r="45" 
-                          fill="none" 
-                          stroke="url(#gradient2)" 
-                          strokeWidth="8"
-                          strokeDasharray="283"
-                          strokeDashoffset="68"
-                          transform="rotate(-90 50 50)"
-                        />
-                      </svg>
-                      <div className={styles.metricValue}>76%</div>
-                    </div>
-                    <span className={styles.metricLabel}>Learning Velocity</span>
-                  </div>
-                  
-                  <div className={styles.heroMetric}>
-                    <div className={styles.metricCircle}>
-                      <svg className={styles.progressRing} viewBox="0 0 100 100">
-                        <circle 
-                          cx="50" cy="50" r="45" 
-                          fill="none" 
-                          stroke="rgba(0, 212, 255, 0.2)" 
-                          strokeWidth="8"
-                        />
-                        <circle 
-                          cx="50" cy="50" r="45" 
-                          fill="none" 
-                          stroke="url(#gradient3)" 
-                          strokeWidth="8"
-                          strokeDasharray="283"
-                          strokeDashoffset="28"
-                          transform="rotate(-90 50 50)"
-                        />
-                      </svg>
-                      <div className={styles.metricValue}>{studyStats.averageMastery}%</div>
-                    </div>
-                    <span className={styles.metricLabel}>Average Mastery</span>
-                  </div>
-                </div>
-                
-                <div className={styles.heroFooter}>
-                  <div className={styles.heroStat}>
-                    <span className={styles.heroStatValue}>4h 32m</span>
-                    <span className={styles.heroStatLabel}>This week</span>
-                  </div>
-                  <div className={styles.heroStat}>
-                    <span className={styles.heroStatValue}>38 min</span>
-                    <span className={styles.heroStatLabel}>Avg session</span>
-                  </div>
-                  <div className={styles.heroStat}>
-                    <span className={styles.heroStatValue}>{studyStats.streak} days</span>
-                    <span className={styles.heroStatLabel}>Current streak</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Memory Retention Analysis */}
-              <div className={styles.modernAnalyticsCard}>
-                <div className={styles.cardHeader}>
-                  <h3 className={styles.cardTitle}>
-                    <span className={styles.cardIcon}>🧠</span>
-                    Memory Retention
-                  </h3>
-                  <div className={styles.cardBadge}>FSRS-5</div>
-                </div>
-                
-                <div className={styles.retentionViz}>
-                  {[
-                    { label: '24h', value: 94, color: '#00D4FF' },
-                    { label: '1 week', value: 82, color: '#06B6D4' },
-                    { label: '1 month', value: 71, color: '#4F46E5' },
-                    { label: '3 months', value: 63, color: '#7C3AED' }
-                  ].map((item, index) => (
-                    <div key={item.label} className={styles.retentionItem}>
-                      <div className={styles.retentionHeader}>
-                        <span className={styles.retentionLabel}>{item.label}</span>
-                        <span className={styles.retentionPercent}>{item.value}%</span>
-                      </div>
-                      <div className={styles.retentionBarContainer}>
-                        <div 
-                          className={styles.retentionBar}
-                          style={{ 
-                            width: `${item.value}%`,
-                            background: `linear-gradient(90deg, ${item.color}40, ${item.color})`
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Weekly Study Heatmap */}
-              <div className={styles.modernAnalyticsCard}>
-                <div className={styles.cardHeader}>
-                  <h3 className={styles.cardTitle}>
-                    <span className={styles.cardIcon}>📅</span>
-                    Study Heatmap
-                  </h3>
-                </div>
-                
-                <div className={styles.heatmapContainer}>
-                  <div className={styles.heatmapGrid}>
-                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
-                      const intensity = [60, 80, 45, 90, 70, 30, 40][index];
-                      return (
-                        <div key={day} className={styles.heatmapDay}>
-                          <div className={styles.dayLabel}>{day}</div>
-                          <div 
-                            className={styles.heatmapCell}
-                            style={{ 
-                              background: `rgba(79, 70, 229, ${intensity / 100})`,
-                              height: `${intensity}%`
-                            }}
-                            title={`${Math.round(intensity * 1.5)} minutes`}
-                          ></div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className={styles.heatmapLegend}>
-                    <span>Less</span>
-                    <div className={styles.legendScale}>
-                      {[0.2, 0.4, 0.6, 0.8, 1.0].map(opacity => (
-                        <div 
-                          key={opacity}
-                          className={styles.legendCell}
-                          style={{ background: `rgba(79, 70, 229, ${opacity})` }}
-                        ></div>
-                      ))}
-                    </div>
-                    <span>More</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Subject Performance Radar */}
-              <div className={styles.modernAnalyticsCard}>
-                <div className={styles.cardHeader}>
-                  <h3 className={styles.cardTitle}>
-                    <span className={styles.cardIcon}>📚</span>
-                    Subject Mastery
-                  </h3>
-                </div>
-                
-                <div className={styles.subjectList}>
-                  {myFlashcardSets.slice(0, 5).map(set => (
-                    <div key={set.id} className={styles.subjectRow}>
-                      <div className={styles.subjectInfo}>
-                        <span className={styles.subjectName}>{set.subject}</span>
-                        <span className={styles.subjectCards}>{set.cardCount} cards</span>
-                      </div>
-                      <div className={styles.subjectProgress}>
-                        <div className={styles.progressTrack}>
-                          <div 
-                            className={styles.progressThumb}
-                            style={{ 
-                              width: `${set.masteryLevel}%`,
-                              background: getMasteryColor(set.masteryLevel)
-                            }}
-                          ></div>
-                        </div>
-                        <span className={styles.progressValue}>{set.masteryLevel}%</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* AI Insights */}
-              <div className={styles.modernAnalyticsCard}>
-                <div className={styles.cardHeader}>
-                  <h3 className={styles.cardTitle}>
-                    <span className={styles.cardIcon}>🤖</span>
-                    AI Insights
-                  </h3>
-                  <div className={styles.cardBadge}>Live</div>
-                </div>
-                
-                <div className={styles.insightsList}>
-                  {[
-                    { icon: '🎯', text: 'Focus on Organic Chemistry - 35% improvement potential', type: 'priority' },
-                    { icon: '⏰', text: 'Your peak performance is 9-11 AM', type: 'timing' },
-                    { icon: '🔄', text: 'Review Spanish vocabulary in 2 days', type: 'schedule' },
-                    { icon: '🎮', text: 'Try Match Game for Calculus concepts', type: 'method' }
-                  ].map((insight, index) => (
-                    <div key={index} className={styles.insightItem}>
-                      <span className={styles.insightIcon}>{insight.icon}</span>
-                      <span className={styles.insightText}>{insight.text}</span>
-                      <div className={styles.insightType}>{insight.type}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Achievements Showcase */}
-              <div className={styles.modernAnalyticsCard}>
-                <div className={styles.cardHeader}>
-                  <h3 className={styles.cardTitle}>
-                    <span className={styles.cardIcon}>🏆</span>
-                    Achievements
-                  </h3>
-                </div>
-                
-                <div className={styles.achievementsGrid}>
-                  <div className={styles.achievementBadge}>
-                    <div className={styles.badgeIcon}>🎯</div>
-                    <div className={styles.badgeInfo}>
-                      <span className={styles.badgeName}>Sharp Shooter</span>
-                      <span className={styles.badgeDesc}>90%+ accuracy</span>
-                    </div>
-                    <div className={styles.badgeRarity}>Rare</div>
-                  </div>
-                  
-                  <div className={styles.achievementBadge}>
-                    <div className={styles.badgeIcon}>⚡</div>
-                    <div className={styles.badgeInfo}>
-                      <span className={styles.badgeName}>Speed Demon</span>
-                      <span className={styles.badgeDesc}>Fast responses</span>
-                    </div>
-                    <div className={`${styles.badgeRarity} ${styles.epic}`}>Epic</div>
-                  </div>
-                  
-                  <div className={styles.achievementBadge}>
-                    <div className={styles.badgeIcon}>📚</div>
-                    <div className={styles.badgeInfo}>
-                      <span className={styles.badgeName}>Scholar</span>
-                      <span className={styles.badgeDesc}>3 subjects mastered</span>
-                    </div>
-                    <div className={`${styles.badgeRarity} ${styles.legendary}`}>Legendary</div>
-                  </div>
-                </div>
-                
-                <div className={styles.nextAchievement}>
-                  <span className={styles.nextText}>Next: </span>
-                  <span className={styles.nextName}>Perfect Week (6/7 days)</span>
-                  <div className={styles.nextProgress}>
-                    <div className={styles.nextBar}>
-                      <div className={styles.nextFill} style={{ width: '86%' }}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* SVG Gradients for circular progress */}
-            <svg width="0" height="0">
-              <defs>
-                <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#4F46E5" />
-                  <stop offset="100%" stopColor="#06B6D4" />
-                </linearGradient>
-                <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#06B6D4" />
-                  <stop offset="100%" stopColor="#00D4FF" />
-                </linearGradient>
-                <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#00D4FF" />
-                  <stop offset="100%" stopColor="#4F46E5" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
+          </>
         )}
       </div>
 

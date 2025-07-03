@@ -3,16 +3,19 @@
  * 单个闪卡的创建、编辑、删除管理组件
  */
 
-import React, { useState } from 'react'
+import { X } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
 import { CreateFlashcardData } from '../api/flashcards'
+import { FSRSCard } from '../types/SRSTypes'
 import styles from './FlashcardEditor.module.css'
 
 interface FlashcardEditorProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (data: CreateFlashcardData) => Promise<void>
+  onSave: (data: CreateFlashcardData, cardId?: string) => Promise<void>
   setId: string
   isLoading?: boolean
+  cardToEdit?: FSRSCard | null
 }
 
 const FlashcardEditor: React.FC<FlashcardEditorProps> = ({
@@ -20,7 +23,8 @@ const FlashcardEditor: React.FC<FlashcardEditorProps> = ({
   onClose,
   onSave,
   setId,
-  isLoading = false
+  isLoading = false,
+  cardToEdit
 }) => {
   const [formData, setFormData] = useState({
     question: '',
@@ -28,6 +32,24 @@ const FlashcardEditor: React.FC<FlashcardEditorProps> = ({
     hint: '',
     explanation: ''
   })
+
+  useEffect(() => {
+    if (cardToEdit) {
+      setFormData({
+        question: cardToEdit.question,
+        answer: cardToEdit.answer,
+        hint: cardToEdit.hint || '',
+        explanation: cardToEdit.explanation || ''
+      })
+    } else {
+      setFormData({
+        question: '',
+        answer: '',
+        hint: '',
+        explanation: ''
+      })
+    }
+  }, [cardToEdit, isOpen])
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -58,10 +80,10 @@ const FlashcardEditor: React.FC<FlashcardEditorProps> = ({
         ...formData,
         set_id: setId,
         card_type: 'basic',
-        tags: []
+        tags: cardToEdit?.tags || []
       }
 
-      await onSave(cardData)
+      await onSave(cardData, cardToEdit?.id)
       handleClose()
     } catch (error) {
       console.error('Error saving flashcard:', error)
@@ -82,13 +104,17 @@ const FlashcardEditor: React.FC<FlashcardEditorProps> = ({
 
   if (!isOpen) return null
 
+  const isEditing = !!cardToEdit
+
   return (
     <div className={styles.modalOverlay} onClick={handleClose}>
       <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
         
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Create New Flashcard</h2>
-          <button onClick={handleClose} disabled={isLoading}>✕</button>
+          <h2 className={styles.modalTitle}>{isEditing ? 'Edit Flashcard' : 'Create New Flashcard'}</h2>
+          <button onClick={handleClose} disabled={isLoading} className={styles.closeButton}>
+            <X size={24} />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.cardForm}>
@@ -165,7 +191,7 @@ const FlashcardEditor: React.FC<FlashcardEditorProps> = ({
               type="submit"
               disabled={isLoading}
             >
-              {isLoading ? 'Creating...' : 'Create Card'}
+              {isLoading ? (isEditing ? 'Saving...' : 'Creating...') : (isEditing ? 'Save Changes' : 'Create Card')}
             </button>
           </div>
 
