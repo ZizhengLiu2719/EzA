@@ -10,6 +10,7 @@ interface Props {
 }
 
 const emptyTask: Omit<Task, 'id' | 'course_id' | 'created_at' | 'updated_at'> = {
+  user_id: '',
   title: '',
   type: 'assignment',
   due_date: '',
@@ -17,6 +18,7 @@ const emptyTask: Omit<Task, 'id' | 'course_id' | 'created_at' | 'updated_at'> = 
   estimated_hours: 2,
   status: 'pending',
   description: '',
+  is_locked: false,
 };
 
 function formatDateInputValue(dateStr?: string) {
@@ -26,17 +28,19 @@ function formatDateInputValue(dateStr?: string) {
   return d.toISOString().slice(0, 10);
 }
 
-function normalizeTasksDate(tasks: any[]) {
+function normalizeTasks(tasks: any[]) {
   return tasks.map(task => ({
     ...task,
-    due_date: formatDateInputValue(task.due_date)
+    due_date: formatDateInputValue(task.due_date),
+    is_locked: task.is_locked || false,
+    user_id: task.user_id || '',
   }));
 }
 
 const CourseParseResultEditor: React.FC<Props> = ({ initialData, onSave, onCancel }) => {
   const [data, setData] = useState<CourseParseResult>({
     ...initialData,
-    tasks: normalizeTasksDate(initialData.tasks || [])
+    tasks: normalizeTasks(initialData.tasks || [])
   });
   const [newTask, setNewTask] = useState<Omit<Task, 'id' | 'course_id' | 'created_at' | 'updated_at'>>(emptyTask);
 

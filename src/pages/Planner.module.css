@@ -214,21 +214,39 @@
 }
 
 .taskItem {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  padding: 1rem;
-  cursor: pointer;
-  transition: background 0.3s ease;
-  border-left: 4px solid transparent;
   display: flex;
-  gap: 1rem;
   align-items: center;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  background-color: rgba(22, 36, 71, 0.6);
+  border-radius: 8px;
+  border-left: 5px solid transparent;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
 }
 
-.taskItem:hover, .selectedTask {
-  background: rgba(118, 75, 224, 0.2);
-  border-left-color: #764be0;
+.taskItem:hover {
+  background-color: rgba(31, 64, 104, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.taskItem.selectedTask {
+  background-color: rgba(31, 64, 104, 1);
+  border-left-color: #00ffff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.taskScheduled {
+  opacity: 0.5;
+  background-color: rgba(22, 36, 71, 0.3);
+  text-decoration: line-through;
+}
+
+.taskScheduled:hover {
+  opacity: 0.8;
+  text-decoration: none;
 }
 
 .taskTypeIcon {
@@ -265,10 +283,10 @@
 }
 
 .priorityIndicator {
-  width: 6px;
-  height: 24px;
-  border-radius: 3px;
-  flex-shrink: 0;
+  width: 5px;
+  height: 50px;
+  border-radius: 5px;
+  margin-right: 1rem;
 }
 
 .loading, .emptyState {
@@ -420,10 +438,14 @@
   color: #a0a0c0;
 }
 :global(.fc .fc-event) {
-  border-radius: 4px !important;
-  font-size: 0.8rem !important;
-  padding: 4px !important;
-  cursor: pointer !important;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.3) !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.fc-event:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
 }
 
 /* Cyber Priority & Status Indicators */
@@ -611,6 +633,94 @@
   opacity: 0.75;
   border: 1px dashed #ffa500 !important;
   background-color: rgba(255, 165, 0, 0.4) !important;
+}
+
+.taskDetails {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #a0a0c0;
+}
+
+.taskActions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.lockButton {
+  background: none;
+  border: none;
+  color: #a0a0c0;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.lockButton:hover {
+  color: #00ffff;
+  background-color: rgba(0, 255, 255, 0.1);
+}
+
+.taskStatus {
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 0.25rem 0.75rem;
+}
+
+.lockedEvent {
+  border-left: 5px solid #00ffff !important;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.05) 10px,
+    rgba(255, 255, 255, 0.1) 10px,
+    rgba(255, 255, 255, 0.1) 20px
+  ) !important;
+}
+
+.eventContentWrapper {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  padding: 4px;
+  overflow: hidden;
+}
+
+.eventText {
+  flex-grow: 1;
+  overflow: hidden;
+  white-space: normal;
+}
+
+.eventText p {
+  margin: 2px 0 0 0;
+  font-size: 0.9em;
+  line-height: 1.2;
+}
+
+.eventLockButton {
+  background: rgba(0,0,0,0.2);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 5px;
+  flex-shrink: 0;
+  transition: background-color 0.2s;
+}
+
+.eventLockButton:hover {
+  background: rgba(0,0,0,0.4);
 }
 
  

@@ -7986,3 +7986,107 @@ const generateExam = async (
 - **个性化适配** - AI 技术实现真正的因材施教
 - **游戏化激励** - 让学习变得有趣和可持续
 -
+
+# EzA - AI-Powered Learning Success Platform
+
+**EzA** is a modern, AI-driven learning platform designed to help students organize their academic life, optimize their study schedules, and master complex subjects. Built with a sleek, cyberpunk-inspired dark theme, EzA provides a suite of intelligent tools in a unified, immersive interface.
+
+---
+
+## ✨ Core Features
+
+### 1. 🧠 Smart Task Engine (Planner)
+
+The heart of the platform. This is a sophisticated task and schedule management system that goes beyond a simple to-do list.
+
+- **Unified Dashboard**: Combines a filterable task list with a full-featured weekly/daily calendar view.
+- **🤖 One-Click Smart Scheduling**: The AI assistant can automatically schedule all un-planned tasks. The algorithm considers:
+  - **Urgency**: Tasks with earlier due dates are prioritized.
+  - **Importance**: Higher priority tasks are scheduled first.
+  - **Time Constraints**: It finds available slots between 9 AM and 10 PM.
+  - **Randomization**: For tasks with equal priority and due dates, it introduces randomness to provide different valid scheduling options on each click.
+- **Manual Drag-and-Drop Scheduling**:
+  - **Plan**: Drag tasks from the left-hand list directly onto the calendar to schedule them.
+  - **Adjust**: Drag and drop existing events within the calendar to adjust their scheduled time.
+  - **Un-schedule**: Drag an event from the calendar back to the task list area to quickly remove it from your schedule.
+- **🔒 Task Locking**: Manually lock any scheduled task on the calendar. Locked tasks are protected and will **not** be moved by the "One-Click Smart Scheduling" AI.
+- **Intuitive Filtering**: Dynamically filter the task list to see exactly what you need:
+  - **Unfinished**: All tasks that are not yet complete.
+  - **Due This Week**: Focus on tasks with a deadline in the current week.
+  - **Overdue**: Immediately see tasks that have passed their due date.
+  - **Completed**: Review your accomplishments.
+- **Status Tracking**: Mark tasks as complete. Completed tasks are automatically removed from the calendar view to keep your schedule clean and forward-focused.
+
+### 2. 📚 Review & Spaced Repetition
+
+Master concepts for the long term with a powerful review module built on the **FSRS-5 (Free Spaced Repetition Scheduler)** algorithm.
+
+- **Algorithmic Learning**: Calculates the optimal time to review flashcards based on your performance.
+- **Hybrid Approach**: The core FSRS calculations happen on the client-side for a snappy user experience, with updated card states persisted to the Supabase database.
+
+### 3. 🔬 STEM Problem Solver
+
+A dedicated assistant to help you tackle complex problems in Science, Technology, Engineering, and Mathematics.
+
+- **Step-by-Step Solutions**: Breaks down complex problems into manageable, easy-to-understand steps.
+- **📜 Solution History**: Automatically saves every problem you solve. You can review, manage, and delete past solutions from your personal history log.
+
+### 4. 🚀 Course Management & AI Parsing
+
+Streamline your course setup from day one.
+
+- **Syllabus Upload**: Upload your course syllabus (e.g., in PDF or DOCX format).
+- **AI-Powered Parsing**: An AI assistant analyzes the syllabus to automatically extract key information like course name, description, and a full list of assignments, exams, and projects with their due dates.
+- **Data Console Editor**: Review and manually edit the AI-parsed results in a structured, console-like interface to ensure accuracy.
+
+---
+
+## 💻 Tech Stack
+
+- **Frontend**: [React](https://reactjs.org/), [TypeScript](https://www.typescriptlang.org/)
+- **Backend & Database**: [Supabase](https://supabase.io/) (PostgreSQL, Auth, Storage)
+- **Calendar**: [FullCalendar](https://fullcalendar.io/)
+- **UI**: Custom CSS Modules with a unified dark/cyberpunk theme
+- **Icons**: [Lucide React](https://lucide.dev/)
+
+---
+
+## 🛠️ Setup & Installation
+
+To run EzA locally, follow these steps:
+
+1.  **Clone the repository:**
+
+    ```bash
+    git clone https://github.com/your-username/EzA.git
+    cd EzA
+    ```
+
+2.  **Install dependencies:**
+
+    ```bash
+    npm install
+    ```
+
+3.  **Set up Supabase:**
+
+    - This project is configured to work with the [Supabase CLI](https://supabase.com/docs/guides/cli).
+    - Initialize Supabase in your project: `supabase init`.
+    - Link your local project to your Supabase project: `supabase link --project-ref <your-project-ref>`.
+    - Push the database migrations to apply the schema: `supabase db push`.
+
+4.  **Configure Environment Variables:**
+
+    - Create a `.env.local` file in the root directory.
+    - Add your Supabase URL and Anon Key:
+      ```
+      REACT_APP_SUPABASE_URL=YOUR_SUPABASE_URL
+      REACT_APP_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+      ```
+
+5.  **Start the development server:**
+    ```bash
+    npm start
+    ```
+
+The application should now be running on `http://localhost:3000`.

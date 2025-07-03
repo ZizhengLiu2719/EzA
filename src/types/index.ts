@@ -47,6 +47,8 @@ export interface Task {
   weight?: number // 占课程总分的百分比
   created_at: string
   updated_at: string
+  scheduled_start_time?: string | null
+  is_locked: boolean
 }
 
 // 子任务类型
