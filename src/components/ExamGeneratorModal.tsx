@@ -107,8 +107,8 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
   const [selectedSetIds, setSelectedSetIds] = useState<string[]>([])
   const [extractedTopics, setExtractedTopics] = useState<string[]>([]);
   const [settings, setSettings] = useState<ExamSettings>({
-    title: '复习测试',
-    subject: '通用',
+    title: 'Review Test',
+    subject: 'General',
     duration: 30,
     question_types: {
       single_choice: 0,
@@ -120,7 +120,7 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
     },
     difficulty_focus: 'mixed',
     cognitive_focus: 'mixed',
-    selectedTopics: ['测试知识掌握度', '巩固学习成果'],
+    selectedTopics: ['Test Knowledge Mastery', 'Reinforce Learning Outcomes'],
     isProfessorMode: false,
   })
   const [newTopic, setNewTopic] = useState('')
@@ -216,7 +216,7 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
     if (isGenerating) return
 
     if (source === 'flashcards' && selectedSetIds.length === 0) {
-      setError('请至少选择一个闪卡集作为考试范围。')
+      setError('Please select at least one flashcard set for the exam.')
       setStep('error')
       return
     }
@@ -224,24 +224,24 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
     if (source === 'flashcards') {
     const availableCardsCount = selectedCardsCount;
       if (totalQuestions === 0) {
-        setError('请至少设置一个题型和数量。');
+        setError('Please set at least one question type and count.');
         setStep('error');
         return;
       }
       if (availableCardsCount < 10 && availableCardsCount < totalQuestions) {
-      setError(`所选范围内至少需要10张卡片才能生成考试，当前只有 ${availableCardsCount} 张。`)
+      setError(`At least 10 cards are required to generate an exam, but only ${availableCardsCount} are available in the selected sets.`)
       setStep('error')
       return
     }
     if (totalQuestions > availableCardsCount) {
-      setError(`题目总数 (${totalQuestions}) 不能超过所选范围内的卡片数量 (${availableCardsCount})。`)
+      setError(`Total questions (${totalQuestions}) cannot exceed the number of available cards (${availableCardsCount}) in the selected sets.`)
       setStep('error')
       return
       }
     }
     
     if (source === 'files' && totalQuestions === 0) {
-      setError('请至少设置一个题型和数量。');
+      setError('Please set at least one question type and count.');
       setStep('error');
       return;
     }
@@ -253,13 +253,14 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
     try {
       const examConfig = createExamConfig()
       let generatedExam;
+
       if (source === 'flashcards') {
-      const cardsForExam = await getFlashcardsBySetIds(selectedSetIds);
+        const cardsForExam = await getFlashcardsBySetIds(selectedSetIds);
         generatedExam = await examAI.generateExamFromCards(cardsForExam, examConfig, settings.isProfessorMode)
       } else {
         // TODO: Implement generateExamFromContent
         // For now, we'll use a placeholder or throw an error
-        setError('从文件生成考试的功能尚未实现。');
+        setError('File-based exam generation is not implemented yet.');
         setStep('error');
         setIsGenerating(false);
         return;
@@ -267,7 +268,7 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
       onExamGenerated(generatedExam)
     } catch (err: any) {
       console.error('Exam generation failed:', err)
-      setError(err.message || '考试生成失败，请稍后重试。')
+      setError(err.message || 'Exam generation failed, please try again later.')
       setStep('error')
     } finally {
       setIsGenerating(false)
@@ -284,8 +285,8 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
   ]);
 
   const updateSettings = (newSettings: Partial<ExamSettings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
-  };
+    setSettings(prev => ({ ...prev, ...newSettings }))
+  }
   
   const updateQuestionCount = (type: keyof ExamSettings['question_types'], delta: number) => {
     setSettings(prev => {
@@ -325,10 +326,10 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
           {/* Left Panel: Settings */}
           <div className={styles.configPanel}>
              <div className={styles.configSection}>
-                <p className={styles.sectionTitle}>基础设置</p>
+                <p className={styles.sectionTitle}>Basic Settings</p>
                 <div className={styles.formGrid}>
                   <div className={styles.fieldGroup}>
-                    <label className={styles.fieldLabel}>考试标题</label>
+                    <label className={styles.fieldLabel}>Exam Title</label>
                     <input
                       type="text"
                       className={styles.fieldInput}
@@ -337,7 +338,7 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
                     />
                   </div>
                   <div className={styles.fieldGroup}>
-                    <label className={styles.fieldLabel}>所属学科</label>
+                    <label className={styles.fieldLabel}>Subject</label>
                     <input
                       type="text"
                       className={styles.fieldInput}
@@ -346,7 +347,7 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
                     />
                   </div>
                   <div className={styles.fieldGroup}>
-                    <label className={styles.fieldLabel}>时长(分钟)</label>
+                    <label className={styles.fieldLabel}>Duration (minutes)</label>
                     <input
                       type="number"
                       className={styles.fieldInput}
@@ -355,23 +356,23 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
                     />
                   </div>
                   <div className={styles.fieldGroup}>
-                    <label className={styles.fieldLabel}>难度重点</label>
+                    <label className={styles.fieldLabel}>Difficulty Focus</label>
                     <select
                       className={styles.fieldSelect}
                       value={settings.difficulty_focus}
                       onChange={e => updateSettings({ difficulty_focus: e.target.value as any })}
                     >
-                      <option value="mixed">混合</option>
-                      <option value="easy">偏简单</option>
-                      <option value="medium">偏中等</option>
-                      <option value="hard">偏困难</option>
+                      <option value="mixed">Mixed</option>
+                      <option value="easy">Easy</option>
+                      <option value="medium">Medium</option>
+                      <option value="hard">Hard</option>
                     </select>
                   </div>
                 </div>
               </div>
 
             <div className={styles.configSection}>
-              <p className={styles.sectionTitle}>题型分布 (共 {totalQuestions} 题)</p>
+              <p className={styles.sectionTitle}>Question Distribution ({totalQuestions} total)</p>
               <div className={styles.questionTypeGrid}>
                 {(Object.keys(settings.question_types) as Array<keyof typeof settings.question_types>).map(type => (
                   <div key={type} className={styles.stepperRow}>
@@ -394,21 +395,21 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
                 className={`${styles.sourceButton} ${source === 'flashcards' ? styles.active : ''}`}
                 onClick={() => setSource('flashcards')}
               >
-                从卡片集选择
+                From Flashcard Sets
               </button>
               <button
                 className={`${styles.sourceButton} ${source === 'files' ? styles.active : ''}`}
                 onClick={() => setSource('files')}
               >
-                从文件上传
+                From File Upload
               </button>
             </div>
 
             {source === 'flashcards' && (
               <div className={styles.configSection}>
                 <p className={styles.sectionTitle}>
-                  选择卡片集
-                  <span className={styles.selectionCount}>已选 {selectedSetIds.length} 套 / 共 {selectedCardsCount} 张卡片</span>
+                  Select Flashcard Sets
+                  <span className={styles.selectionCount}>Selected {selectedSetIds.length} sets / {selectedCardsCount} total cards</span>
                 </p>
                 <div className={styles.setList}>
                   {flashcardSets.map(set => (
@@ -427,13 +428,13 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
             
             {source === 'files' && (
               <div className={styles.configSection}>
-                <p className={styles.sectionTitle}>上传学习资料</p>
+                <p className={styles.sectionTitle}>Upload Study Materials</p>
                 <ContentUploader onTopicsExtracted={handleTopicsExtracted} />
               </div>
             )}
 
             <div className={styles.configSection}>
-              <p className={styles.sectionTitle}>考试重点 (Topics)</p>
+              <p className={styles.sectionTitle}>Exam Focus (Topics)</p>
               <div className={styles.tagsList}>
                 {settings.selectedTopics.map(topic => (
                   <span
@@ -450,20 +451,20 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
                   type="text"
                   value={newTopic}
                   onChange={e => setNewTopic(e.target.value)}
-                  placeholder="手动添加考点..."
+                  placeholder="Add a custom topic..."
                   className={styles.tagInput}
                   onKeyPress={e => e.key === 'Enter' && handleTopicSubmit()}
                 />
-                <button onClick={handleTopicSubmit} className={styles.tagAddButton}>添加</button>
+                <button onClick={handleTopicSubmit} className={styles.tagAddButton}>Add</button>
               </div>
             </div>
           </div>
         </div>
       </div>
       <div className={styles.modalFooter}>
-        <button onClick={handleClose} className={styles.cancelButton}>取消</button>
+        <button onClick={handleClose} className={styles.cancelButton}>Cancel</button>
         <button onClick={handleGenerateExam} disabled={isGenerating} className={styles.generateButton}>
-          {isGenerating ? '生成中...' : `生成 ${totalQuestions} 道题`}
+          {isGenerating ? 'Generating...' : `Generate ${totalQuestions} Questions`}
         </button>
       </div>
     </>
@@ -477,22 +478,22 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
       return (
         <div className={styles.centeredContent}>
             <div className={styles.spinner}></div>
-            <h3 className={styles.loadingTitle}>AI 正在为您精心组卷...</h3>
-            <p className={styles.loadingText}>请稍候，这可能需要一点时间</p>
+            <h3 className={styles.loadingTitle}>AI is crafting your exam...</h3>
+            <p className={styles.loadingText}>Please wait, this may take a moment.</p>
         </div>
       )
       case 'error':
         return (
           <div className={styles.centeredContent}>
             <AlertCircle size={48} className={styles.errorIcon} />
-            <h3 className={styles.loadingTitle}>出错了</h3>
+            <h3 className={styles.loadingTitle}>An Error Occurred</h3>
             <p className={styles.errorText}>{error}</p>
             <button
               type="button"
               onClick={() => setStep('settings')}
               className={styles.submitButton}
             >
-              返回设置
+              Back to Settings
             </button>
           </div>
         )
@@ -510,10 +511,10 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
       <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
                   <div>
-            <h2>智能考试生成器</h2>
+            <h2>Smart Exam Generator</h2>
             {source === 'flashcards' 
-              ? <p>基于 {selectedCardsCount} 张已选闪卡</p>
-              : <p>基于上传的文档内容</p>
+              ? <p>Based on {selectedCardsCount} selected cards</p>
+              : <p>Based on uploaded content</p>
             }
                   </div>
           <button onClick={handleClose} className={styles.closeButton}>

@@ -1,23 +1,23 @@
 /**
- * AI难度自适应服务
- * 基于认知科学和学习心理学的智能难度调节系统
+ * AI difficulty adaptive service
+ * Based on cognitive science and learning psychology
  */
 
 import { getAIModel } from '@/config/aiModel'
 import { FSRSCard } from '../types/SRSTypes'
 
 export interface CognitiveLoad {
-  intrinsic: number    // 内在认知负荷 (0-1)
-  extraneous: number   // 外在认知负荷 (0-1) 
-  germane: number      // 相关认知负荷 (0-1)
-  total: number        // 总认知负荷 (0-1)
+  intrinsic: number    // Intrinsic cognitive load (0-1)
+  extraneous: number   // Extraneous cognitive load (0-1) 
+  germane: number      // Germane cognitive load (0-1)
+  total: number        // Total cognitive load (0-1)
   recommendation: 'reduce' | 'maintain' | 'increase'
 }
 
 export interface LearningContext {
   user_id: string
   subject: string
-  session_duration: number // 当前会话时长(分钟)
+  session_duration: number // Current session duration in minutes
   time_of_day: 'morning' | 'afternoon' | 'evening' | 'night'
   energy_level: 'high' | 'medium' | 'low'
   distraction_level: 'high' | 'medium' | 'low'
@@ -30,36 +30,45 @@ export interface LearningContext {
 }
 
 export interface DifficultyRecommendation {
-  target_difficulty: number      // 推荐目标难度 (1-10)
-  adjustment_magnitude: number   // 调整幅度 (-3 to +3)
-  confidence: number            // 推荐置信度 (0-1)
-  reasoning: string            // 调整原因
+  target_difficulty: number      // Recommended target difficulty (1-10)
+  adjustment_magnitude: number   // Adjustment magnitude (-3 to +3)
+  confidence: number            // Recommendation confidence (0-1)
+  reasoning: string            // Reason for the adjustment
   adaptive_strategy: 'gradual' | 'immediate' | 'delayed'
-  next_review_timing: number   // 建议下次复习时间间隔(小时)
+  next_review_timing: number   // Suggested next review interval in hours
   cognitive_load_target: CognitiveLoad
   personalization_factors: {
-    learning_speed: number     // 学习速度因子 (0-2)
-    retention_strength: number // 记忆保持强度 (0-2)
-    difficulty_preference: number // 难度偏好 (-1 to +1)
+    learning_speed: number     // Learning speed factor (0-2)
+    retention_strength: number // Memory retention strength (0-2)
+    difficulty_preference: number // Difficulty preference (-1 to +1)
   }
 }
 
 export interface AdaptiveLearningProfile {
   user_id: string
-  optimal_difficulty_range: [number, number]  // 最佳难度范围
-  cognitive_capacity: number                  // 认知容量评估
-  learning_speed: number                      // 学习速度
-  retention_rate: number                      // 记忆保持率
-  preferred_challenge_level: number           // 偏好挑战水平
-  fatigue_pattern: number[]                   // 疲劳模式 (24小时)
-  peak_performance_hours: number[]            // 最佳表现时段
-  subject_strengths: Record<string, number>   // 学科优势
+  optimal_difficulty_range: [number, number]  // Optimal difficulty range
+  cognitive_capacity: number                  // Cognitive capacity assessment
+  learning_speed: number                      // Learning speed
+  retention_rate: number                      // Memory retention rate
+  preferred_challenge_level: number           // Preferred challenge level
+  fatigue_pattern: number[]                   // Fatigue pattern (24 hours)
+  peak_performance_hours: number[]            // Peak performance hours
+  subject_strengths: Record<string, number>   // Subject strengths
   learning_style_weights: {
     visual: number
     auditory: number
     kinesthetic: number
     reading_writing: number
   }
+}
+
+interface Session {
+  date: Date
+  duration: number
+  accuracy: number
+  cards_count: number
+  time_of_day: string
+  subject: string
 }
 
 class DifficultyAI {
@@ -72,38 +81,38 @@ class DifficultyAI {
   }
 
   /**
-   * 评估当前认知负荷
+   * Assesses the current cognitive load.
    */
   async assessCognitiveLoad(
     current_cards: FSRSCard[],
     context: LearningContext
   ): Promise<CognitiveLoad> {
     const prompt = `
-作为认知心理学专家，评估当前学习会话的认知负荷：
+As a cognitive psychology expert, assess the cognitive load of the current learning session:
 
-学习上下文:
-- 会话时长: ${context.session_duration}分钟
-- 时间段: ${context.time_of_day}
-- 能量水平: ${context.energy_level}
-- 干扰水平: ${context.distraction_level}
-- 压力水平: ${context.stress_level}
+Learning Context:
+- Session Duration: ${context.session_duration} minutes
+- Time of Day: ${context.time_of_day}
+- Energy Level: ${context.energy_level}
+- Distraction Level: ${context.distraction_level}
+- Stress Level: ${context.stress_level}
 
-当前卡片统计:
-- 卡片数量: ${current_cards.length}
-- 平均难度: ${(current_cards.reduce((sum, card) => sum + card.difficulty, 0) / current_cards.length).toFixed(2)}
-- 复杂卡片比例: ${(current_cards.filter(card => card.difficulty > 6).length / current_cards.length * 100).toFixed(1)}%
+Current Card Statistics:
+- Number of Cards: ${current_cards.length}
+- Average Difficulty: ${(current_cards.reduce((sum, card) => sum + card.difficulty, 0) / current_cards.length).toFixed(2)}
+- Percentage of Complex Cards: ${(current_cards.filter(card => card.difficulty > 6).length / current_cards.length * 100).toFixed(1)}%
 
-最近表现:
-- 平均准确率: ${(context.recent_performance.reduce((sum, p) => sum + p.accuracy, 0) / context.recent_performance.length * 100).toFixed(1)}%
-- 平均响应时间: ${(context.recent_performance.reduce((sum, p) => sum + p.response_time, 0) / context.recent_performance.length / 1000).toFixed(1)}秒
-- 平均信心度: ${(context.recent_performance.reduce((sum, p) => sum + p.confidence, 0) / context.recent_performance.length).toFixed(2)}
+Recent Performance:
+- Average Accuracy: ${(context.recent_performance.reduce((sum, p) => sum + p.accuracy, 0) / context.recent_performance.length * 100).toFixed(1)}%
+- Average Response Time: ${(context.recent_performance.reduce((sum, p) => sum + p.response_time, 0) / context.recent_performance.length / 1000).toFixed(1)} seconds
+- Average Confidence: ${(context.recent_performance.reduce((sum, p) => sum + p.confidence, 0) / context.recent_performance.length).toFixed(2)}
 
-请根据认知负荷理论评估三种负荷类型：
-1. 内在认知负荷 (任务本身复杂度)
-2. 外在认知负荷 (无关干扰因素)  
-3. 相关认知负荷 (促进学习的处理)
+Based on cognitive load theory, please evaluate the three types of load:
+1. Intrinsic Cognitive Load (complexity of the task itself)
+2. Extraneous Cognitive Load (irrelevant distracting factors)
+3. Germane Cognitive Load (processing that contributes to learning)
 
-用JSON格式输出评估结果和建议。
+Output the assessment results and recommendations in JSON format.
 `
 
     try {
@@ -114,13 +123,13 @@ class DifficultyAI {
 
       return this.parseCognitiveLoadResponse(response)
     } catch (error) {
-      console.error('认知负荷评估失败:', error)
+      console.error('Cognitive load assessment failed:', error)
       return this.getFallbackCognitiveLoad(current_cards, context)
     }
   }
 
   /**
-   * 生成个性化难度推荐
+   * Generates a personalized difficulty recommendation.
    */
   async generateDifficultyRecommendation(
     card: FSRSCard,
@@ -129,34 +138,33 @@ class DifficultyAI {
     cognitive_load: CognitiveLoad
   ): Promise<DifficultyRecommendation> {
     const prompt = `
-作为AI学习心理学家，为用户提供个性化难度调整建议：
+As an AI learning psychologist, provide a personalized difficulty adjustment recommendation for the user:
 
-当前卡片:
-- 难度: ${card.difficulty}
-- 稳定性: ${card.stability.toFixed(2)}
-- 成功率: ${(card.success_rate * 100).toFixed(1)}%
-- 复习次数: ${card.reps}
-- 平均用时: ${card.average_time.toFixed(1)}秒
+Current Card:
+- Difficulty: ${card.difficulty}
+- Stability: ${card.stability.toFixed(2)}
+- Lapses: ${card.lapses}
+- Repetitions: ${card.reps}
 
-用户学习档案:
-- 最佳难度范围: ${user_profile.optimal_difficulty_range[0]}-${user_profile.optimal_difficulty_range[1]}
-- 认知容量: ${user_profile.cognitive_capacity.toFixed(2)}
-- 学习速度: ${user_profile.learning_speed.toFixed(2)}
-- 记忆保持率: ${(user_profile.retention_rate * 100).toFixed(1)}%
-- 偏好挑战水平: ${user_profile.preferred_challenge_level.toFixed(2)}
+User Learning Profile:
+- Optimal Difficulty Range: ${user_profile.optimal_difficulty_range[0]}-${user_profile.optimal_difficulty_range[1]}
+- Cognitive Capacity: ${user_profile.cognitive_capacity.toFixed(2)}
+- Learning Speed: ${user_profile.learning_speed.toFixed(2)}
+- Retention Rate: ${(user_profile.retention_rate * 100).toFixed(1)}%
+- Preferred Challenge Level: ${user_profile.preferred_challenge_level.toFixed(2)}
 
-当前状态:
-- 认知负荷: ${cognitive_load.total.toFixed(2)} (${cognitive_load.recommendation})
-- 会话时长: ${context.session_duration}分钟
-- 能量水平: ${context.energy_level}
+Current State:
+- Cognitive Load: ${cognitive_load.total.toFixed(2)} (${cognitive_load.recommendation})
+- Session Duration: ${context.session_duration} minutes
+- Energy Level: ${context.energy_level}
 
-基于以下原则提供建议:
-1. 维持适当的挑战水平 (Zone of Proximal Development)
-2. 避免认知过载
-3. 个性化适应用户档案
-4. 考虑当前学习状态
+Provide a recommendation based on the following principles:
+1. Maintain an appropriate level of challenge (Zone of Proximal Development).
+2. Avoid cognitive overload.
+3. Personalize the adaptation to the user's profile.
+4. Consider the current learning state.
 
-用JSON格式输出详细的难度调整建议。
+Output a detailed difficulty adjustment recommendation in JSON format.
 `
 
     try {
@@ -167,13 +175,13 @@ class DifficultyAI {
 
       return this.parseDifficultyRecommendation(response, card, user_profile)
     } catch (error) {
-      console.error('难度推荐生成失败:', error)
+      console.error('Difficulty recommendation generation failed:', error)
       return this.getFallbackDifficultyRecommendation(card, context, user_profile, cognitive_load)
     }
   }
 
   /**
-   * 动态调整学习节奏
+   * Dynamically adjusts the learning pace.
    */
   async adjustLearningPace(
     session_performance: {
@@ -191,7 +199,7 @@ class DifficultyAI {
     recommended_pace: 'slower' | 'maintain' | 'faster'
     break_suggestion: {
       needed: boolean
-      duration: number // 分钟
+      duration: number // minutes
       type: 'micro' | 'short' | 'long'
     }
     session_adjustment: {
@@ -201,31 +209,31 @@ class DifficultyAI {
     }
     motivational_message: string
   }> {
-    const pace_ratio = session_performance.cards_completed / (session_performance.total_time / 60) // 卡片/分钟
+    const pace_ratio = session_performance.cards_completed / (session_performance.total_time / 60) // cards/minute
     const accuracy_gap = target_goals.desired_accuracy - session_performance.accuracy
     
     const prompt = `
-作为学习节奏优化专家，分析当前学习会话并提供调整建议：
+As a learning pace optimization expert, analyze the current learning session and provide adjustment recommendations:
 
-会话表现:
-- 已完成卡片: ${session_performance.cards_completed}
-- 总用时: ${session_performance.total_time}分钟  
-- 当前准确率: ${(session_performance.accuracy * 100).toFixed(1)}%
-- 学习节奏: ${pace_ratio.toFixed(2)}卡片/分钟
-- 疲劳指标: ${session_performance.fatigue_indicators.join(', ')}
+Session Performance:
+- Cards Completed: ${session_performance.cards_completed}
+- Total Time: ${session_performance.total_time} minutes
+- Current Accuracy: ${(session_performance.accuracy * 100).toFixed(1)}%
+- Learning Pace: ${pace_ratio.toFixed(2)} cards/minute
+- Fatigue Indicators: ${session_performance.fatigue_indicators.join(', ')}
 
-目标设定:
-- 期望准确率: ${(target_goals.desired_accuracy * 100).toFixed(1)}%
-- 时间预算: ${target_goals.time_budget}分钟
-- 卡片目标: ${target_goals.cards_target}张
+Target Goals:
+- Desired Accuracy: ${(target_goals.desired_accuracy * 100).toFixed(1)}%
+- Time Budget: ${target_goals.time_budget} minutes
+- Card Target: ${target_goals.cards_target} cards
 
-基于学习心理学原理，提供：
-1. 节奏调整建议 (slower/maintain/faster)
-2. 休息建议 (是否需要、时长、类型)
-3. 会话调整策略
-4. 激励性反馈
+Based on principles of learning psychology, provide:
+1. Pace adjustment recommendation (slower/maintain/faster)
+2. Break suggestion (if needed, duration, type)
+3. Session adjustment strategy
+4. Motivational feedback
 
-用JSON格式输出建议。
+Output the recommendations in JSON format.
 `
 
     try {
@@ -236,13 +244,13 @@ class DifficultyAI {
 
       return this.parsePaceAdjustment(response)
     } catch (error) {
-      console.error('学习节奏调整失败:', error)
+      console.error('Learning pace adjustment failed:', error)
       return this.getFallbackPaceAdjustment(session_performance, target_goals)
     }
   }
 
   /**
-   * 构建用户学习档案
+   * Builds a user's learning profile.
    */
   async buildLearningProfile(
     user_id: string,
@@ -264,36 +272,36 @@ class DifficultyAI {
     }
   ): Promise<AdaptiveLearningProfile> {
     const prompt = `
-作为学习分析专家，基于历史数据构建用户的自适应学习档案：
+As an expert in educational data mining and learning analytics, build a comprehensive adaptive learning profile for the user.
 
-历史学习记录:
-- 总学习卡片: ${historical_data.cards_studied.length}
-- 学习会话: ${historical_data.session_records.length}次
-- 平均准确率: ${(historical_data.session_records.reduce((sum, s) => sum + s.accuracy, 0) / historical_data.session_records.length * 100).toFixed(1)}%
+**User ID:** ${user_id}
 
-卡片难度分布:
-${this.calculateDifficultyDistribution(historical_data.cards_studied)}
+**Historical Data Summary:**
+- Total Sessions: ${historical_data.session_records.length}
+- Preference Feedbacks: ${historical_data.preference_feedback.length}
+- Difficulty Distribution of Studied Cards: ${this.calculateDifficultyDistribution(historical_data.cards_studied)}
+- Performance by Time of Day: ${this.analyzeTimePerformance(historical_data.session_records)}
+- Performance by Subject: ${this.analyzeSubjectPerformance(historical_data.session_records)}
 
-时间段表现分析:
-${this.analyzeTimePerformance(historical_data.session_records)}
+**Your Task:**
+Analyze all the provided data to model the user's learning characteristics. Infer the following attributes for their profile:
 
-学科表现分析:
-${this.analyzeSubjectPerformance(historical_data.session_records)}
+1.  **Optimal Difficulty Range:** The sweet spot of difficulty (1-10) where the user learns most effectively.
+2.  **Cognitive Capacity:** An estimation of the user's working memory and processing power.
+3.  **Learning Speed:** How quickly the user masters new concepts.
+4.  **Retention Rate:** How well the user retains information over time.
+5.  **Preferred Challenge Level:** The user's stated or inferred preference for challenge.
+6.  **Fatigue Pattern:** Identify patterns of performance decline over a 24-hour cycle.
+7.  **Peak Performance Hours:** The times of day when the user performs best.
+8.  **Subject Strengths:** A map of subjects where the user excels.
+9.  **Learning Style Weights:** The user's dominant learning styles (visual, auditory, etc.).
 
-用户偏好反馈:
-- 平均偏好难度: ${(historical_data.preference_feedback.reduce((sum, p) => sum + p.difficulty, 0) / historical_data.preference_feedback.length).toFixed(2)}
-- 平均满意度: ${(historical_data.preference_feedback.reduce((sum, p) => sum + p.satisfaction, 0) / historical_data.preference_feedback.length).toFixed(2)}
+**Methodology:**
+- Use statistical analysis and machine learning principles.
+- Correlate performance (accuracy, time) with context (difficulty, time of day, subject).
+- Synthesize quantitative data with qualitative preference feedback.
 
-请构建包含以下要素的学习档案：
-1. 最佳难度范围
-2. 认知容量评估
-3. 学习速度特征
-4. 记忆保持模式
-5. 疲劳周期分析
-6. 学科优势识别
-7. 学习风格偏好
-
-用JSON格式输出完整的用户学习档案。
+Output the complete, structured learning profile in JSON format.
 `
 
     try {
@@ -304,12 +312,12 @@ ${this.analyzeSubjectPerformance(historical_data.session_records)}
 
       return this.parseLearningProfile(response, user_id)
     } catch (error) {
-      console.error('学习档案构建失败:', error)
+      console.error('Learning profile building failed:', error)
       return this.getFallbackLearningProfile(user_id, historical_data)
     }
   }
 
-  // === 私有辅助方法 ===
+  // === Private helper methods ===
 
   private async callOpenAI(prompt: string, options: any = {}): Promise<string> {
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -366,24 +374,18 @@ ${this.analyzeSubjectPerformance(historical_data.session_records)}
         target_difficulty: parsed.target_difficulty || card.difficulty,
         adjustment_magnitude: parsed.adjustment_magnitude || 0,
         confidence: parsed.confidence || 0.7,
-        reasoning: parsed.reasoning || '基于当前表现的标准调整',
+        reasoning: parsed.reasoning || 'Fallback logic based on cognitive load and recent accuracy.',
         adaptive_strategy: parsed.adaptive_strategy || 'gradual',
         next_review_timing: parsed.next_review_timing || 24,
-        cognitive_load_target: parsed.cognitive_load_target || {
-          intrinsic: 0.6,
-          extraneous: 0.2,
-          germane: 0.7,
-          total: 0.8,
-          recommendation: 'maintain'
-        },
+        cognitive_load_target: parsed.cognitive_load_target || this.getFallbackCognitiveLoad([], {} as LearningContext),
         personalization_factors: parsed.personalization_factors || {
           learning_speed: profile.learning_speed,
           retention_strength: profile.retention_rate,
-          difficulty_preference: profile.preferred_challenge_level - 5
+          difficulty_preference: profile.preferred_challenge_level,
         }
       }
     } catch (error) {
-      return this.getFallbackDifficultyRecommendation(card, {} as any, profile, {} as any)
+      return this.getFallbackDifficultyRecommendation(card, {} as LearningContext, profile, {} as CognitiveLoad)
     }
   }
 
@@ -395,15 +397,15 @@ ${this.analyzeSubjectPerformance(historical_data.session_records)}
         recommended_pace: 'maintain',
         break_suggestion: {
           needed: false,
-          duration: 5,
+          duration: 0,
           type: 'micro'
         },
         session_adjustment: {
           continue: true,
-          remaining_time_allocation: 15,
+          remaining_time_allocation: 30,
           difficulty_adjustment: 0
         },
-        motivational_message: '继续保持现在的学习节奏！'
+        motivational_message: 'Keep up the great work! Consistency is key.'
       }
     }
   }
@@ -433,61 +435,65 @@ ${this.analyzeSubjectPerformance(historical_data.session_records)}
     }
   }
 
-  // 数据分析辅助方法
   private calculateDifficultyDistribution(cards: FSRSCard[]): string {
     const distribution = cards.reduce((acc, card) => {
-      const range = Math.floor(card.difficulty / 2) * 2
-      acc[range] = (acc[range] || 0) + 1
-      return acc
-    }, {} as Record<number, number>)
+      const BUCKET_SIZE = 2;
+      const bucket = Math.floor((card.difficulty - 1) / BUCKET_SIZE) * BUCKET_SIZE;
+      const key = `Difficulty ${bucket + 1}-${bucket + BUCKET_SIZE}`;
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
 
     return Object.entries(distribution)
-      .map(([range, count]) => `${range}-${parseInt(range) + 1}: ${count}张`)
-      .join(', ')
+      .map(([key, value]) => `${key}: ${((value / cards.length) * 100).toFixed(1)}%`)
+      .join(', ');
   }
 
-  private analyzeTimePerformance(sessions: any[]): string {
-    const timeGroups = sessions.reduce((acc, session) => {
-      acc[session.time_of_day] = acc[session.time_of_day] || []
-      acc[session.time_of_day].push(session.accuracy)
-      return acc
-    }, {} as Record<string, number[]>)
+  private analyzeTimePerformance(sessions: Session[]): string {
+    const performanceByHour = sessions.reduce((acc, session) => {
+      const hour = new Date(session.date).getHours();
+      if (!acc[hour]) {
+        acc[hour] = [];
+      }
+      acc[hour].push(session.accuracy);
+      return acc;
+    }, {} as Record<number, number[]>);
 
-    return Object.entries(timeGroups)
-      .map(([time, accuracies]) => {
-        const avg = accuracies.reduce((sum, acc) => sum + acc, 0) / accuracies.length
-        return `${time}: ${(avg * 100).toFixed(1)}%`
+    return Object.entries(performanceByHour)
+      .map(([hour, accuracies]) => {
+        const avgAccuracy = accuracies.reduce((sum, acc) => sum + acc, 0) / accuracies.length;
+        return `Hour ${hour}: ${avgAccuracy.toFixed(2)}%`;
       })
-      .join(', ')
+      .join('; ');
   }
 
-  private analyzeSubjectPerformance(sessions: any[]): string {
-    const subjectGroups = sessions.reduce((acc, session) => {
-      acc[session.subject] = acc[session.subject] || []
-      acc[session.subject].push(session.accuracy)
-      return acc
-    }, {} as Record<string, number[]>)
+  private analyzeSubjectPerformance(sessions: Session[]): string {
+    const performanceBySubject = sessions.reduce((acc, session) => {
+      const subject = session.subject;
+      if (!acc[subject]) {
+        acc[subject] = [];
+      }
+      acc[subject].push(session.accuracy);
+      return acc;
+    }, {} as Record<string, number[]>);
 
-    return Object.entries(subjectGroups)
+    return Object.entries(performanceBySubject)
       .map(([subject, accuracies]) => {
-        const avg = accuracies.reduce((sum, acc) => sum + acc, 0) / accuracies.length
-        return `${subject}: ${(avg * 100).toFixed(1)}%`
+        const avgAccuracy = accuracies.reduce((sum, acc) => sum + acc, 0) / accuracies.length;
+        return `${subject}: ${avgAccuracy.toFixed(2)}%`;
       })
-      .join(', ')
+      .join('; ');
   }
 
-  // 回退方法
   private getFallbackCognitiveLoad(cards: FSRSCard[], context: LearningContext): CognitiveLoad {
-    const avgDifficulty = cards.reduce((sum, card) => sum + card.difficulty, 0) / cards.length
-    const sessionLoad = Math.min(context.session_duration / 30, 1) // 30分钟后开始增加负荷
-
+    const total = (context.distraction_level === 'high' ? 0.8 : 0.5);
     return {
-      intrinsic: Math.min(avgDifficulty / 10, 0.9),
-      extraneous: context.distraction_level === 'high' ? 0.7 : context.distraction_level === 'medium' ? 0.4 : 0.2,
-      germane: context.energy_level === 'high' ? 0.8 : context.energy_level === 'medium' ? 0.6 : 0.4,
-      total: Math.min((avgDifficulty / 10) + sessionLoad, 0.9),
-      recommendation: sessionLoad > 0.8 ? 'reduce' : sessionLoad < 0.4 ? 'increase' : 'maintain'
-    }
+      intrinsic: 0.5,
+      extraneous: 0.6,
+      germane: 0.7,
+      total,
+      recommendation: total > 0.7 ? 'reduce' : 'maintain'
+    };
   }
 
   private getFallbackDifficultyRecommendation(
@@ -496,57 +502,49 @@ ${this.analyzeSubjectPerformance(historical_data.session_records)}
     profile: AdaptiveLearningProfile,
     load: CognitiveLoad
   ): DifficultyRecommendation {
-    const adjustment = card.success_rate < 0.6 ? -1 : card.success_rate > 0.9 ? 1 : 0
+    let adjustment = 0;
+    if (load.total > 0.8) adjustment = -1;
+    if (context.recent_performance.length > 0 && context.recent_performance.slice(-1)[0].accuracy < 0.6) {
+      adjustment -= 1;
+    }
+    
+    const target_difficulty = Math.max(1, Math.min(10, card.difficulty + adjustment));
 
     return {
-      target_difficulty: Math.max(1, Math.min(10, card.difficulty + adjustment)),
+      target_difficulty,
       adjustment_magnitude: adjustment,
       confidence: 0.6,
-      reasoning: `基于${(card.success_rate * 100).toFixed(1)}%成功率的标准调整`,
+      reasoning: "Fallback logic based on cognitive load and recent accuracy.",
       adaptive_strategy: 'gradual',
-      next_review_timing: card.success_rate > 0.8 ? 48 : 12,
-      cognitive_load_target: {
-        intrinsic: 0.6,
-        extraneous: 0.2,
-        germane: 0.7,
-        total: 0.8,
-        recommendation: 'maintain'
-      },
+      next_review_timing: 24,
+      cognitive_load_target: this.getFallbackCognitiveLoad([], context),
       personalization_factors: {
-        learning_speed: 1.0,
-        retention_strength: 0.8,
-        difficulty_preference: 0
+        learning_speed: profile.learning_speed,
+        retention_strength: profile.retention_rate,
+        difficulty_preference: profile.preferred_challenge_level,
       }
-    }
+    };
   }
 
   private getFallbackPaceAdjustment(performance: any, goals: any): any {
     return {
-      recommended_pace: performance.accuracy < goals.desired_accuracy ? 'slower' : 'maintain',
-      break_suggestion: {
-        needed: performance.total_time > 45,
-        duration: 5,
-        type: 'micro'
-      },
-      session_adjustment: {
-        continue: true,
-        remaining_time_allocation: Math.max(10, goals.time_budget - performance.total_time),
-        difficulty_adjustment: performance.accuracy < 0.7 ? -1 : 0
-      },
-      motivational_message: '保持专注，你做得很好！'
-    }
+      recommended_pace: 'maintain',
+      break_suggestion: { needed: false, duration: 0, type: 'micro' },
+      session_adjustment: { continue: true, remaining_time_allocation: 30, difficulty_adjustment: 0 },
+      motivational_message: 'Keep up the great work! Consistency is key.'
+    };
   }
 
   private getFallbackLearningProfile(user_id: string, data: any): AdaptiveLearningProfile {
     return {
       user_id,
       optimal_difficulty_range: [4, 7],
-      cognitive_capacity: 0.8,
+      cognitive_capacity: 0.7,
       learning_speed: 1.0,
-      retention_rate: 0.75,
+      retention_rate: 0.85,
       preferred_challenge_level: 6,
-      fatigue_pattern: new Array(24).fill(0.5),
-      peak_performance_hours: [9, 10, 14, 15, 16],
+      fatigue_pattern: [],
+      peak_performance_hours: [],
       subject_strengths: {},
       learning_style_weights: {
         visual: 0.25,
@@ -554,7 +552,7 @@ ${this.analyzeSubjectPerformance(historical_data.session_records)}
         kinesthetic: 0.25,
         reading_writing: 0.25
       }
-    }
+    };
   }
 }
 

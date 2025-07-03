@@ -63,14 +63,14 @@ class AIService {
       const temperature = model === 'gpt-4o' ? 0.5 : 0.6  // 提高温度，减少推理时间
 
       console.log('🔥 开始调用OpenAI API:', model, `(max_tokens: ${maxTokens})`)
-      console.log('📝 发送消息长度:', JSON.stringify(messages).length, '字符')
+      console.log('📝 Sending message length:', JSON.stringify(messages).length, 'characters')
 
-      // 创建AbortController用于超时控制
+      // Create AbortController for timeout control
       const controller = new AbortController()
       const timeoutId = setTimeout(() => {
-        console.warn('⏰ OpenAI API请求超时，取消请求')
+        console.warn('⏰ OpenAI API request timed out, aborting request')
         controller.abort()
-      }, 15000) // 🚀 减少到15秒超时，激进优化
+      }, 15000) // 🚀 Reduced to 15-second timeout for aggressive optimization
 
       const startTime = Date.now()
 
@@ -85,21 +85,21 @@ class AIService {
           messages,
           max_tokens: config?.max_tokens || maxTokens,
           temperature: config?.temperature || temperature,
-          top_p: config?.top_p || 0.8,  // 进一步降低，提升生成速度
-          frequency_penalty: config?.frequency_penalty || 0.1,  // 轻微惩罚，提升速度
-          presence_penalty: config?.presence_penalty || 0.1,    // 轻微惩罚，提升速度
-          stream: false  // 确保不使用流式响应
+          top_p: config?.top_p || 0.8,  // Further reduced for faster generation
+          frequency_penalty: config?.frequency_penalty || 0.1,  // Slight penalty for speed
+          presence_penalty: config?.presence_penalty || 0.1,    // Slight penalty for speed
+          stream: false  // Ensure streaming is not used
         }),
-        signal: controller.signal // 添加信号用于取消请求
+        signal: controller.signal // Add signal for request cancellation
       })
 
       const duration = Date.now() - startTime
-      clearTimeout(timeoutId) // 清除超时计时器
-      console.log(`📡 OpenAI API响应 (${duration}ms):`, response.status)
+      clearTimeout(timeoutId) // Clear the timeout timer
+      console.log(`📡 OpenAI API response (${duration}ms):`, response.status)
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('❌ OpenAI API响应错误:', errorText)
+        console.error('❌ OpenAI API response error:', errorText)
         
         let error
         try {
@@ -112,20 +112,20 @@ class AIService {
       }
 
       const data = await response.json()
-      console.log(`✅ OpenAI API调用成功 (总耗时: ${Date.now() - startTime}ms)`)
-      console.log('🔢 Token使用情况:', data.usage)
+      console.log(`✅ OpenAI API call successful (Total time: ${Date.now() - startTime}ms)`)
+      console.log('🔢 Token usage:', data.usage)
       
-      const content = data.choices[0]?.message?.content || '抱歉，我无法生成回复。'
+      const content = data.choices[0]?.message?.content || 'Sorry, I was unable to generate a response.'
       return content
     } catch (error: any) {
-      console.error('💥 OpenAI API调用失败:', error)
+      console.error('💥 OpenAI API call failed:', error)
       
       if (error.name === 'AbortError') {
-        throw new Error('请求超时：AI服务响应时间过长，请稍后重试')
+        throw new Error('Request timed out: The AI service took too long to respond. Please try again later.')
       } else if (error.message.includes('fetch')) {
-        throw new Error('网络连接错误：无法连接到AI服务，请检查网络连接')
+        throw new Error('Network connection error: Could not connect to the AI service. Please check your network connection.')
       } else {
-        throw new Error(`AI 服务暂时不可用: ${error.message}`)
+        throw new Error(`AI service is temporarily unavailable: ${error.message}`)
       }
     }
   }
@@ -210,24 +210,24 @@ class AIService {
 
   // 生成复习卡片
   async generateReviewCards(courseContent: any): Promise<Omit<ReviewCard, 'id' | 'course_id' | 'created_at'>[]> {
-    const systemPrompt = `你是一位专业的课程复习卡片生成专家。请根据提供的课程内容生成高质量的复习卡片。
+    const systemPrompt = `You are an expert in generating course review cards. Please create high-quality review cards based on the provided course content.
 
-要求：
-1. 生成 5-8 张复习卡片
-2. 每张卡片包含问题和答案
-3. 涵盖基础概念、应用理论和重点公式
-4. 难度分布：简单 30%，中等 50%，困难 20%
-5. 问题要具体且有启发性
-6. 答案要准确且易于理解
+Requirements:
+1. Generate 5-8 review cards.
+2. Each card must include a question and an answer.
+3. Cover basic concepts, applied theories, and key formulas.
+4. Difficulty distribution: 30% easy, 50% medium, 20% hard.
+5. Questions should be specific and insightful.
+6. Answers should be accurate and easy to understand.
 
-课程内容：${JSON.stringify(courseContent, null, 2)}
+Course Content: ${JSON.stringify(courseContent, null, 2)}
 
-请以 JSON 格式返回复习卡片数组，格式如下：
+Please return the review cards as a JSON array with the following format:
 [
   {
-    "question": "问题内容",
-    "answer": "答案内容", 
-    "category": "分类",
+    "question": "Question content",
+    "answer": "Answer content", 
+    "category": "Category",
     "difficulty": "easy|medium|hard"
   }
 ]`
@@ -237,7 +237,7 @@ class AIService {
         { role: 'system', content: systemPrompt }
       ])
 
-      // 尝试解析 JSON 响应
+      // Try to parse the JSON response
       const jsonMatch = response.match(/\[[\s\S]*\]/)
       if (jsonMatch) {
         const cards = JSON.parse(jsonMatch[0])
@@ -247,7 +247,7 @@ class AIService {
         }))
       }
 
-      // 如果无法解析 JSON，返回默认卡片
+      // If JSON parsing fails, return default cards
       return this.getDefaultReviewCards()
     } catch (error) {
       console.error('Failed to generate review cards:', error)
@@ -257,24 +257,24 @@ class AIService {
 
   // 生成周报告建议
   async generateWeeklyRecommendations(stats: any, tasks: any[]): Promise<string[]> {
-    const systemPrompt = `你是一位专业的学习教练。请根据学生的学习数据生成个性化的建议。
+    const systemPrompt = `You are a professional learning coach. Please generate personalized recommendations for the student based on their learning data.
 
-学习统计：
-- 任务完成率: ${stats.completion_rate}%
-- 学习时间: ${stats.study_hours} 小时
-- 拖延指数: ${stats.procrastination_index}/10
-- 专注度评分: ${stats.focus_score}/100
+Learning Statistics:
+- Task completion rate: ${stats.completion_rate}%
+- Study hours: ${stats.study_hours} hours
+- Procrastination index: ${stats.procrastination_index}/10
+- Focus score: ${stats.focus_score}/100
 
-任务情况：
+Task Status:
 ${tasks.map(task => `- ${task.title}: ${task.status}`).join('\n')}
 
-请生成 3-5 条具体、可操作的建议，帮助学生在下周提高学习效率。建议要：
-1. 针对性强，基于具体数据
-2. 可操作，有明确的行动步骤
-3. 积极正面，鼓励学生
-4. 不超过 50 字
+Please generate 3-5 specific, actionable recommendations to help the student improve their learning efficiency next week. The recommendations should be:
+1. Targeted and based on specific data.
+2. Actionable, with clear steps.
+3. Positive and encouraging.
+4. No more than 50 words each.
 
-请直接返回建议列表，每条建议一行。`
+Please return only the list of recommendations, with each on a new line.`
 
     try {
       const response = await this.callOpenAI([
@@ -284,22 +284,22 @@ ${tasks.map(task => `- ${task.title}: ${task.status}`).join('\n')}
       return response.split('\n').filter(line => line.trim().length > 0)
     } catch (error) {
       console.error('Failed to generate recommendations:', error)
-      return ['本周表现良好，继续保持！']
+      return ["You performed well this week, keep it up!"]
     }
   }
 
   // 解析课程材料
   async parseCourseMaterials(materials: any[]): Promise<any> {
-    // 拼接所有材料文本
-    const materialsText = materials.map(m => `${m.name}:\n${m.extracted_text || '无文本内容'}`).join('\n\n');
+    // Concatenate all material texts
+    const materialsText = materials.map(m => `${m.name}:\n${m.extracted_text || 'No text content'}`).join('\n\n');
     
-    // 检查文件内容是否超过GPT-4o的token限制
+    // Check if the file content exceeds GPT-4o's token limit
     const sizeCheck = checkFileSizeLimit(materialsText)
     if (sizeCheck.isOverLimit) {
-      throw new Error(`文件内容过大！当前字符数：${sizeCheck.characterCount.toLocaleString()}，超过GPT-4o限制：${sizeCheck.limit.toLocaleString()}。请上传较小的文件或分割文件内容。`)
+      throw new Error(`File content is too large! Current character count: ${sizeCheck.characterCount.toLocaleString()}, exceeds GPT-4o limit: ${sizeCheck.limit.toLocaleString()}. Please upload a smaller file or split the content.`)
     }
     
-    const systemPrompt = `你是一位专业的课程材料解析专家。请分析提供的课程材料，提取关键信息并生成结构化数据。\n\n要求：\n1. 识别课程名称、学期、年份\n2. 提取所有任务、作业、考试信息\n3. 识别评分政策和课程重点\n4. 生成任务时间线\n5. 提供课程描述\n\n请以 JSON 格式返回解析结果，格式如下：\n{\n  "course_name": "课程名称",\n  "semester": "学期",\n  "year": 年份,\n  "course_description": "课程描述",\n  "grading_policy": "评分政策",\n  "tasks": [\n    {\n      "title": "任务标题",\n      "type": "reading|writing|assignment|exam|quiz|project|presentation",\n      "due_date": "YYYY-MM-DD",\n      "priority": "low|medium|high",\n      "estimated_hours": 数字,\n      "description": "任务描述"\n    }\n  ]\n}`;
+    const systemPrompt = `You are an expert in parsing course materials. Please analyze the provided materials, extract key information, and generate structured data.\n\nRequirements:\n1. Identify the course name, semester, and year.\n2. Extract all tasks, assignments, and exam information.\n3. Identify the grading policy and course highlights.\n4. Generate a task timeline.\n5. Provide a course description.\n\nPlease return the parsed results in JSON format as follows:\n{\n  "course_name": "Course Name",\n  "semester": "Semester",\n  "year": 2024,\n  "course_description": "Course Description",\n  "grading_policy": "Grading Policy",\n  "tasks": [\n    {\n      "title": "Task Title",\n      "type": "reading|writing|assignment|exam|quiz|project|presentation",\n      "due_date": "YYYY-MM-DD",\n      "priority": "low|medium|high",\n      "estimated_hours": 10,\n      "description": "Task Description"\n    }\n  ]\n}`;
     try {
       const headers = {
         'Content-Type': 'application/json',
@@ -312,7 +312,7 @@ ${tasks.map(task => `- ${task.title}: ${task.status}`).join('\n')}
           model: OPENAI_MODEL,
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: `请解析以下课程材料：\n\n${materialsText}` }
+            { role: 'user', content: `Please parse the following course materials:\n\n${materialsText}` }
           ],
           temperature: 0.2,
           max_tokens: 1500,
@@ -320,29 +320,29 @@ ${tasks.map(task => `- ${task.title}: ${task.status}`).join('\n')}
       });
       const result = await response.json();
       const content = result.choices?.[0]?.message?.content || '';
-      // 尝试提取JSON
+      // Try to extract JSON
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsedData = JSON.parse(jsonMatch[0]);
-        // grading提示
-        const gradingNotice = '只自动生成了与评分权重有关的任务，其他任务请在下方手动补充。';
-        // 补全所有任务的estimated_hours字段，默认2小时
+        // Grading notice
+        const gradingNotice = 'Only tasks related to grading weights were automatically generated. Please add other tasks manually below.';
+        // Fill in estimated_hours for all tasks, default to 2 hours
         parsedData.tasks = parsedData.tasks.map((t: any) => ({
           ...t,
           estimated_hours: t.estimated_hours == null ? 2 : t.estimated_hours
         }));
         return { ...parsedData, gradingNotice };
       }
-      // 如果AI解析失败，抛出错误而不是返回默认模板
-      throw new Error('AI解析失败，无法生成课程结构。请检查文件内容或稍后重试。');
+      // If AI parsing fails, throw an error instead of returning a default template
+      throw new Error('AI parsing failed, unable to generate course structure. Please check the file content or try again later.');
     } catch (error) {
-      console.error('AI解析失败:', error);
-      // 如果是文件大小限制错误，直接抛出
-      if (error instanceof Error && error.message.includes('文件内容过大')) {
+      console.error('AI parsing failed:', error);
+      // If it's a file size limit error, rethrow it directly
+      if (error instanceof Error && error.message.includes('File content is too large')) {
         throw error;
       }
-      // 其他错误也抛出，不再返回默认模板
-      throw new Error('AI解析失败，无法生成课程结构。请检查文件内容或稍后重试。');
+      // Rethrow other errors as well, no longer returning a default template
+      throw new Error('AI parsing failed, unable to generate course structure. Please check the file content or try again later.');
     }
   }
 
@@ -350,23 +350,23 @@ ${tasks.map(task => `- ${task.title}: ${task.status}`).join('\n')}
   private getDefaultReviewCards(): Omit<ReviewCard, 'id' | 'course_id' | 'created_at'>[] {
     return [
       {
-        question: '什么是课程的核心概念？',
-        answer: '根据课程材料，核心概念包括基础理论、重要方法和关键应用。',
-        category: '基础概念',
+        question: 'What are the core concepts of the course?',
+        answer: 'According to the course materials, core concepts include fundamental theories, important methods, and key applications.',
+        category: 'Basic Concepts',
         difficulty: 'easy',
         mastery_level: 0
       },
       {
-        question: '如何应用课程中的主要理论？',
-        answer: '主要理论的应用需要理解其基本原理，结合实际案例进行分析和验证。',
-        category: '应用理论',
+        question: 'How can the main theories of the course be applied?',
+        answer: 'Applying the main theories requires understanding their basic principles and analyzing real-world cases for validation.',
+        category: 'Applied Theory',
         difficulty: 'medium',
         mastery_level: 0
       },
       {
-        question: '课程中最重要的公式或方法是什么？',
-        answer: '最重要的公式和方法是课程的核心工具，需要熟练掌握其推导和应用。',
-        category: '公式记忆',
+        question: 'What are the most important formulas or methods in the course?',
+        answer: 'The most important formulas and methods are the core tools of the course; their derivation and application must be mastered.',
+        category: 'Formula Memorization',
         difficulty: 'hard',
         mastery_level: 0
       }
@@ -376,11 +376,11 @@ ${tasks.map(task => `- ${task.title}: ${task.status}`).join('\n')}
   // 默认课程解析
   private getDefaultCourseParse() {
     return {
-      course_name: '示例课程',
+      course_name: 'Sample Course',
       semester: 'Fall',
       year: 2024,
-      course_description: '课程描述',
-      grading_policy: '基于作业和考试',
+      course_description: 'Course Description',
+      grading_policy: 'Based on assignments and exams',
       tasks: []
     }
   }
@@ -401,7 +401,7 @@ export const aiConversationApi = {
   ): Promise<ApiResponse<AIConversation>> {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('用户未登录')
+      if (!user) throw new Error('User not logged in')
 
       const { data, error } = await supabase
         .from('ai_conversations')
@@ -424,7 +424,7 @@ export const aiConversationApi = {
   async getUserConversations(): Promise<ApiResponse<AIConversation[]>> {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('用户未登录')
+      if (!user) throw new Error('User not logged in')
 
       const { data, error } = await supabase
         .from('ai_conversations')
@@ -528,12 +528,12 @@ export const aiConversationApi = {
         .from('ai_messages')
         .select('*')
         .eq('conversation_id', conversationId)
-        .order('timestamp', { ascending: false }) // 降序获取最新的
+        .order('timestamp', { ascending: false }) // Get the latest in descending order
         .limit(limit)
 
       if (error) throw error
       
-      // 翻转顺序，让最老的消息在前面
+      // Reverse the order to have the oldest message first
       const messages = (data || []).reverse()
       return { data: messages }
     } catch (error: any) {
@@ -562,14 +562,14 @@ export const aiConversationApi = {
 
       if (error) throw error
       
-      // 处理消息：截断长内容为预览
+      // Process messages: truncate long content for preview
       const processedMessages = (data || []).map(message => ({
         ...message,
         content: message.content.length > 150 
           ? message.content.substring(0, 150) + '...' 
           : message.content,
-        isPreview: message.content.length > 150 // 标记是否为预览
-      })).reverse() // 翻转顺序
+        isPreview: message.content.length > 150 // Mark if it's a preview
+      })).reverse() // Reverse the order
 
       return { data: processedMessages as AIMessage[] }
     } catch (error: any) {
@@ -610,7 +610,7 @@ export const aiConversationApi = {
 
       if (error) throw error
       
-      // 翻转顺序，让最老的消息在前面
+      // Reverse the order to have the oldest message first
       const messages = (data || []).reverse()
       return { data: messages }
     } catch (error: any) {
@@ -622,15 +622,15 @@ export const aiConversationApi = {
   async deleteConversation(conversationId: string): Promise<ApiResponse<{ success: boolean }>> {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('用户未登录')
+      if (!user) throw new Error('User not logged in')
 
-      // 🚀 优化：利用CASCADE删除和RLS策略，一次操作删除对话及所有相关消息
-      // 数据库的外键约束会自动删除相关消息，RLS会确保权限安全
+      // 🚀 Optimization: Use CASCADE delete and RLS policies to delete the conversation and all related messages in one operation.
+      // The foreign key constraint will automatically delete related messages, and RLS will ensure permissions.
       const { error: conversationError } = await supabase
         .from('ai_conversations')
         .delete()
         .eq('id', conversationId)
-        .eq('user_id', user.id) // RLS会确保用户只能删除自己的对话
+        .eq('user_id', user.id) // RLS will ensure users can only delete their own conversations
 
       if (conversationError) throw conversationError
 
@@ -644,9 +644,9 @@ export const aiConversationApi = {
   async deleteAllConversations(): Promise<ApiResponse<{ success: boolean, deletedCount: number }>> {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('用户未登录')
+      if (!user) throw new Error('User not logged in')
 
-      // 🚀 优化：先获取要删除的对话数量，然后利用CASCADE一次性删除
+      // 🚀 Optimization: First get the number of conversations to be deleted, then delete them all at once using CASCADE.
       const { data: conversations, error: countError } = await supabase
         .from('ai_conversations')
         .select('id')
@@ -660,7 +660,7 @@ export const aiConversationApi = {
         return { data: { success: true, deletedCount: 0 } }
       }
 
-      // 🚀 利用CASCADE删除：删除所有对话，相关消息会自动删除
+      // 🚀 Use CASCADE delete: delete all conversations, related messages will be deleted automatically.
       const { error: conversationsError } = await supabase
         .from('ai_conversations')
         .delete()
@@ -680,7 +680,7 @@ export const reviewCardsApi = {
   // 为课程生成复习卡片
   async generateReviewCards(courseId: string): Promise<ApiResponse<ReviewCard[]>> {
     try {
-      // 获取课程材料和任务信息
+      // Get course materials and task information
       const { data: materials } = await supabase
         .from('course_materials')
         .select('*')
@@ -691,16 +691,16 @@ export const reviewCardsApi = {
         .select('*')
         .eq('course_id', courseId)
 
-      // 合并课程内容
+      // Merge course content
       const courseContent = {
         materials: materials || [],
         tasks: tasks || []
       }
 
-      // 调用 AI 生成复习卡片
+      // Call AI to generate review cards
       const cards = await aiService.generateReviewCards(courseContent)
 
-      // 保存到数据库
+      // Save to the database
       const cardsWithCourseId = cards.map(card => ({
         ...card,
         course_id: courseId
@@ -761,9 +761,9 @@ export const weeklyReportApi = {
   async generateWeeklyReport(weekStart: string, weekEnd: string): Promise<ApiResponse<WeeklyReport>> {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('用户未登录')
+      if (!user) throw new Error('User not logged in')
 
-      // 获取本周的任务数据
+      // Get this week's task data
       const { data: tasks } = await supabase
         .from('tasks')
         .select(`
@@ -774,13 +774,13 @@ export const weeklyReportApi = {
         .gte('due_date', weekStart)
         .lte('due_date', weekEnd)
 
-      // 计算统计数据
+      // Calculate statistics
       const stats = this.calculateWeeklyStats(tasks || [])
 
-      // 生成 AI 建议
+      // Generate AI recommendations
       const recommendations = await aiService.generateWeeklyRecommendations(stats, tasks || [])
 
-      // 创建周报告
+      // Create the weekly report
       const reportData: Omit<WeeklyReport, 'id' | 'created_at'> = {
         user_id: user.id,
         week_start: weekStart,
@@ -802,7 +802,7 @@ export const weeklyReportApi = {
     }
   },
 
-  // 计算周统计数据
+  // Calculate weekly statistics
   calculateWeeklyStats(tasks: any[]): {
     tasks_completed: number
     total_tasks: number
@@ -827,7 +827,7 @@ export const weeklyReportApi = {
     }
   },
 
-  // 计算专注度评分
+  // Calculate focus score
   calculateFocusScore(completedTasks: number, totalStudyHours: number, averageTaskHours: number): number {
     if (totalStudyHours === 0 || averageTaskHours === 0) return 0
     
@@ -838,11 +838,11 @@ export const weeklyReportApi = {
     return Math.min(Math.max(Math.round(score), 0), 100)
   },
 
-  // 获取用户的周报告历史
+  // Get user's weekly report history
   async getUserWeeklyReports(): Promise<ApiResponse<WeeklyReport[]>> {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('用户未登录')
+      if (!user) throw new Error('User not logged in')
 
       const { data, error } = await supabase
         .from('weekly_reports')

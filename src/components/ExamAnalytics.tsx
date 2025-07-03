@@ -73,7 +73,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
       return;
     }
     
-    const setTitle = `错题集 - ${exam.config.title} (${new Date().toLocaleDateString()})`;
+    const setTitle = `Mistake Book - ${exam.config.title} (${new Date().toLocaleDateString()})`;
 
     try {
       await createSetFromMistakes(setTitle, incorrectQuestions);
@@ -194,17 +194,17 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
 
   // 渲染性能雷达图数据
   const radarData = [
-    { metric: '准确率', value: isNaN(metrics.accuracy) ? 0 : metrics.accuracy, max: 100 },
-    { metric: '答题速度', value: isNaN(metrics.speed) ? 0 : Math.min(metrics.speed * 10, 100), max: 100 },
-    { metric: '稳定性', value: isNaN(metrics.consistency) ? 80 : metrics.consistency, max: 100 },
-    { metric: '置信度', value: isNaN(metrics.confidence) ? 60 : metrics.confidence, max: 100 }
+    { metric: 'Accuracy', value: isNaN(metrics.accuracy) ? 0 : metrics.accuracy, max: 100 },
+    { metric: 'Speed', value: isNaN(metrics.speed) ? 0 : Math.min(metrics.speed * 10, 100), max: 100 },
+    { metric: 'Consistency', value: isNaN(metrics.consistency) ? 80 : metrics.consistency, max: 100 },
+    { metric: 'Confidence', value: isNaN(metrics.confidence) ? 60 : metrics.confidence, max: 100 }
   ]
 
   const tabItems = [
-    { id: 'overview', label: '总览', icon: BarChart3 },
-    { id: 'detailed', label: '详细分析', icon: Clock },
-    { id: 'recommendations', label: '学习建议', icon: Lightbulb },
-    { id: 'comparison', label: '对比分析', icon: TrendingUp },
+    { id: 'overview', label: 'Overview', icon: BarChart3 },
+    { id: 'detailed', label: 'Detailed Analysis', icon: Clock },
+    { id: 'recommendations', label: 'Recommendations', icon: Lightbulb },
+    { id: 'comparison', label: 'Comparison', icon: TrendingUp },
   ]
 
   return (
@@ -219,10 +219,10 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
       >
         <div className={styles.headerContent}>
           <div>
-            <h1 className={styles.mainTitle}>{exam.config.title} - 成绩分析</h1>
+            <h1 className={styles.mainTitle}>{exam.config.title} - Results & Analysis</h1>
             <p className={styles.subTitle}>
-              完成时间: {new Date(session.end_time || Date.now()).toLocaleString()} • 
-              用时: {Math.floor((analysis?.time_analysis?.total_time || 0) / 60)}分{Math.round(analysis?.time_analysis?.total_time || 0) % 60}秒
+              Completed at: {new Date(session.end_time || Date.now()).toLocaleString()} • 
+              Time taken: {Math.floor((analysis?.time_analysis?.total_time || 0) / 60)}m {Math.round(analysis?.time_analysis?.total_time || 0) % 60}s
             </p>
           </div>
 
@@ -235,7 +235,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                 {(percentage || 0).toFixed(1)}%
               </div>
               <div className={styles.scoreDetail}>
-                {totalScore || 0}/{exam.config.total_points}分
+                {totalScore || 0}/{exam.config.total_points} Points
               </div>
             </div>
           </div>
@@ -278,11 +278,11 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                 {/* AI 智能诊断 */}
                 <div className={`${styles.card} ${styles.aiDiagnosisCard}`}>
                   <h2 className={styles.cardTitle}>
-                    <Brain size={20} /> AI 智能诊断
+                    <Brain size={20} /> AI Diagnosis
                   </h2>
                   <div className={styles.diagnosisContent}>
                     <h3 className={styles.strengthsTitle}>
-                      ✅ 优势分析 (Strengths)
+                      ✅ Strengths
                     </h3>
                     {(strengths || []).map((s, i) => (
                       <p key={`strength-${i}`} className={styles.diagnosisText}>
@@ -296,7 +296,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                     )}
 
                     <h3 className={styles.weaknessesTitle}>
-                      ⚠️ 弱点与错误模式 (Weaknesses)
+                      ⚠️ Weaknesses & Error Patterns
                     </h3>
                     {(weaknesses || []).map((w, i) => (
                       <p key={`weakness-${i}`} className={styles.diagnosisText}>
@@ -315,15 +315,15 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                     disabled={isCreatingSet}
                   >
                     {isCreatingSet
-                      ? '正在创建...'
-                      : '一键创建错题集'}
+                      ? 'Creating...'
+                      : 'Create Mistake Set'}
                   </button>
                 </div>
 
                 {/* 综合表现雷达图 */}
                 <div className={styles.card}>
                   <h2 className={styles.cardTitle}>
-                    <Target size={20} /> 综合表现
+                    <Target size={20} /> Overall Performance
                   </h2>
                   <div className={styles.radarChartContainer}>
                     {radarData.map((data, index) => (
@@ -351,29 +351,29 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                 {/* 综合指标 */}
                 <div className={styles.card}>
                   <h2 className={styles.cardTitle}>
-                    <Target size={20} /> 关键指标
+                    <Target size={20} /> Key Metrics
                   </h2>
                   <div className={styles.metricsGrid}>
                     <div className={styles.metricItem}>
-                      <span className={styles.metricLabel}>准确率</span>
+                      <span className={styles.metricLabel}>Accuracy</span>
                       <span className={styles.metricValue}>
                         {metrics.accuracy.toFixed(1)}%
                       </span>
                     </div>
                     <div className={styles.metricItem}>
-                      <span className={styles.metricLabel}>答题速度</span>
+                      <span className={styles.metricLabel}>Pace</span>
                       <span className={styles.metricValue}>
-                        {metrics.speed.toFixed(1)} 题/分
+                        {metrics.speed.toFixed(1)} q/min
                       </span>
                     </div>
                     <div className={styles.metricItem}>
-                      <span className={styles.metricLabel}>稳定性</span>
+                      <span className={styles.metricLabel}>Consistency</span>
                       <span className={styles.metricValue}>
                         {metrics.consistency.toFixed(1)}%
                       </span>
                     </div>
                     <div className={styles.metricItem}>
-                      <span className={styles.metricLabel}>置信度</span>
+                      <span className={styles.metricLabel}>Confidence</span>
                       <span className={styles.metricValue}>
                         {metrics.confidence.toFixed(1)}%
                       </span>
@@ -384,7 +384,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                 {/* 难度表现 */}
                 <div className={styles.card}>
                   <h2 className={styles.cardTitle}>
-                    <BarChart3 size={20} /> 难度表现
+                    <BarChart3 size={20} /> Performance by Difficulty
                   </h2>
                   <div className={styles.difficultyContainer}>
                     {Object.entries(metrics.difficulty_performance).map(
@@ -430,7 +430,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
           >
             <div className={`${styles.card} ${styles.detailedAnalysisCard}`}>
               <h2 className={styles.cardTitle}>
-                <Clock size={20} /> 逐题详细分析
+                <Clock size={20} /> Detailed Question Analysis
               </h2>
               <div className={styles.questionsList}>
                 {exam.questions.map((question, index) => {
@@ -471,7 +471,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                       </div>
                       <div className={styles.questionDetailsGrid}>
                         <div key={`student-answer-${question.id}`}>
-                          <span className={styles.detailLabel}>你的答案:</span>
+                          <span className={styles.detailLabel}>Your Answer:</span>
                           <span className={styles.detailValue}>
                             {Array.isArray(response?.student_answer)
                               ? response.student_answer.join(', ')
@@ -479,7 +479,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                           </span>
                         </div>
                         <div key={`correct-answer-${question.id}`}>
-                          <span className={styles.detailLabel}>正确答案:</span>
+                          <span className={styles.detailLabel}>Correct Answer:</span>
                           <span
                             className={`${styles.detailValue} ${styles.correctAnswer}`}
                           >
@@ -506,7 +506,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                             className={styles.explanationToggle}
                           >
                             <Lightbulb size={16} />
-                            {showExplanation ? '隐藏解析' : '查看解析'}
+                            {showExplanation ? 'Hide Explanation' : 'Show Explanation'}
                           </button>
                           {showExplanation && (
                             <motion.div
@@ -537,7 +537,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
           >
             <div className={`${styles.card} ${styles.recommendationsCard}`}>
               <h2 className={styles.cardTitle}>
-                <Lightbulb size={20} /> AI 学习建议
+                <Lightbulb size={20} /> AI Learning Recommendations
               </h2>
               <ul className={styles.recommendationsList}>
                 {(recommendations || []).map(
@@ -564,8 +564,8 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
             <div className={styles.card}>
                <div className={styles.placeholder}>
                  <Calendar size={48} />
-                 <h3>历史对比分析</h3>
-                 <p>该功能正在开发中，敬请期待！</p>
+                 <h3>Performance Comparison (Coming Soon)</h3>
+                 <p>Compare your results against class averages and your own past performance.</p>
               </div>
             </div>
           </motion.div>

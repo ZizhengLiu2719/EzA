@@ -11,8 +11,8 @@ export interface AIHint {
   type: 'memory_technique' | 'concept_connection' | 'mnemonic' | 'visual_aid' | 'context_clue'
   content: string
   confidence: number // 0-1, AI对提示有效性的信心
-  reasoning: string // AI生成此提示的推理过程
-  difficulty_adjustment: number // -2 to +2, 对卡片难度的建议调整
+  reasoning: string // AI's reasoning for generating this hint
+  difficulty_adjustment: number // -2 to +2, suggested adjustment to the card's difficulty
 }
 
 export interface HintGenerationOptions {
@@ -20,7 +20,7 @@ export interface HintGenerationOptions {
   learning_style: 'visual' | 'auditory' | 'kinesthetic' | 'reading_writing'
   subject_context: string
   previous_mistakes?: string[]
-  time_constraint?: number // 秒，用户希望的学习时间
+  time_constraint?: number // seconds, desired study time from the user
   hint_types?: AIHint['type'][]
 }
 
@@ -50,13 +50,13 @@ class AIHintService {
 
       return this.parseHintResponse(response)
     } catch (error) {
-      console.error('AI提示生成失败:', error)
+      console.error('AI hint generation failed:', error)
       return this.getFallbackHints(card, options)
     }
   }
 
   /**
-   * 生成记忆宫殿技巧提示
+   * Generates a Memory Palace technique guide
    */
   async generateMemoryPalaceGuide(
     cards: FSRSCard[],
@@ -72,21 +72,21 @@ class AIHintService {
     navigation_path: string
   }> {
     const prompt = `
-你是一位记忆大师，擅长记忆宫殿技术。帮助用户为以下知识点创建记忆宫殿：
+You are a memory grandmaster specializing in the Memory Palace technique. Help the user create a memory palace for the following knowledge points:
 
-主题环境: ${theme}
-知识点数量: ${cards.length}
+Theme Environment: ${theme}
+Number of Knowledge Points: ${cards.length}
 
-卡片内容:
-${cards.map((card, index) => `${index + 1}. 问题: ${card.question}\n   答案: ${card.answer}`).join('\n')}
+Card Content:
+${cards.map((card, index) => `${index + 1}. Question: ${card.question}\n   Answer: ${card.answer}`).join('\n')}
 
-请创建一个记忆宫殿方案，包括：
-1. 宫殿整体描述（选择熟悉的地点）
-2. 每个知识点的房间分配和记忆锚点
-3. 生动的视觉化描述
-4. 导航路径说明
+Please create a memory palace plan that includes:
+1. A general description of the palace (choose a familiar location)
+2. Room assignments and memory anchors for each knowledge point
+3. Vivid visualization descriptions
+4. Instructions for the navigation path
 
-用JSON格式输出，确保内容生动有趣且易于记忆。
+Output in JSON format, ensuring the content is engaging, fun, and easy to remember.
 `
 
     try {
@@ -97,13 +97,13 @@ ${cards.map((card, index) => `${index + 1}. 问题: ${card.question}\n   答案:
 
       return this.parseMemoryPalaceResponse(response)
     } catch (error) {
-      console.error('记忆宫殿生成失败:', error)
+      console.error('Memory Palace generation failed:', error)
       return this.getFallbackMemoryPalace(cards, theme)
     }
   }
 
   /**
-   * 为困难卡片生成突破性提示
+   * Generates a breakthrough hint for a difficult card
    */
   async generateBreakthroughHint(
     card: FSRSCard,
@@ -116,23 +116,23 @@ ${cards.map((card, index) => `${index + 1}. 问题: ${card.question}\n   答案:
     practice_suggestions: string[]
   }> {
     const prompt = `
-用户在学习这张卡片时遇到困难：
+The user is having difficulty with this card:
 
-问题: ${card.question}
-答案: ${card.answer}
-困难模式: ${struggling_patterns.join(', ')}
-当前难度: ${card.difficulty}
-成功率: ${(card.success_rate * 100).toFixed(1)}%
+Question: ${card.question}
+Answer: ${card.answer}
+Struggling Patterns: ${struggling_patterns.join(', ')}
+Current Difficulty: ${card.difficulty}
+Success Rate: ${(card.reps > 0 ? (card.lapses / card.reps) : 0).toFixed(2)}%
 
-作为学习心理学专家，请分析根本原因并提供突破性学习策略：
+As a learning psychology expert, please analyze the root cause and provide a breakthrough learning strategy:
 
-1. 根本原因分析（为什么用户在此卡片上困难）
-2. 针对性策略（基于困难模式的具体建议）
-3. 分步骤学习方法
-4. 多种解释方式
-5. 练习建议
+1. Root Cause Analysis (why the user is struggling with this card)
+2. Targeted Strategy (specific advice based on the struggling patterns)
+3. Step-by-step Learning Approach
+4. Alternative Explanations
+5. Practice Suggestions
 
-用JSON格式输出，确保策略具体可执行。
+Output in JSON format, ensuring the strategy is concrete and actionable.
 `
 
     try {
@@ -143,13 +143,13 @@ ${cards.map((card, index) => `${index + 1}. 问题: ${card.question}\n   答案:
 
       return this.parseBreakthroughResponse(response)
     } catch (error) {
-      console.error('突破性提示生成失败:', error)
+      console.error('Breakthrough hint generation failed:', error)
       return this.getFallbackBreakthroughHint(card)
     }
   }
 
   /**
-   * 实时难度调整建议
+   * Real-time difficulty adjustment suggestion
    */
   async suggestDifficultyAdjustment(
     card: FSRSCard,
@@ -168,21 +168,21 @@ ${cards.map((card, index) => `${index + 1}. 问题: ${card.question}\n   答案:
     const avgTime = recent_performance.reduce((sum, p) => sum + p.response_time, 0) / recent_performance.length
 
     const prompt = `
-分析这张卡片的学习表现并建议难度调整：
+Analyze the learning performance for this card and suggest a difficulty adjustment:
 
-卡片信息:
-- 当前难度: ${card.difficulty}
-- 稳定性: ${card.stability}
-- 总复习次数: ${card.reps}
-- 成功率: ${(card.success_rate * 100).toFixed(1)}%
+Card Information:
+- Current Difficulty: ${card.difficulty}
+- Stability: ${card.stability}
+- Total Repetitions: ${card.reps}
+- Lapses: ${card.lapses}
 
-最近表现 (最近${recent_performance.length}次):
-- 平均评分: ${avgRating.toFixed(1)}/4
-- 平均响应时间: ${(avgTime / 1000).toFixed(1)}秒
-- 详细记录: ${recent_performance.map(p => `评分${p.rating}, ${(p.response_time/1000).toFixed(1)}s`).join('; ')}
+Recent Performance (last ${recent_performance.length} reviews):
+- Average Rating: ${avgRating.toFixed(1)}/4
+- Average Response Time: ${(avgTime / 1000).toFixed(1)} seconds
+- Detailed Log: ${recent_performance.map(p => `Rating ${p.rating}, ${(p.response_time/1000).toFixed(1)}s`).join('; ')}
 
-请提供难度调整建议（-2到+2的整数调整）和推理。
-用JSON格式输出。
+Please provide a difficulty adjustment suggestion (an integer from -2 to +2) and the reasoning.
+Output in JSON format.
 `
 
     try {
@@ -193,13 +193,13 @@ ${cards.map((card, index) => `${index + 1}. 问题: ${card.question}\n   答案:
 
       return this.parseDifficultyResponse(response)
     } catch (error) {
-      console.error('难度调整建议生成失败:', error)
+      console.error('Difficulty adjustment suggestion failed:', error)
       return this.getFallbackDifficultyAdjustment(card, recent_performance)
     }
   }
 
   /**
-   * 生成知识连接图谱
+   * Generates a knowledge connection map
    */
   async generateKnowledgeConnections(
     target_card: FSRSCard,
@@ -216,24 +216,24 @@ ${cards.map((card, index) => `${index + 1}. 问题: ${card.question}\n   答案:
     concept_map: string
   }> {
     const prompt = `
-分析以下知识点之间的连接关系：
+Analyze the connections between the following knowledge points:
 
-目标卡片:
-问题: ${target_card.question}
-答案: ${target_card.answer}
+Target Card:
+Question: ${target_card.question}
+Answer: ${target_card.answer}
 
-相关卡片:
-${related_cards.map((card, index) => `${index + 1}. 问题: ${card.question}\n   答案: ${card.answer}`).join('\n')}
+Related Cards:
+${related_cards.map((card, index) => `${index + 1}. Question: ${card.question}\n   Answer: ${card.answer}`).join('\n')}
 
-请识别知识连接，包括：
-1. 因果关系 (causal)
-2. 类比关系 (analogical)  
-3. 层次关系 (hierarchical)
-4. 时间关系 (temporal)
-5. 概念关系 (conceptual)
+Please identify the knowledge connections, including:
+1. Causal relationships
+2. Analogical relationships
+3. Hierarchical relationships
+4. Temporal relationships
+5. Conceptual relationships
 
-为每个连接提供强度评分(0-1)和解释，并建议最佳学习路径。
-用JSON格式输出。
+Provide a strength score (0-1) and an explanation for each connection, and suggest an optimal learning path.
+Output in JSON format.
 `
 
     try {
@@ -244,7 +244,7 @@ ${related_cards.map((card, index) => `${index + 1}. 问题: ${card.question}\n  
 
       return this.parseConnectionResponse(response)
     } catch (error) {
-      console.error('知识连接生成失败:', error)
+      console.error('Knowledge connection generation failed:', error)
       return this.getFallbackConnections(target_card, related_cards)
     }
   }
@@ -253,35 +253,25 @@ ${related_cards.map((card, index) => `${index + 1}. 问题: ${card.question}\n  
 
   private buildHintPrompt(card: FSRSCard, options: HintGenerationOptions): string {
     return `
-你是一位专业的学习心理学家和记忆专家。为以下学习卡片生成智能提示：
+You are an AI learning assistant. Generate a helpful hint for the following flashcard.
 
-卡片内容:
-问题: ${card.question}
-答案: ${card.answer}
-${card.hint ? `现有提示: ${card.hint}` : ''}
-${card.explanation ? `解释: ${card.explanation}` : ''}
+**Card:**
+Question: ${card.question}
+Answer: ${card.answer}
 
-学习者信息:
-- 知识水平: ${options.user_knowledge_level}
-- 学习风格: ${options.learning_style}
-- 学科背景: ${options.subject_context}
-${options.previous_mistakes ? `- 之前错误: ${options.previous_mistakes.join(', ')}` : ''}
-${options.time_constraint ? `- 时间限制: ${options.time_constraint}秒` : ''}
+**User Profile:**
+- Knowledge Level: ${options.user_knowledge_level}
+- Learning Style: ${options.learning_style}
+- Subject: ${options.subject_context}
+- Previous Mistakes on this topic: ${options.previous_mistakes?.join(', ') || 'None'}
 
-当前卡片统计:
-- 难度: ${card.difficulty}
-- 成功率: ${(card.success_rate * 100).toFixed(1)}%
-- 复习次数: ${card.reps}
-
-请生成2-3个不同类型的智能提示，每个提示包括：
-1. 类型 (memory_technique/concept_connection/mnemonic/visual_aid/context_clue)
-2. 具体内容 (简洁有效)
-3. 信心度 (0-1)
-4. 推理过程
-5. 难度调整建议 (-2到+2)
-
-用JSON数组格式输出。
-`
+**Hint Requirements:**
+- The hint should not give away the answer directly.
+- It should guide the user towards the correct thinking process.
+- Tailor the hint to the user's profile.
+- If possible, choose from these types: ${options.hint_types?.join(', ') || 'any'}.
+- Provide the hint in a JSON format with 'type', 'content', and 'reasoning' fields.
+`;
   }
 
   private async callOpenAI(prompt: string, options: any = {}): Promise<string> {
@@ -374,61 +364,63 @@ ${options.time_constraint ? `- 时间限制: ${options.time_constraint}秒` : ''
   // 回退方法
   private getFallbackHints(card: FSRSCard, options: HintGenerationOptions): AIHint[] {
     return [{
-      id: `fallback_${Date.now()}`,
-      type: 'concept_connection',
-      content: '尝试将这个概念与您已知的知识联系起来',
-      confidence: 0.6,
-      reasoning: '通用学习策略',
+      id: `fallback_${card.id}`,
+      type: 'context_clue',
+      content: 'Think about the main concept this question is related to.',
+      confidence: 0.5,
+      reasoning: 'Fallback hint due to AI service error.',
       difficulty_adjustment: 0
-    }]
+    }];
   }
 
   private getFallbackMemoryPalace(cards: FSRSCard[], theme: string): any {
     return {
-      palace_description: `想象您的${theme}，为每个知识点分配一个房间`,
-      room_assignments: cards.map((card, index) => ({
+      palace_description: `A standard ${theme}-themed memory palace.`,
+      room_assignments: cards.map(card => ({
         card_id: card.id,
-        room: `房间${index + 1}`,
-        memory_anchor: '门把手',
-        visualization: `在门把手上贴上答案便签`
+        room: 'Main Hall',
+        memory_anchor: 'A central table',
+        visualization: `Imagine the answer to '${card.question}' written on a plaque on the table.`
       })),
-      navigation_path: '按顺序访问每个房间'
-    }
+      navigation_path: 'Start at the entrance and walk to the main hall.'
+    };
   }
 
   private getFallbackBreakthroughHint(card: FSRSCard): any {
     return {
-      root_cause_analysis: '此卡片需要更多关注和练习',
-      targeted_strategy: '分解学习，循序渐进',
-      step_by_step_approach: ['重新理解问题', '记忆关键词', '练习回忆'],
-      alternative_explanations: ['用自己的话重新描述', '寻找相似例子'],
-      practice_suggestions: ['增加复习频率', '使用记忆技巧']
-    }
+      root_cause_analysis: 'The concept may be abstract or not well-connected to prior knowledge.',
+      targeted_strategy: 'Try to connect this concept to something you already know well.',
+      step_by_step_approach: ['1. Re-read the question carefully.', '2. Break down the answer into smaller parts.', '3. Try to explain the concept in your own words.'],
+      alternative_explanations: ['Consider looking for a video explanation of this topic online.'],
+      practice_suggestions: ['Find a similar practice problem to solve.']
+    };
   }
 
   private getFallbackDifficultyAdjustment(card: FSRSCard, performance: any[]): any {
-    const avgRating = performance.reduce((sum, p) => sum + p.rating, 0) / performance.length
-    
+    const lastRating = performance.length > 0 ? performance[performance.length - 1].rating : 0;
+    let adjustment = 0;
+    if (lastRating <= 2) adjustment = 1; // Increase difficulty if failed
+    if (lastRating === 4) adjustment = -1; // Decrease difficulty if easy
     return {
-      suggested_adjustment: avgRating < 2.5 ? 1 : avgRating > 3.5 ? -1 : 0,
-      reasoning: `基于平均评分${avgRating.toFixed(1)}的调整建议`,
-      confidence: 0.7,
-      next_review_strategy: '根据表现调整复习间隔'
-    }
+      suggested_adjustment: adjustment,
+      reasoning: 'Fallback logic based on the last performance rating.',
+      confidence: 0.5,
+      next_review_strategy: 'Review again after a shorter interval if the last attempt was a failure.'
+    };
   }
 
   private getFallbackConnections(target: FSRSCard, related: FSRSCard[]): any {
     return {
-      connections: related.map(card => ({
+      connections: related.map(r => ({
         target_card_id: target.id,
-        related_card_id: card.id,
-        connection_type: 'conceptual' as const,
+        related_card_id: r.id,
+        connection_type: 'conceptual',
         strength: 0.5,
-        explanation: '概念相关性'
+        explanation: `The concept in '${target.question}' is related to the concept in '${r.question}'.`
       })),
-      learning_path: [target.id, ...related.map(c => c.id)],
-      concept_map: '基础概念连接图'
-    }
+      learning_path: [target.id, ...related.map(r => r.id)],
+      concept_map: 'A simple linear map connecting the target card to related cards.'
+    };
   }
 }
 

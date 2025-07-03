@@ -208,13 +208,13 @@ const Planner: React.FC = () => {
     }
 
     if (task.scheduled_start_time) {
-      setNotification({ show: true, message: '该任务已被安排。请直接在日历上拖动。' });
+      setNotification({ show: true, message: 'This task is already scheduled. To reschedule, please drag it on the calendar.' });
       event.remove();
       return;
     }
 
     if (task.is_locked) {
-      setNotification({ show: true, message: '无法安排已锁定的任务。' });
+      setNotification({ show: true, message: 'Cannot schedule a locked task.' });
       event.remove();
       return;
     }
@@ -225,7 +225,7 @@ const Planner: React.FC = () => {
     const dueDate = new Date(task.due_date);
 
     if (newEndTime > dueDate) {
-      setNotification({ show: true, message: `无法将任务安排在截止日期 (${dueDate.toLocaleString()}) 之后。` });
+      setNotification({ show: true, message: `Cannot schedule task past its due date (${dueDate.toLocaleString()}).` });
       event.remove();
       return;
     }
@@ -235,7 +235,7 @@ const Planner: React.FC = () => {
 
     const { error } = await tasksApi.updateTask(event.id, updates);
     if (error) {
-      setNotification({ show: true, message: `任务安排失败: ${(error as any).message}` });
+      setNotification({ show: true, message: `Failed to schedule task: ${(error as any).message}` });
       await fetchTasksAndCourses();
     }
   };
@@ -248,7 +248,7 @@ const Planner: React.FC = () => {
     if (!task) return;
 
     if (task.is_locked) {
-      setNotification({ show: true, message: '无法移动已锁定的任务。请先解锁。' });
+      setNotification({ show: true, message: 'Cannot move a locked task. Please unlock it first.' });
       info.revert();
       return;
     }
@@ -259,7 +259,7 @@ const Planner: React.FC = () => {
     const dueDate = new Date(task.due_date);
 
     if (newEndTime > dueDate) {
-      setNotification({ show: true, message: `无法将任务安排在截止日期 (${dueDate.toLocaleString()}) 之后。` });
+      setNotification({ show: true, message: `Cannot schedule task past its due date (${dueDate.toLocaleString()}).` });
       info.revert();
       return;
     }
@@ -268,7 +268,7 @@ const Planner: React.FC = () => {
     const { error } = await tasksApi.updateTask(event.id, updates);
 
     if (error) {
-      setNotification({ show: true, message: `任务更新失败: ${(error as any).message}` });
+      setNotification({ show: true, message: `Failed to update task: ${(error as any).message}` });
       info.revert();
     } else {
       setTasks(prevTasks => prevTasks.map(t => t.id === event.id ? {...t, ...updates} : t));
@@ -303,10 +303,10 @@ const Planner: React.FC = () => {
     
     const { error } = await tasksApi.updateTask(event.id, updates);
     if (error) {
-      setNotification({ show: true, message: `任务移除失败: ${(error as any).message}` });
+      setNotification({ show: true, message: `Failed to unschedule task: ${(error as any).message}` });
       fetchTasksAndCourses();
     } else {
-      setNotification({ show: true, message: `任务 "${event.title}" 已成功从日历中移除。` });
+      setNotification({ show: true, message: `Task "${event.title}" has been unscheduled.` });
     }
     
     // Reset state and close modal
@@ -429,17 +429,17 @@ const Planner: React.FC = () => {
           const updatePromises = updates.map(u => tasksApi.updateTask(u.id, u.updates));
           await Promise.all(updatePromises);
           
-          setNotification({ show: true, message: `${updates.length}个任务已成功安排！` });
+          setNotification({ show: true, message: `${updates.length} tasks scheduled successfully!` });
           await fetchTasksAndCourses();
         } else {
-          setNotification({ show: true, message: '没有需要调度的任务，或者您的日历已满/时间不足。' });
+          setNotification({ show: true, message: 'No tasks to schedule, or your calendar is full.' });
         }
 
       } catch (error: unknown) {
         if (error instanceof Error) {
-          setNotification({ show: true, message: `智能调度失败: ${error.message}` });
+          setNotification({ show: true, message: `Auto-schedule failed: ${error.message}` });
         } else {
-          setNotification({ show: true, message: '发生未知错误，智能调度失败。' });
+          setNotification({ show: true, message: 'Auto-schedule failed due to an unknown error.' });
         }
       } finally {
         setIsScheduling(false);
@@ -451,7 +451,7 @@ const Planner: React.FC = () => {
     if (!modalTask) return;
     const { error } = await tasksApi.updateTask(modalTask.id, { status: modalTask.status });
     if (error) {
-      setNotification({ show: true, message: `任务状态更新失败: ${(error as any).message}` });
+      setNotification({ show: true, message: `Failed to update task status: ${(error as any).message}` });
     } else {
       fetchTasksAndCourses();
       setShowStatusModal(false);
@@ -470,7 +470,7 @@ const Planner: React.FC = () => {
     const { error } = await tasksApi.updateTask(taskId, { is_locked: newLockedState });
 
     if (error) {
-      setNotification({ show: true, message: '锁定状态更新失败，请重试。' });
+      setNotification({ show: true, message: 'Failed to update lock status, please try again.' });
       // Revert on failure
       setTasks(prevTasks => prevTasks.map(t => t.id === taskId ? { ...t, is_locked: !newLockedState } : t));
     }
@@ -502,20 +502,20 @@ const Planner: React.FC = () => {
       <div className={styles.glow} />
       <div className={styles.container}>
         <div className={styles.header}>
-          <h1>智能任务引擎</h1>
-          <button onClick={() => navigate(-1)} className={styles.backButton}>返回</button>
+          <h1>Smart Task Engine</h1>
+          <button onClick={() => navigate(-1)} className={styles.backButton}>Back</button>
         </div>
         
         <div className={styles.mainContent}>
           <div className={styles.taskList} ref={taskListRef}>
             <div className={styles.taskListHeader}>
-              <h2>智能任务引擎</h2>
+              <h2>Smart Task Engine</h2>
               <div className={styles.filterButtons}>
                 {[
-                  { key: 'unfinished', label: '未完成' },
-                  { key: 'due_this_week', label: '本周到期' },
-                  { key: 'overdue', label: '已逾期' },
-                  { key: 'completed', label: '已完成' },
+                  { key: 'unfinished', label: 'Incomplete' },
+                  { key: 'due_this_week', label: 'Due This Week' },
+                  { key: 'overdue', label: 'Overdue' },
+                  { key: 'completed', label: 'Completed' },
                 ].map((f) => (
                   <button key={f.key} onClick={() => setStatusFilter(f.key)} className={statusFilter === f.key ? styles.activeFilter : ''}>
                     {f.label}
@@ -524,12 +524,12 @@ const Planner: React.FC = () => {
               </div>
               <button onClick={handleAutoScheduleClick} className={styles.scheduleButton} disabled={isScheduling}>
                 {isScheduling ? <Loader2 className={styles.loader} /> : null}
-                {isScheduling ? '正在调度...' : '一键智能调度'}
+                {isScheduling ? 'Scheduling...' : 'Auto-Schedule'}
               </button>
             </div>
             <div className={styles.tasks}>
               {loading ? (
-                <div className={styles.loading}>加载中...</div>
+                <div className={styles.loading}>Loading...</div>
               ) : filteredTasks.length > 0 ? (
                 filteredTasks.map(task => (
                   <div
@@ -545,7 +545,7 @@ const Planner: React.FC = () => {
                       <span className={styles.taskTitle}>{task.title}</span>
                       <span className={styles.courseName}>{getCourseName(task.course_id)}</span>
                       <span className={styles.dueDate}>
-                        截止于: {formatDateTime(task.due_date)}
+                        Due: {formatDateTime(task.due_date)}
                         {isOverdue(task.due_date) && task.status !== 'completed' && <span className={styles.overdueIndicator}>!</span>}
                       </span>
                     </div>
@@ -561,7 +561,7 @@ const Planner: React.FC = () => {
                   </div>
                 ))
               ) : (
-                <div className={styles.emptyState}>没有找到任务。</div>
+                <div className={styles.emptyState}>No tasks found.</div>
               )}
             </div>
           </div>
@@ -592,13 +592,13 @@ const Planner: React.FC = () => {
       {showStatusModal && modalTask && (
         <div className={styles.modalBackdrop} onClick={() => setShowStatusModal(false)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h3>任务状态更新</h3>
-            <p><strong>任务:</strong> {modalTask.title}</p>
-            <p><strong>当前状态:</strong> {modalTask.status}</p>
-            <p>您想将此任务标记为 "{modalTask.status === 'completed' ? '未完成' : '已完成'}" 吗？</p>
+            <h3>Update Task Status</h3>
+            <p><strong>Task:</strong> {modalTask.title}</p>
+            <p><strong>Current Status:</strong> {modalTask.status}</p>
+            <p>Would you like to mark this task as "{modalTask.status === 'completed' ? 'Incomplete' : 'Completed'}"?</p>
             <div className={styles.modalActions}>
-              <button onClick={() => setShowStatusModal(false)} className={styles.cancelButton}>取消</button>
-              <button onClick={() => toggleTaskStatus(modalTask)} className={styles.confirmButton}>确认</button>
+              <button onClick={() => setShowStatusModal(false)} className={styles.cancelButton}>Cancel</button>
+              <button onClick={() => toggleTaskStatus(modalTask)} className={styles.confirmButton}>Confirm</button>
             </div>
           </div>
         </div>
@@ -607,11 +607,11 @@ const Planner: React.FC = () => {
       {showConfirmScheduleModal && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
-            <h3>一键智能调度确认</h3>
-            <p>这将根据任务的优先级、截止日期和预估时长，自动将它们安排到日历的可用时间段。现有任务的时间将会被更新。确定吗？</p>
+            <h3>Confirm Auto-Schedule</h3>
+            <p>This will automatically schedule tasks into available calendar slots based on priority, due date, and estimated time. Existing scheduled tasks may be moved. Are you sure?</p>
             <div className={styles.modalActions}>
-              <button onClick={executeAutoSchedule} className={styles.confirmButton}>确定</button>
-              <button onClick={() => setShowConfirmScheduleModal(false)} className={styles.cancelButton}>取消</button>
+              <button onClick={executeAutoSchedule} className={styles.confirmButton}>Confirm</button>
+              <button onClick={() => setShowConfirmScheduleModal(false)} className={styles.cancelButton}>Cancel</button>
             </div>
           </div>
         </div>
@@ -620,11 +620,11 @@ const Planner: React.FC = () => {
       {showUnscheduleConfirm && eventToUnschedule && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
-            <h3>取消任务安排</h3>
-            <p>{`您确定要将任务 "${eventToUnschedule.title}" 从日历中移除吗？`}</p>
+            <h3>Unschedule Task</h3>
+            <p>{`Are you sure you want to remove "${eventToUnschedule.title}" from the calendar?`}</p>
             <div className={styles.modalActions}>
-              <button onClick={executeUnschedule} className={styles.confirmButton}>确定</button>
-              <button onClick={() => { setShowUnscheduleConfirm(false); setEventToUnschedule(null); }} className={styles.cancelButton}>取消</button>
+              <button onClick={executeUnschedule} className={styles.confirmButton}>Confirm</button>
+              <button onClick={() => { setShowUnscheduleConfirm(false); setEventToUnschedule(null); }} className={styles.cancelButton}>Cancel</button>
             </div>
           </div>
         </div>
@@ -633,11 +633,11 @@ const Planner: React.FC = () => {
       {notification.show && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
-            <h3>通知</h3>
+            <h3>Notification</h3>
             <p>{notification.message}</p>
             <div className={styles.modalActions}>
               <button onClick={() => setNotification({ show: false, message: '' })} className={styles.confirmButton}>
-                好的
+                OK
               </button>
             </div>
           </div>

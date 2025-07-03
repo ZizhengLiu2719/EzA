@@ -1,6 +1,6 @@
 /**
- * AI内容生成服务
- * 智能生成学习题目、解释、提示和相关学习材料
+ * AI content generation service
+ * Intelligent generates learning questions, explanations, hints, and related learning materials
  */
 
 import { getAIModel } from '@/config/aiModel'
@@ -15,10 +15,10 @@ export interface GeneratedQuestion {
   difficulty: number // 1-10
   question_type: 'definition' | 'application' | 'analysis' | 'synthesis' | 'evaluation'
   cognitive_level: 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create'
-  estimated_time: number // 秒
+  estimated_time: number // seconds
   tags: string[]
   source_material?: string
-  confidence: number // 0-1, AI对生成质量的信心
+  confidence: number // 0-1, AI's confidence in the quality of the generated content
 }
 
 export interface ContentGenerationOptions {
@@ -30,7 +30,7 @@ export interface ContentGenerationOptions {
   cognitive_levels?: GeneratedQuestion['cognitive_level'][]
   learning_objectives?: string[]
   target_audience: 'high_school' | 'college' | 'graduate'
-  time_constraint?: number // 总时间限制(分钟)
+  time_constraint?: number // Total time limit in minutes
   language_style: 'formal' | 'conversational' | 'technical'
   include_multimedia?: boolean
 }
@@ -40,8 +40,8 @@ export interface StudyMaterialPackage {
   description: string
   learning_objectives: string[]
   prerequisite_knowledge: string[]
-  estimated_study_time: number // 分钟
-  difficulty_progression: number[] // 每个阶段的难度
+  estimated_study_time: number // minutes
+  difficulty_progression: number[] // Difficulty for each stage
   content_sections: {
     type: 'introduction' | 'concept' | 'example' | 'practice' | 'assessment'
     title: string
@@ -78,7 +78,7 @@ class ContentGenerator {
   }
 
   /**
-   * 基于主题智能生成学习问题
+   * Intelligently generates learning questions based on a topic.
    */
   async generateQuestions(
     topic: string,
@@ -86,39 +86,39 @@ class ContentGenerator {
     options: ContentGenerationOptions
   ): Promise<GeneratedQuestion[]> {
     const prompt = `
-作为教育内容专家，基于以下材料生成高质量学习问题：
+As an expert in educational content, generate high-quality learning questions based on the following materials:
 
-主题: ${topic}
-学科: ${options.subject}
-目标受众: ${options.target_audience}
-难度范围: ${options.difficulty_range[0]}-${options.difficulty_range[1]}
-问题数量: ${options.question_count}
+Topic: ${topic}
+Subject: ${options.subject}
+Target Audience: ${options.target_audience}
+Difficulty Range: ${options.difficulty_range[0]}-${options.difficulty_range[1]}
+Number of Questions: ${options.question_count}
 
-源材料:
+Source Material:
 ${source_material}
 
-学习目标:
-${options.learning_objectives?.join('\n') || '掌握核心概念和应用'}
+Learning Objectives:
+${options.learning_objectives?.join('\n') || 'Master core concepts and their applications'}
 
-请生成涵盖不同认知层次的问题：
-1. Remember (记忆) - 基础事实和概念
-2. Understand (理解) - 解释和总结
-3. Apply (应用) - 在新情境中使用知识
-4. Analyze (分析) - 分解和关联
-5. Evaluate (评价) - 判断和批评
-6. Create (创造) - 合成新想法
+Please generate questions covering different cognitive levels:
+1. Remember - Basic facts and concepts
+2. Understand - Explanations and summaries
+3. Apply - Use knowledge in new situations
+4. Analyze - Break down and connect ideas
+5. Evaluate - Judge and critique
+6. Create - Synthesize new ideas
 
-每个问题包含：
-- 明确的问题陈述
-- 准确的答案
-- 有用的提示
-- 详细的解释
-- 难度评估 (1-10)
-- 认知层次分类
-- 预估答题时间
-- 相关标签
+Each question should include:
+- A clear question statement
+- An accurate answer
+- A helpful hint
+- A detailed explanation
+- A difficulty rating (1-10)
+- The cognitive level classification
+- Estimated time to answer
+- Relevant tags
 
-用JSON数组格式输出所有问题。
+Output all questions in a JSON array format.
 `
 
     try {
@@ -129,13 +129,13 @@ ${options.learning_objectives?.join('\n') || '掌握核心概念和应用'}
 
       return this.parseGeneratedQuestions(response)
     } catch (error) {
-      console.error('问题生成失败:', error)
+      console.error('Question generation failed:', error)
       return this.getFallbackQuestions(topic, options)
     }
   }
 
   /**
-   * 基于现有卡片生成相似问题
+   * Generates similar questions based on an existing card.
    */
   async generateSimilarQuestions(
     base_card: FSRSCard,
@@ -143,30 +143,30 @@ ${options.learning_objectives?.join('\n') || '掌握核心概念和应用'}
     difficulty_adjustment: number = 0 // -2 to +2
   ): Promise<GeneratedQuestion[]> {
     const prompt = `
-基于这张学习卡片，生成${variation_count}个相似但不同的问题变体：
+Based on this flashcard, generate ${variation_count} similar but different question variations:
 
-原始卡片:
-问题: ${base_card.question}
-答案: ${base_card.answer}
-${base_card.hint ? `提示: ${base_card.hint}` : ''}
-${base_card.explanation ? `解释: ${base_card.explanation}` : ''}
-当前难度: ${base_card.difficulty}
+Original Card:
+Question: ${base_card.question}
+Answer: ${base_card.answer}
+${base_card.hint ? `Hint: ${base_card.hint}` : ''}
+${base_card.explanation ? `Explanation: ${base_card.explanation}` : ''}
+Current Difficulty: ${base_card.difficulty}
 
-变体要求:
-- 保持核心概念不变
-- 调整难度: ${difficulty_adjustment > 0 ? `增加${difficulty_adjustment}` : difficulty_adjustment < 0 ? `降低${Math.abs(difficulty_adjustment)}` : '保持相同'}
-- 使用不同的表达方式
-- 提供新的应用场景
-- 确保每个变体都有独特价值
+Variation Requirements:
+- Keep the core concept the same.
+- Adjust difficulty: ${difficulty_adjustment > 0 ? `Increase by ${difficulty_adjustment}` : difficulty_adjustment < 0 ? `Decrease by ${Math.abs(difficulty_adjustment)}` : 'Keep the same'}
+- Use different phrasing.
+- Provide new application scenarios.
+- Ensure each variation has unique value.
 
-每个变体包含：
-1. 重新表述的问题
-2. 对应的准确答案  
-3. 适当的提示
-4. 清晰的解释
-5. 调整后的难度值
+Each variation should include:
+1. A rephrased question
+2. The corresponding accurate answer
+3. An appropriate hint
+4. A clear explanation
+5. The adjusted difficulty value
 
-用JSON数组格式输出所有变体。
+Output all variations in a JSON array format.
 `
 
     try {
@@ -177,13 +177,13 @@ ${base_card.explanation ? `解释: ${base_card.explanation}` : ''}
 
       return this.parseGeneratedQuestions(response)
     } catch (error) {
-      console.error('变体问题生成失败:', error)
+      console.error('Similar question generation failed:', error)
       return this.getFallbackSimilarQuestions(base_card, variation_count)
     }
   }
 
   /**
-   * 增强现有解释
+   * Enhances an existing explanation.
    */
   async enhanceExplanation(
     question: string,
@@ -192,31 +192,31 @@ ${base_card.explanation ? `解释: ${base_card.explanation}` : ''}
     enhancement_focus: ExplanationEnhancement['improvement_type'][]
   ): Promise<ExplanationEnhancement> {
     const prompt = `
-作为教育专家，增强以下学习材料的解释质量：
+As an educational expert, enhance the quality of the explanation for the following learning material:
 
-问题: ${question}
-答案: ${answer}
-当前解释: ${current_explanation}
+Question: ${question}
+Answer: ${answer}
+Current Explanation: ${current_explanation}
 
-增强重点: ${enhancement_focus.join(', ')}
+Enhancement Focus: ${enhancement_focus.join(', ')}
 
-请提供：
-1. 改进后的解释（更清晰、更全面）
-2. 具体的改进类型说明
-3. 2-3个相关例子
-4. 1-2个生动的类比
-5. 常见误解澄清
-6. 练习建议
-7. 相关概念连接
+Please provide:
+1. An improved explanation (clearer, more comprehensive)
+2. A description of the specific improvement type
+3. 2-3 relevant examples
+4. 1-2 vivid analogies
+5. Clarification of common misconceptions
+6. Practice suggestions
+7. Connections to related concepts
 
-确保增强后的内容：
-- 更容易理解
-- 包含具体例子
-- 使用恰当的类比
-- 预防常见错误
-- 促进深度学习
+Ensure the enhanced content is:
+- Easier to understand
+- Includes concrete examples
+- Uses appropriate analogies
+- Prevents common errors
+- Promotes deep learning
 
-用JSON格式输出增强结果。
+Output the enhanced result in JSON format.
 `
 
     try {
@@ -227,80 +227,57 @@ ${base_card.explanation ? `解释: ${base_card.explanation}` : ''}
 
       return this.parseExplanationEnhancement(response, current_explanation)
     } catch (error) {
-      console.error('解释增强失败:', error)
+      console.error('Explanation enhancement failed:', error)
       return this.getFallbackExplanationEnhancement(current_explanation, enhancement_focus)
     }
   }
 
   /**
-   * 生成完整的学习材料包
+   * Generates a complete study material package.
    */
   async generateStudyMaterialPackage(
     topic: string,
     learning_objectives: string[],
-    target_duration: number, // 分钟
+    target_duration: number, // minutes
     options: Partial<ContentGenerationOptions>
   ): Promise<StudyMaterialPackage> {
     const prompt = `
-创建关于"${topic}"的完整学习材料包：
+Create a complete study material package on "${topic}":
 
-学习目标:
+Learning Objectives:
 ${learning_objectives.join('\n')}
 
-目标学习时间: ${target_duration}分钟
-目标受众: ${options.target_audience || 'college'}
-语言风格: ${options.language_style || 'conversational'}
+Target Study Time: ${target_duration} minutes
+Target Audience: ${options.target_audience || 'college'}
+Style: ${options.language_style || 'conversational'}
 
-请创建包含以下部分的学习包：
+Your task is to structure a comprehensive learning module. It should include:
+1.  **Title & Description:** An engaging title and a brief overview.
+2.  **Prerequisites:** What the learner should know beforehand.
+3.  **Content Sections:** Break down the topic into logical sections (e.g., Intro, Core Concept, Examples, Practice). For each section, provide content and generate 2-3 relevant questions.
+4.  **Interactive Elements:** Suggest ideas for quizzes, simulations, or diagrams.
+5.  **Summary:** A concise summary of the key takeaways.
+6.  **Further Reading:** A list of resources for deeper study.
 
-1. **介绍部分** (10%时间)
-   - 主题概述
-   - 学习目标
-   - 先决知识
-   - 学习路径
-
-2. **核心概念** (40%时间)
-   - 基础概念解释
-   - 关键术语定义
-   - 原理和理论
-   - 概念间关系
-
-3. **实例与应用** (30%时间)
-   - 具体例子
-   - 实际应用
-   - 案例研究
-   - 问题解决
-
-4. **练习与评估** (15%时间)
-   - 练习题目
-   - 自测问题
-   - 反思提示
-   - 应用练习
-
-5. **总结与拓展** (5%时间)
-   - 要点总结
-   - 进一步阅读
-   - 相关主题
-   - 实践建议
-
-每个部分包含适当的问题和互动元素。用JSON格式输出完整的学习包结构。
+The entire package should be cohesive and structured to fit the target study time.
+Output the result in a single JSON object.
 `
 
     try {
       const response = await this.callOpenAI(prompt, {
-        temperature: 0.6,
-        max_tokens: 1200
+        temperature: 0.7,
+        max_tokens: 3000
       })
 
       return this.parseStudyMaterialPackage(response, topic)
     } catch (error) {
-      console.error('学习材料包生成失败:', error)
+      console.error('Study material package generation failed:', error)
       return this.getFallbackStudyMaterialPackage(topic, learning_objectives, target_duration)
     }
   }
 
   /**
-   * 智能填充卡片空白信息
+   * Fills in missing information for an incomplete flashcard.
    */
   async fillMissingCardInfo(
     incomplete_card: Partial<FSRSCard>,
@@ -317,45 +294,42 @@ ${learning_objectives.join('\n')}
     suggested_tags?: string[]
     confidence: number
   }> {
+    const { subject, topic, difficulty_hint } = context;
+    const { question, answer, hint, explanation } = incomplete_card;
+
     const prompt = `
-帮助完善这张不完整的学习卡片：
+As an AI-powered subject matter expert for ${subject}, complete the following flashcard based on the provided information.
 
-现有信息:
-${incomplete_card.question ? `问题: ${incomplete_card.question}` : ''}
-${incomplete_card.answer ? `答案: ${incomplete_card.answer}` : ''}
-${incomplete_card.hint ? `提示: ${incomplete_card.hint}` : ''}
-${incomplete_card.explanation ? `解释: ${incomplete_card.explanation}` : ''}
+**Context:**
+- Subject: ${subject}
+- Topic: ${topic || 'General'}
+- Target Difficulty: ${difficulty_hint || 'Not specified'}
 
-上下文信息:
-- 学科: ${context.subject}
-${context.topic ? `- 主题: ${context.topic}` : ''}
-${context.difficulty_hint ? `- 建议难度: ${context.difficulty_hint}` : ''}
+**Provided Information (some fields may be empty):**
+- Question: ${question || ''}
+- Answer: ${answer || ''}
+- Hint: ${hint || ''}
+- Explanation: ${explanation || ''}
 
-请为缺失的部分提供建议：
-${!incomplete_card.question ? '- 生成合适的问题' : ''}
-${!incomplete_card.answer ? '- 提供准确的答案' : ''}
-${!incomplete_card.hint ? '- 添加有用的提示' : ''}
-${!incomplete_card.explanation ? '- 编写清晰的解释' : ''}
-- 建议相关标签
+**Your Task:**
+- If a field is empty, intelligently fill it in based on the other provided fields.
+- If 'question' is missing, generate a relevant question based on the answer.
+- If 'answer' is missing, provide a concise and accurate answer to the question.
+- If 'hint' is missing, create one that guides the user without giving away the answer.
+- If 'explanation' is missing, provide a clear and detailed explanation.
+- Suggest relevant tags for categorization.
+- Provide a confidence score (0-1) for the completed card.
 
-确保所有建议内容：
-1. 彼此一致和协调
-2. 适合指定的学科和主题
-3. 具有教育价值
-4. 符合学习心理学原理
-
-用JSON格式输出建议内容和置信度。
+Output the result in a JSON object with the suggested fields.
 `
-
     try {
       const response = await this.callOpenAI(prompt, {
-        temperature: 0.6,
+        temperature: 0.5,
         max_tokens: 500
       })
-
       return this.parseCardCompletion(response)
     } catch (error) {
-      console.error('卡片信息填充失败:', error)
+      console.error('Card completion failed:', error)
       return this.getFallbackCardCompletion(incomplete_card, context)
     }
   }
@@ -429,8 +403,8 @@ ${!incomplete_card.explanation ? '- 编写清晰的解释' : ''}
     try {
       const parsed = JSON.parse(response)
       return {
-        title: parsed.title || `${topic} 学习指南`,
-        description: parsed.description || `关于${topic}的综合学习材料`,
+        title: parsed.title || `${topic} - Study Guide`,
+        description: parsed.description || `Comprehensive study guide for ${topic}`,
         learning_objectives: parsed.learning_objectives || [],
         prerequisite_knowledge: parsed.prerequisite_knowledge || [],
         estimated_study_time: parsed.estimated_study_time || 60,
@@ -456,35 +430,31 @@ ${!incomplete_card.explanation ? '- 编写清晰的解释' : ''}
 
   // 回退方法
   private getFallbackQuestions(topic: string, options: ContentGenerationOptions): GeneratedQuestion[] {
-    return [{
-      id: `fallback_${Date.now()}`,
-      question: `什么是${topic}？`,
-      answer: `${topic}是...`,
-      hint: `考虑${topic}的基本定义`,
-      explanation: `这是关于${topic}的基础问题`,
-      difficulty: 3,
+    return Array.from({ length: options.question_count }, (_, i) => ({
+      id: `fallback_q_${i}`,
+      question: `What is a key concept in ${topic}? (Fallback)`,
+      answer: 'This is a fallback answer. Please verify.',
+      difficulty: 5,
       question_type: 'definition',
-      cognitive_level: 'understand',
-      estimated_time: 30,
-      tags: [topic, options.subject],
-      confidence: 0.6
-    }]
+      cognitive_level: 'remember',
+      estimated_time: 60,
+      tags: [topic],
+      confidence: 0.3
+    }));
   }
 
   private getFallbackSimilarQuestions(card: FSRSCard, count: number): GeneratedQuestion[] {
-    return Array.from({ length: count }, (_, index) => ({
-      id: `similar_${Date.now()}_${index}`,
-      question: `${card.question} (变体 ${index + 1})`,
+    return Array.from({ length: count }, (_, i) => ({
+      id: `fallback_sim_${card.id}_${i}`,
+      question: `What is another way to ask about '${card.question.substring(0, 20)}...'?`,
       answer: card.answer,
-      hint: card.hint,
-      explanation: card.explanation,
       difficulty: card.difficulty,
-      question_type: 'definition' as const,
-      cognitive_level: 'understand' as const,
-      estimated_time: 30,
+      question_type: 'definition',
+      cognitive_level: 'understand',
+      estimated_time: 60,
       tags: card.tags || [],
-      confidence: 0.6
-    }))
+      confidence: 0.3
+    }));
   }
 
   private getFallbackExplanationEnhancement(
@@ -493,14 +463,14 @@ ${!incomplete_card.explanation ? '- 编写清晰的解释' : ''}
   ): ExplanationEnhancement {
     return {
       original_explanation: original,
-      enhanced_explanation: `${original}\n\n这个概念可以进一步理解为...`,
+      enhanced_explanation: `${original}\n\n[Fallback] This explanation could be improved by adding more examples and analogies, focusing on ${focus.join(', ')}.`,
       improvement_type: focus[0] || 'clarity',
-      additional_examples: ['例子1', '例子2'],
-      analogies: ['这就像...'],
-      common_misconceptions: ['常见误解：...'],
-      practice_suggestions: ['练习建议：...'],
-      related_concepts: ['相关概念：...']
-    }
+      additional_examples: ['Example: Fallback example.'],
+      analogies: ['Analogy: This is like... (fallback).'],
+      common_misconceptions: ['A common mistake is... (fallback).'],
+      practice_suggestions: ['Try to apply this concept to a new problem.'],
+      related_concepts: ['This is related to... (fallback).']
+    };
   }
 
   private getFallbackStudyMaterialPackage(
@@ -509,33 +479,32 @@ ${!incomplete_card.explanation ? '- 编写清晰的解释' : ''}
     duration: number
   ): StudyMaterialPackage {
     return {
-      title: `${topic} 学习指南`,
-      description: `关于${topic}的学习材料包`,
+      title: `${topic} - Study Guide (Fallback)`,
+      description: 'A basic study guide generated as a fallback.',
       learning_objectives: objectives,
-      prerequisite_knowledge: [],
+      prerequisite_knowledge: ['Basic understanding of the subject.'],
       estimated_study_time: duration,
       difficulty_progression: [3, 5, 7],
       content_sections: [{
-        type: 'introduction',
-        title: '介绍',
-        content: `欢迎学习${topic}`,
-        questions: [],
-        interactive_elements: []
+        type: 'concept',
+        title: `Introduction to ${topic}`,
+        content: 'This is the core content for the topic. (Fallback)',
+        questions: this.getFallbackQuestions(topic, { topic, question_count: 2, subject: 'any', difficulty_range: [3, 7], target_audience: 'college', language_style: 'formal' })
       }],
-      summary: `本材料包涵盖了${topic}的核心概念`,
-      further_reading: []
-    }
+      summary: 'This is a summary of the topic. (Fallback)',
+      further_reading: ['Search for this topic on a reliable educational website.']
+    };
   }
 
   private getFallbackCardCompletion(card: Partial<FSRSCard>, context: any): any {
     return {
-      suggested_question: card.question || `关于${context.subject}的问题`,
-      suggested_answer: card.answer || '答案待补充',
-      suggested_hint: card.hint || '提示：仔细思考概念',
-      suggested_explanation: card.explanation || '这个概念很重要',
-      suggested_tags: [context.subject, context.topic].filter(Boolean),
-      confidence: 0.5
-    }
+      suggested_question: card.question || 'What is the key idea? (Fallback)',
+      suggested_answer: card.answer || 'Provide the answer here. (Fallback)',
+      suggested_hint: 'Think about the context. (Fallback)',
+      suggested_explanation: 'This requires a detailed explanation. (Fallback)',
+      suggested_tags: ['fallback'],
+      confidence: 0.2
+    };
   }
 }
 
