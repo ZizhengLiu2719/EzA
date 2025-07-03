@@ -70,7 +70,7 @@ const Review = () => {
   const { user } = useUser()
   const navigate = useNavigate()
   
-  // 使用简单的状态管理代替复杂的React Query
+  // Using simple state management instead of complex React Query
   const [flashcardSets, setFlashcardSets] = useState<FlashcardSetWithStats[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -102,7 +102,7 @@ const Review = () => {
   const [examFlowOpen, setExamFlowOpen] = useState(false)
   const [selectedExamType, setSelectedExamType] = useState<ExamType | null>(null)
 
-  // 加载flashcard sets
+  // Load flashcard sets
   const loadFlashcardSets = async () => {
     if (!user?.id) return
     
@@ -119,12 +119,12 @@ const Review = () => {
     }
   }
 
-  // 在组件挂载和用户变化时加载数据
+  // Load data on component mount and user change
   useEffect(() => {
     loadFlashcardSets()
   }, [user?.id])
 
-  // 转换数据格式以匹配现有接口
+  // Convert data format to match the existing interface
   const myFlashcardSets = useMemo(() => {
     return flashcardSets.map((set: FlashcardSetWithStats) => ({
       id: set.id,
@@ -136,15 +136,15 @@ const Review = () => {
       isPublic: set.is_public,
       author: 'You',
       lastStudied: set.last_studied ? new Date(set.last_studied) : undefined,
-      masteryLevel: Math.round(set.mastery_level * 100), // 转换为百分比
-      estimatedStudyTime: Math.max(5, Math.round(set.card_count * 0.5)), // 估算学习时间
+      masteryLevel: Math.round(set.mastery_level * 100), // Convert to percentage
+      estimatedStudyTime: Math.max(5, Math.round(set.card_count * 0.5)), // Estimated study time
       tags: set.tags || [],
       dueForReview: (set.due_cards_count || 0) > 0,
       nextReview: undefined
     }))
   }, [flashcardSets])
   
-  // 计算统计数据
+  // Calculate statistics
   const studyStats = useMemo(() => {
     const totalSets = flashcardSets.length
     const totalCards = flashcardSets.reduce((sum, set) => sum + set.card_count, 0)
@@ -263,7 +263,7 @@ const Review = () => {
     try {
       const newSet = await createFlashcardSet(data)
       
-      // 刷新数据以显示新创建的卡片集
+      // Refresh data to display the newly created set
       await loadFlashcardSets()
       
       console.log('Created new flashcard set:', newSet)
@@ -273,7 +273,7 @@ const Review = () => {
       // Show success notification (you might want to add a toast system)
       alert('Flashcard set created successfully!')
       
-      return newSet // <== 关键: 返回新建的集合，供后续流程使用
+      return newSet // <== Key: Return the new set for use in subsequent flows
     } catch (error) {
       console.error('Error creating flashcard set:', error)
       throw error // Re-throw to let the modal handle the error
@@ -293,7 +293,7 @@ const Review = () => {
   // Handle deleting all flashcard sets
   const handleDeleteAllSets = () => {
     if (flashcardSets.length === 0) {
-      alert('没有卡片集可以删除')
+      alert('No sets to delete')
       return
     }
     
@@ -312,16 +312,16 @@ const Review = () => {
 
       if (deleteConfirmModal.type === 'single' && deleteConfirmModal.setId) {
         await deleteFlashcardSet(deleteConfirmModal.setId)
-        alert(`✅ 成功删除卡片集"${deleteConfirmModal.setTitle}"`)
+        alert(`✅ Successfully deleted set "${deleteConfirmModal.setTitle}"`)
       } else if (deleteConfirmModal.type === 'all') {
         await deleteAllFlashcardSets()
-        alert('✅ 成功删除所有卡片集')
+        alert('✅ Successfully deleted all sets')
       }
 
-      // 刷新数据
+      // Refresh data
       await loadFlashcardSets()
       
-      // 关闭确认模态框
+      // Close confirmation modal
       setDeleteConfirmModal({
         isOpen: false,
         type: 'single'
@@ -329,7 +329,7 @@ const Review = () => {
 
     } catch (error) {
       console.error('Error deleting flashcard set(s):', error)
-      alert(`❌ 删除失败：${error instanceof Error ? error.message : '未知错误'}`)
+      alert(`❌ Deletion failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsDeleting(false)
     }
@@ -343,20 +343,20 @@ const Review = () => {
     })
   }
 
-  // 处理创建方法选择
+  // Handle create method selection
   const handleMethodSelected = async (method: 'manual' | 'import' | 'ai-generate', setData: CreateFlashcardSetData) => {
     console.log('Selected method:', method, 'with data:', setData)
     
     try {
-      // 先创建基本的卡片集，并获取其信息
+      // First, create the basic set and get its info
       const newSet = await handleCreateFlashcardSet(setData)
       
-      // 保存设置数据以供后续使用
+      // Save set data for later use
       setPendingSetData(setData)
       
-      // 构造包含真实ID的临时对象，供后续模态框使用
+      // Construct a temporary object with the real ID for the modal to use
       const tempSet: FlashcardSet = {
-        id: newSet.id, // 使用真实UUID，避免"temp-id"导致数据库错误
+        id: newSet.id, // Use real UUID to avoid "temp-id" database errors
         title: newSet.title,
         description: newSet.description || '',
         subject: newSet.subject || 'Other',
@@ -370,7 +370,7 @@ const Review = () => {
         dueForReview: false
       }
       
-      // 根据选择的方法打开相应的模态框
+      // Open the corresponding modal based on the selected method
       if (method === 'import') {
         setSelectedSet(tempSet)
         setShowBatchImportModal(true)
@@ -378,17 +378,18 @@ const Review = () => {
         setSelectedSet(tempSet)
         setShowAIGenerator(true)
       }
-      // manual 方法已在 handleCreateFlashcardSet 中处理
+      // The 'manual' method is handled in handleCreateFlashcardSet
       
     } catch (error) {
       console.error('Error in method selection:', error)
     }
   }
 
-  // 清理状态的辅助函数
+  // Helper functions to clean up state
   const handleCloseManageModal = () => {
     setShowManageModal(false);
     setSelectedSet(null);
+    setPendingSetData(null);
   };
 
   const handleCloseBatchImportModal = () => {
@@ -397,36 +398,36 @@ const Review = () => {
     setPendingSetData(null);
   };
 
-  // 开始学习模式
+  // Start study mode
   const handleStartStudy = async (set: FlashcardSet) => {
     try {
-      // 从数据库获取实际的待复习卡片
+      // Fetch the actual due cards from the database
       const dueCards = await getDueFlashcards(set.id)
       
       if (dueCards.length === 0) {
-        alert('🎉 恭喜！当前没有需要复习的卡片。')
+        alert('🎉 Congratulations! There are no cards due for review right now.')
         return
       }
 
-      console.log(`开始学习: ${set.title}，待复习卡片: ${dueCards.length}张`)
+      console.log(`Starting study for: ${set.title}, due cards: ${dueCards.length}`)
       setSelectedSet(set)
       setStudyCards(dueCards)
       setStudyMode('studying')
     } catch (error) {
-      console.error('获取待复习卡片失败:', error)
-      alert('无法加载复习卡片，请重试')
+      console.error('Failed to fetch due cards:', error)
+      alert('Could not load cards for review, please try again')
     }
   }
 
-  // 学习完成
+  // Study completed
   const handleStudyComplete = (session: StudySession) => {
     setStudySession(session);
     setStudyMode('results');
-    // 刷新数据以更新统计
+    // Refresh data to update statistics
     console.log('Study session completed:', session);
   };
 
-  // 退出学习模式
+  // Exit study mode
   const handleExitStudy = () => {
     setStudyMode('none');
     setSelectedSet(null);
@@ -434,20 +435,20 @@ const Review = () => {
     setStudySession(null);
   };
 
-  // 再次复习
+  // Review again
   const handleReviewAgain = () => {
     if (selectedSet) {
       handleStartStudy(selectedSet);
     }
   };
 
-  // 开始考试流程
+  // Start exam flow
   const handleStartExamFlow = (examType: ExamType) => {
     setSelectedExamType(examType)
     setExamFlowOpen(true)
   }
 
-  // 如果正在学习，显示学习模式
+  // If studying, render the study mode component
   if (studyMode === 'studying' && selectedSet && studyCards.length > 0) {
     return (
       <StudyMode
@@ -459,7 +460,7 @@ const Review = () => {
     );
   }
 
-  // 如果学习完成，显示结果
+  // If study is complete, render the results
   if (studyMode === 'results' && selectedSet && studySession) {
     return (
       <StudyResults
@@ -1273,17 +1274,17 @@ const Review = () => {
           onImport={async (cards) => {
             try {
               console.log('Importing cards to set:', selectedSet.id, cards);
-              // TODO: 实现实际的导入逻辑
+              // TODO: Implement the actual import logic
               // const importedCards = await createFlashcards(cards);
               
-              // 模拟导入成功
+              // Simulate a successful import
               console.log('Mock import successful:', cards.length, 'cards');
-              alert(`✅ 成功导入 ${cards.length} 张卡片到 "${selectedSet.title}"！\n\n导入的卡片：\n${cards.slice(0, 3).map(card => `• ${card.question}`).join('\n')}${cards.length > 3 ? '\n...' : ''}`);
+              alert(`✅ Successfully imported ${cards.length} cards into "${selectedSet.title}"!\n\nImported cards:\n${cards.slice(0, 3).map(card => `• ${card.question}`).join('\n')}${cards.length > 3 ? '\n...' : ''}`);
               
               handleCloseBatchImportModal();
             } catch (error) {
               console.error('Import failed:', error);
-              alert(`❌ 导入失败：${error instanceof Error ? error.message : '未知错误'}`);
+              alert(`❌ Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
           }}
           setId={selectedSet.id}
@@ -1297,7 +1298,7 @@ const Review = () => {
           onClose={() => setShowAIGenerator(false)}
           onGenerated={(count) => {
             setShowAIGenerator(false);
-            alert(`🎉 成功生成 ${count} 张闪卡！`);
+            alert(`🎉 Successfully generated ${count} flashcards!`);
             console.log('AI generated cards:', count);
           }}
         />
@@ -1335,7 +1336,7 @@ const Review = () => {
               fontSize: '24px',
               fontWeight: '600' 
             }}>
-              {deleteConfirmModal.type === 'single' ? '确认删除卡片集' : '确认删除所有卡片集'}
+              {deleteConfirmModal.type === 'single' ? 'Confirm Set Deletion' : 'Confirm Deletion of All Sets'}
             </h3>
             
             <p style={{ 
@@ -1345,8 +1346,8 @@ const Review = () => {
               fontSize: '16px'
             }}>
               {deleteConfirmModal.type === 'single' 
-                ? `你确定要删除卡片集 "${deleteConfirmModal.setTitle}" 吗？\n\n这个操作无法撤销，所有卡片和学习进度都将被永久删除。`
-                : `你确定要删除所有 ${flashcardSets.length} 个卡片集吗？\n\n这个操作无法撤销，所有卡片和学习进度都将被永久删除。`
+                ? `Are you sure you want to delete the set "${deleteConfirmModal.setTitle}"?\n\nThis action cannot be undone. All cards and study progress will be permanently deleted.`
+                : `Are you sure you want to delete all ${flashcardSets.length} sets?\n\nThis action cannot be undone. All cards and study progress will be permanently deleted.`
               }
             </p>
 
@@ -1381,7 +1382,7 @@ const Review = () => {
                   }
                 }}
               >
-                取消
+                Cancel
               </button>
               
               <button
@@ -1414,7 +1415,7 @@ const Review = () => {
                   }
                 }}
               >
-                {isDeleting ? '删除中...' : '确认删除'}
+                {isDeleting ? 'Deleting...' : 'Confirm Delete'}
               </button>
             </div>
           </div>
