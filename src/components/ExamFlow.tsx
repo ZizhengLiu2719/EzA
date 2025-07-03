@@ -40,14 +40,14 @@ const ExamFlow: React.FC<ExamFlowProps> = ({ isOpen, examType: _examType, onClos
       try {
         const sets = await getFlashcardSets()
         if (sets.length === 0) {
-          setError('您还没有任何闪卡集可用于生成考试。请先创建一些卡片集。')
+          setError('You do not have any flashcard sets to generate an exam from. Please create some flashcard sets first.')
           return
         }
         setFlashcardSets(sets)
         setPhase('generator')
       } catch (err) {
         console.error('Failed to load flashcard sets for exam:', err)
-        setError('无法加载闪卡集数据，请稍后重试。')
+        setError('Could not load flashcard set data, please try again later.')
       }
     }
 
@@ -57,12 +57,12 @@ const ExamFlow: React.FC<ExamFlowProps> = ({ isOpen, examType: _examType, onClos
   const handleExamGenerated = (generatedExam: GeneratedExam) => {
     if (!generatedExam || !generatedExam.questions || generatedExam.questions.length === 0) {
       console.error('Exam generation resulted in an empty question set.', { generatedExam });
-      setError('AI未能生成任何题目。请尝试调整考试配置或稍后再试。');
+      setError('The AI failed to generate any questions. Please try adjusting the exam configuration or try again later.');
       setPhase('loading'); // Use the loading phase to display the modal error
       return;
     }
     
-    // 确保所有问题都有唯一的ID
+    // Ensure all questions have unique IDs
     const questionsWithIds = generatedExam.questions.map((q, index) => ({
       ...q,
       id: q.id || `gen_qid_${index}_${Date.now()}`
@@ -80,7 +80,7 @@ const ExamFlow: React.FC<ExamFlowProps> = ({ isOpen, examType: _examType, onClos
   const handleSessionComplete = async (completedSession: ExamSession) => {
     if (!exam || !exam.questions || exam.questions.length === 0) {
       console.error('Scoring failed: Exam data is incomplete or missing.', { exam });
-      setError('无法评分：考试数据不完整，请尝试重新生成考试。');
+      setError('Cannot score: Exam data is incomplete, please try generating the exam again.');
       setPhase('loading'); // Show error in modal
       return;
     }
@@ -93,7 +93,7 @@ const ExamFlow: React.FC<ExamFlowProps> = ({ isOpen, examType: _examType, onClos
       setPhase('analytics')
     } catch (err) {
       console.error('Score exam failed:', err)
-      setError('考试评分失败，请检查网络连接或稍后重试。')
+      setError('Exam scoring failed, please check your network connection or try again later.')
     }
   }
 
@@ -126,16 +126,16 @@ const ExamFlow: React.FC<ExamFlowProps> = ({ isOpen, examType: _examType, onClos
           <div className={styles.centeredMessage}>
             {error ? (
               <>
-                <p className={styles.errorMessageHeader}>出错了</p>
+                <p className={styles.errorMessageHeader}>An error occurred</p>
                 <p className={styles.errorMessageText}>{error}</p>
                 <button onClick={onClose} className={styles.closeButtonAction}>
-                  关闭
+                  Close
                 </button>
               </>
             ) : (
               <>
                 <div className={styles.spinner} />
-                <p className={styles.loadingMessage}>正在准备考试环境...</p>
+                <p className={styles.loadingMessage}>Preparing exam environment...</p>
               </>
             )}
           </div>

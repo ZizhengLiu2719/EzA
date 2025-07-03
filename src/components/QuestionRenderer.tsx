@@ -1,14 +1,14 @@
 /**
- * 多样化题型渲染器
- * 支持多种考试题型的答题界面渲染
+ * Diverse Question Type Renderer
+ * Supports rendering of answer interfaces for various exam question types
  */
 
 import { motion } from 'framer-motion'
 import {
-  BookOpen,
-  Check,
-  HelpCircle,
-  Lightbulb
+    BookOpen,
+    Check,
+    HelpCircle,
+    Lightbulb
 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import type { ExamQuestion } from '../types/examTypes'
@@ -40,13 +40,13 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   const [isConfirmed, setIsConfirmed] = useState<boolean>(answer !== undefined)
   const [showHintPanel, setShowHintPanel] = useState(false)
   
-  // 当外部的 `answer` prop 或 `question` 改变时，同步内部状态
+  // When the external `answer` prop or `question` changes, synchronize the internal state
   useEffect(() => {
     setCurrentAnswer(answer)
     setIsConfirmed(answer !== undefined)
   }, [answer, question.id])
 
-  // 提交答案的逻辑
+  // Logic for submitting an answer
   const handleConfirmAnswer = () => {
     if (currentAnswer !== undefined) {
       onAnswerChange(question.id, currentAnswer, confidence)
@@ -57,10 +57,10 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   const handleSelectionChange = (newAnswer: string | string[]) => {
     if (disabled) return;
     setCurrentAnswer(newAnswer);
-    setIsConfirmed(false); // 用户做出新选择，重置确认状态
+    setIsConfirmed(false); // User makes a new selection, reset confirmation state
   }
 
-  // 渲染单选题
+  // Render single choice question
   const renderSingleChoice = () => (
     <div className={styles.optionsContainer}>
       {question?.options?.map((option, index) => {
@@ -84,7 +84,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     </div>
   )
 
-  // 渲染多选题
+  // Render multiple choice question
   const renderMultipleChoice = () => {
     const currentAnswers = Array.isArray(currentAnswer) ? currentAnswer : []
     const handleSelect = (option: string) => {
@@ -118,7 +118,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     )
   }
 
-  // 渲染判断题
+  // Render true/false question
   const renderTrueFalse = () => (
     <div className={styles.optionsContainer}>
       {['True', 'False'].map((option, index) => {
@@ -132,7 +132,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
             whileTap={!disabled ? { scale: 0.98 } : {}}
             disabled={disabled}
           >
-            <span className={styles.optionText}>{option === 'True' ? '正确' : '错误'}</span>
+            <span className={styles.optionText}>{option === 'True' ? 'True' : 'False'}</span>
             {isSelected && <Check className={styles.checkIcon} />}
           </motion.button>
         )
@@ -140,7 +140,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     </div>
   )
 
-  // 渲染简答题
+  // Render short answer question
   const renderShortAnswer = () => {
     const answerText = Array.isArray(currentAnswer) ? currentAnswer.join('\n') : currentAnswer || ''
 
@@ -155,19 +155,19 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
             value={answerText}
             onChange={(e) => handleSelectionChange(e.target.value)}
             disabled={disabled}
-            placeholder="请在此输入您的答案..."
+            placeholder="Please enter your answer here..."
             className={`${styles.textarea} w-full p-4 border-2 rounded-lg resize-none focus:outline-none focus:ring-2 focus:border-transparent ${disabled ? 'cursor-not-allowed' : ''}`}
           />
           <div className="flex justify-between items-center text-sm text-gray-500">
-            <span>建议字数: 50-200字</span>
-            <span>{answerText.length} 字符</span>
+            <span>Suggested word count: 50-200 words</span>
+            <span>{answerText.length} characters</span>
           </div>
         </div>
       </div>
     )
   }
 
-  // 渲染论述题
+  // Render essay question
   const renderEssay = () => {
     const answerText = Array.isArray(currentAnswer) ? currentAnswer.join('\n') : currentAnswer || ''
 
@@ -181,13 +181,13 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
             <h4 className="font-medium text-blue-800 mb-2 flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
-              评分标准
+              Scoring Rubric
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-              <div className="text-green-700"><strong>优秀:</strong> {question.rubric.excellent}</div>
-              <div className="text-blue-700"><strong>良好:</strong> {question.rubric.good}</div>
-              <div className="text-yellow-700"><strong>合格:</strong> {question.rubric.satisfactory}</div>
-              <div className="text-red-700"><strong>需改进:</strong> {question.rubric.needs_improvement}</div>
+              <div className="text-green-700"><strong>Excellent:</strong> {question.rubric.excellent}</div>
+              <div className="text-blue-700"><strong>Good:</strong> {question.rubric.good}</div>
+              <div className="text-yellow-700"><strong>Satisfactory:</strong> {question.rubric.satisfactory}</div>
+              <div className="text-red-700"><strong>Needs Improvement:</strong> {question.rubric.needs_improvement}</div>
             </div>
           </div>
         )}
@@ -197,19 +197,19 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
             value={answerText}
             onChange={(e) => handleSelectionChange(e.target.value)}
             disabled={disabled}
-            placeholder="请详细阐述您的观点，注意逻辑清晰、论证充分..."
+            placeholder="Please elaborate your views, paying attention to logical clarity and sufficient argumentation..."
             className={`${styles.textarea} w-full p-4 border-2 rounded-lg resize-none focus:outline-none focus:ring-2 focus:border-transparent ${disabled ? 'cursor-not-allowed' : ''}`}
           />
           <div className="flex justify-between items-center text-sm text-gray-500">
-            <span>建议字数: 300-800字</span>
-            <span>{answerText.length} 字符</span>
+            <span>Suggested word count: 300-800 words</span>
+            <span>{answerText.length} characters</span>
           </div>
         </div>
       </div>
     )
   }
 
-  // 渲染填空题
+  // Render fill-in-the-blank question
   const renderFillBlank = () => {
     const questionParts = question.question.split('___')
     const answers = Array.isArray(currentAnswer) ? currentAnswer : (currentAnswer ? [currentAnswer] : [])
@@ -225,7 +225,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-gray-800 mb-4">
-          请填写空缺部分
+          Please fill in the blank parts
         </h3>
         
         <div className="text-lg leading-relaxed">
@@ -255,7 +255,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
               className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 disabled ? 'bg-gray-50 cursor-not-allowed' : ''
               }`}
-              placeholder="请输入答案..."
+              placeholder="Please enter the answer..."
             />
           </div>
         )}
@@ -263,7 +263,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     )
   }
 
-  // 渲染匹配题
+  // Render matching question
   const renderMatching = () => {
     const handleDrop = (event: React.DragEvent<HTMLDivElement>, targetItemId: string) => {
       const sourceItemId = event.dataTransfer.getData('text/plain')
@@ -287,7 +287,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     );
   }
 
-  // 渲染置信度滑块
+  // Render confidence slider
   const renderConfidenceSlider = () => {
     if (isReview || disabled) return null
 
@@ -295,13 +295,13 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
       <div className="mt-6 pt-4 border-t border-gray-200">
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm font-medium text-gray-700">
-            答题置信度
+            Confidence Level
           </label>
           <span className="text-sm text-gray-500">
-            {confidence === 1 ? '很不确定' : 
-             confidence === 2 ? '不太确定' :
-             confidence === 3 ? '一般' :
-             confidence === 4 ? '比较确定' : '非常确定'}
+            {confidence === 1 ? 'Very Unsure' : 
+             confidence === 2 ? 'Unsure' :
+             confidence === 3 ? 'Neutral' :
+             confidence === 4 ? 'Confident' : 'Very Confident'}
           </span>
         </div>
         <input
@@ -323,12 +323,12 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     )
   }
 
-  // 根据题型渲染对应组件
+  // Render the corresponding component based on the question type
   const renderQuestionBody = () => {
     if (!question.type) {
       return (
         <div className={styles.unsupported}>
-          AI返回了无效的题目格式
+          AI returned an invalid question format
         </div>
       )
     }
@@ -367,7 +367,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
         {renderQuestionBody()}
       </div>
 
-      {/* 置信度滑块和确认按钮 */}
+      {/* Confidence slider and confirm button */}
       {!isReview && !disabled && (
         <div className={styles.submissionControls}>
           {renderConfidenceSlider()}
@@ -376,15 +376,15 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
             disabled={isConfirmed || currentAnswer === undefined}
             className={styles.confirmButton}
           >
-            {isConfirmed ? '✓ 已确认' : '确认答案'}
+            {isConfirmed ? '✓ Confirmed' : 'Confirm Answer'}
           </button>
         </div>
       )}
 
-      {/* 提示和解释面板 */}
+      {/* Hint and explanation panel */}
       {(showHint || showExplanation) && (
         <div className="mt-6 space-y-3">
-          {/* 提示按钮 */}
+          {/* Hint button */}
           {showHint && question.hint && (
             <div>
               <button
@@ -392,7 +392,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                 className="flex items-center gap-2 text-sm text-yellow-600 hover:text-yellow-700 font-medium"
               >
                 <Lightbulb className="w-4 h-4" />
-                {showHintPanel ? '隐藏提示' : '显示提示'}
+                {showHintPanel ? 'Hide Hint' : 'Show Hint'}
               </button>
               
               {showHintPanel && (
@@ -405,7 +405,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                   <div className="flex items-start gap-2">
                     <HelpCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
                     <div className="text-sm text-yellow-800">
-                      <strong>提示:</strong> {question.hint}
+                      <strong>Hint:</strong> {question.hint}
                     </div>
                   </div>
                 </motion.div>
@@ -413,13 +413,13 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
             </div>
           )}
 
-          {/* 解释说明 */}
+          {/* Explanation */}
           {showExplanation && question.explanation && (
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-start gap-2">
                 <BookOpen className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-800">
-                  <strong>解释:</strong> {question.explanation}
+                  <strong>Explanation:</strong> {question.explanation}
                 </div>
               </div>
             </div>

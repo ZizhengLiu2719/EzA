@@ -769,15 +769,15 @@ Now, provide the list of key topics in a JSON array format.
       resource_recommendations: [
         {
           type: 'practice' as const,
-          title: '针对性练习题集',
-          description: '专门针对薄弱环节的练习',
+          title: 'Targeted Practice Set',
+          description: 'Practice exercises focused on weak areas',
           estimated_time: 30,
           priority: 'high' as const
         },
         {
           type: 'reading' as const,
-          title: '基础概念复习材料',
-          description: '巩固基础知识',
+          title: 'Basic Concepts Review Materials',
+          description: 'Consolidate foundational knowledge',
           estimated_time: 20,
           priority: 'medium' as const
         }

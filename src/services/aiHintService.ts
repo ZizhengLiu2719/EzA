@@ -1,6 +1,6 @@
 /**
- * AI智能提示生成服务
- * 为闪卡学习提供智能提示、记忆技巧和学习策略
+ * AI Smart Hint Generation Service
+ * Provides smart hints, memory techniques, and learning strategies for flashcard study
  */
 
 import { getAIModel } from '@/config/aiModel'
@@ -10,7 +10,7 @@ export interface AIHint {
   id: string
   type: 'memory_technique' | 'concept_connection' | 'mnemonic' | 'visual_aid' | 'context_clue'
   content: string
-  confidence: number // 0-1, AI对提示有效性的信心
+  confidence: number // 0-1, AI's confidence in the hint's effectiveness
   reasoning: string // AI's reasoning for generating this hint
   difficulty_adjustment: number // -2 to +2, suggested adjustment to the card's difficulty
 }
@@ -34,7 +34,7 @@ class AIHintService {
   }
 
   /**
-   * 为指定卡片生成智能学习提示
+   * Generates smart learning hints for a specified card
    */
   async generateHintsForCard(
     card: FSRSCard, 
@@ -249,7 +249,7 @@ Output in JSON format.
     }
   }
 
-  // === 私有辅助方法 ===
+  // === Private helper methods ===
 
   private buildHintPrompt(card: FSRSCard, options: HintGenerationOptions): string {
     return `
@@ -309,7 +309,7 @@ Answer: ${card.answer}
         difficulty_adjustment: hint.difficulty_adjustment || 0
       })) : []
     } catch (error) {
-      console.error('提示解析失败:', error)
+      console.error('Failed to parse hints:', error)
       return []
     }
   }
@@ -327,11 +327,11 @@ Answer: ${card.answer}
       return JSON.parse(response)
     } catch (error) {
       return {
-        root_cause_analysis: '需要更多练习和不同的学习方法',
-        targeted_strategy: '分解问题，逐步学习',
-        step_by_step_approach: ['理解概念', '记忆要点', '反复练习'],
-        alternative_explanations: ['用比喻解释', '图像化记忆'],
-        practice_suggestions: ['每日复习', '主动回忆练习']
+        root_cause_analysis: 'More practice and different learning methods are needed',
+        targeted_strategy: 'Break down the problem and learn step by step',
+        step_by_step_approach: ['Understand the concept', 'Memorize key points', 'Practice repeatedly'],
+        alternative_explanations: ['Explain with analogies', 'Use visualization for memory'],
+        practice_suggestions: ['Review daily', 'Practice active recall']
       }
     }
   }
@@ -342,9 +342,9 @@ Answer: ${card.answer}
     } catch (error) {
       return {
         suggested_adjustment: 0,
-        reasoning: '基于当前表现，维持现有难度',
+        reasoning: 'Based on current performance, maintaining the current difficulty',
         confidence: 0.7,
-        next_review_strategy: '继续常规复习'
+        next_review_strategy: 'Continue with regular review'
       }
     }
   }
@@ -356,12 +356,12 @@ Answer: ${card.answer}
       return {
         connections: [],
         learning_path: [],
-        concept_map: '暂无连接图谱'
+        concept_map: 'No connection map available at the moment'
       }
     }
   }
 
-  // 回退方法
+  // Fallback methods
   private getFallbackHints(card: FSRSCard, options: HintGenerationOptions): AIHint[] {
     return [{
       id: `fallback_${card.id}`,

@@ -1,6 +1,6 @@
 /**
- * 考试成绩分析界面组件
- * 提供详细的考试结果分析、可视化图表和学习建议
+ * Exam Results Analysis Interface Component
+ * Provides detailed exam result analysis, visual charts, and learning recommendations
  */
 
 import { AnimatePresence, motion } from 'framer-motion'
@@ -31,9 +31,9 @@ interface ExamAnalyticsProps {
 
 interface PerformanceMetrics {
   accuracy: number
-  speed: number // 题/分钟
-  consistency: number // 答题时间一致性
-  confidence: number // 平均置信度
+  speed: number // questions/minute
+  consistency: number // consistency of response time
+  confidence: number // average confidence level
   difficulty_performance: Record<string, number>
   topic_performance: Record<string, number>
   cognitive_performance: Record<string, number>
@@ -86,7 +86,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
     }
   };
 
-  // 计算性能指标
+  // Calculate performance metrics
   const metrics = useMemo((): PerformanceMetrics => {
     const totalQuestions = exam.questions.length
     const correctAnswers = scored_questions.filter((q: { is_correct: boolean; }) => q.is_correct).length
@@ -97,7 +97,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
       : exam.config.duration
     const speed = totalTime > 0 ? totalQuestions / totalTime : 0
 
-    // 计算答题时间一致性
+    // Calculate response time consistency
     const responseTimes = session.responses.map(r => r.response_time)
     const avgResponseTime = responseTimes.length > 0 
       ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length 
@@ -107,9 +107,9 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
       : 0
     const consistency = avgResponseTime > 0 && responseTimes.length > 0
       ? Math.max(0, 100 - (Math.sqrt(timeVariance) / avgResponseTime * 100))
-      : 80 // 默认值
+      : 80 // default value
 
-    // 计算平均置信度
+    // Calculate average confidence
     const confidenceLevels = session.responses
       .map(r => r.confidence_level)
       .filter(c => c !== undefined) as number[]
@@ -117,7 +117,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
       ? (confidenceLevels.reduce((sum, c) => sum + c, 0) / confidenceLevels.length) * 20
       : 60
 
-    // 按难度分析
+    // Analyze by difficulty
     const difficultyPerformance: Record<string, number> = {}
     const difficultyGroups = {
       'easy': exam.questions.filter(q => q.difficulty <= 3),
@@ -134,7 +134,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
       }
     })
 
-    // 按主题分析
+    // Analyze by topic
     const topicPerformance: Record<string, number> = {}
     const topics = Array.from(new Set(exam.questions.map(q => q.topic)))
     topics.forEach(topic => {
@@ -147,7 +147,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
       }
     })
 
-    // 按认知层次分析
+    // Analyze by cognitive level
     const cognitivePerformance: Record<string, number> = {}
     const cognitiveLevels = Array.from(new Set(exam.questions.map(q => q.cognitive_level)))
     cognitiveLevels.forEach(level => {
@@ -171,7 +171,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
     }
   }, [exam, session, result])
 
-  // 获取等级颜色
+  // Get grade color
   const getGradeColor = (grade: string) => {
     switch (grade) {
       case 'A': return styles.gradeA
@@ -183,7 +183,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
     }
   }
 
-  // 切换题目解释显示
+  // Toggle display of question explanation
   const toggleExplanation = (questionId: string) => {
     setShowExplanations(prev => 
       prev.includes(questionId) 
@@ -192,7 +192,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
     )
   }
 
-  // 渲染性能雷达图数据
+  // Render performance radar chart data
   const radarData = [
     { metric: 'Accuracy', value: isNaN(metrics.accuracy) ? 0 : metrics.accuracy, max: 100 },
     { metric: 'Speed', value: isNaN(metrics.speed) ? 0 : Math.min(metrics.speed * 10, 100), max: 100 },
@@ -210,7 +210,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
   return (
     <div className={`${styles.analyticsContainer} ${className}`}>
       {/* <BackToDashboardButton /> */}
-      {/* 头部 */}
+      {/* Header */}
       <motion.div 
         className={styles.header}
         initial={{ opacity: 0, y: -20 }}
@@ -242,7 +242,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
         </div>
       </motion.div>
 
-      {/* 标签页导航 */}
+      {/* Tab Navigation */}
       <div className={styles.tabNav}>
         {tabItems.map((tab) => (
           <button
@@ -262,7 +262,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
         ))}
       </div>
 
-      {/* 核心内容区 */}
+      {/* Core Content Area */}
       <AnimatePresence mode="wait">
         {activeTab === 'overview' && (
           <motion.div
@@ -273,9 +273,9 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
             className={styles.tabContent}
           >
             <div className={styles.mainContent}>
-              {/* 左侧栏 */}
+              {/* Left Panel */}
               <div className={styles.leftPanel}>
-                {/* AI 智能诊断 */}
+                {/* AI Smart Diagnosis */}
                 <div className={`${styles.card} ${styles.aiDiagnosisCard}`}>
                   <h2 className={styles.cardTitle}>
                     <Brain size={20} /> AI Diagnosis
@@ -291,7 +291,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                     ))}
                     {strengths?.length === 0 && (
                       <p className={styles.diagnosisText}>
-                        本次考试未发现明显的优势领域。
+                        No significant areas of strength were identified in this exam.
                       </p>
                     )}
 
@@ -305,7 +305,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                     ))}
                     {weaknesses?.length === 0 && (
                       <p className={styles.diagnosisText}>
-                        恭喜！本次考试没有发现明显的弱点。
+                        Congratulations! No significant weaknesses were found in this exam.
                       </p>
                     )}
                   </div>
@@ -320,7 +320,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                   </button>
                 </div>
 
-                {/* 综合表现雷达图 */}
+                {/* Comprehensive Performance Radar Chart */}
                 <div className={styles.card}>
                   <h2 className={styles.cardTitle}>
                     <Target size={20} /> Overall Performance
@@ -346,9 +346,9 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                 </div>
               </div>
 
-              {/* 右侧栏 */}
+              {/* Right Panel */}
               <div className={styles.rightPanel}>
-                {/* 综合指标 */}
+                {/* Comprehensive Metrics */}
                 <div className={styles.card}>
                   <h2 className={styles.cardTitle}>
                     <Target size={20} /> Key Metrics
@@ -381,7 +381,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                   </div>
                 </div>
 
-                {/* 难度表现 */}
+                {/* Performance by Difficulty */}
                 <div className={styles.card}>
                   <h2 className={styles.cardTitle}>
                     <BarChart3 size={20} /> Performance by Difficulty
@@ -475,7 +475,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                           <span className={styles.detailValue}>
                             {Array.isArray(response?.student_answer)
                               ? response.student_answer.join(', ')
-                              : response?.student_answer || '未答'}
+                              : response?.student_answer || 'Not Answered'}
                           </span>
                         </div>
                         <div key={`correct-answer-${question.id}`}>
@@ -489,7 +489,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                           </span>
                         </div>
                         <div key={`response-time-${question.id}`}>
-                          <span className={styles.detailLabel}>答题时间:</span>
+                          <span className={styles.detailLabel}>Response Time:</span>
                           <span className={styles.detailValue}>
                             {response
                               ? (response.response_time / 1000).toFixed(1)
@@ -514,7 +514,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                               animate={{ opacity: 1, height: 'auto' }}
                               className={styles.explanation}
                             >
-                              <strong>解析:</strong> {question.explanation}
+                              <strong>Explanation:</strong> {question.explanation}
                             </motion.div>
                           )}
                         </div>
