@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { CreateFlashcardData, createFlashcards } from '../api/flashcards';
+import { flashcardAI } from '../services/flashcardAI';
 import styles from './AIFlashcardGenerator.module.css';
 
 interface AIFlashcardGeneratorProps {
@@ -128,175 +129,87 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
   ], []);
 
   // Build prompt
-  const buildPrompt = useCallback((config: GenerationConfig, cardType: 'basic' | 'cloze', index: number) => {
+  const buildPrompt = useCallback((config: GenerationConfig, cardType: 'basic' | 'cloze') => {
     const selectedTopic = presetTopics.find(t => t.value === config.topic);
     const topicName = selectedTopic?.label || config.topic.replace('custom-', '');
     
     const difficultyMap = {
-      beginner: 'Beginner',
-      intermediate: 'Intermediate', 
-      advanced: 'Advanced'
+      beginner: 'Beginner-level (suitable for someone new to the topic)',
+      intermediate: 'Intermediate-level (suitable for a college undergraduate)', 
+      advanced: 'Advanced-level (suitable for graduate-level studies, requiring analysis and synthesis)'
     };
 
     const styleMap = {
-      formal: 'formal and rigorous',
-      conversational: 'conversational and easy to understand',
-      academic: 'academic and professional'
+      formal: 'formal and academic',
+      conversational: 'clear, conversational, and easy to understand',
+      academic: 'rigorous, academic, and professional'
     };
 
-    let prompt = `Please generate a ${difficultyMap[config.difficulty]} difficulty ${topicName} learning flashcard.
+    let prompt = `As an expert in instructional design, please generate a single, high-quality flashcard for a university student.
 
-Requirements:
-- Language: ${config.language === 'zh' ? 'Chinese' : 'English'}
-- Style: ${styleMap[config.style]}
-- Card Type: ${cardType === 'basic' ? 'Question/Answer' : 'Cloze Deletion'}`;
+**Topic:** ${topicName}
+**Difficulty:** ${difficultyMap[config.difficulty]}
+**Style:** ${styleMap[config.style]}
+**Card Type:** ${cardType === 'basic' ? 'Question/Answer' : 'Cloze Deletion (fill-in-the-blank)'}`;
 
     if (config.focusAreas.length > 0) {
-      prompt += `\n- Focus on: ${config.focusAreas.join(', ')}`;
+      prompt += `\n**Key Focus Areas:** ${config.focusAreas.join(', ')}`;
     }
 
     if (cardType === 'basic') {
-      prompt += `\n\nFormatting requirements:
-- The question should be specific and clear, avoiding being too broad.
-- The answer should be accurate and complete, including key points.
-- The question should test the understanding of core concepts.`;
-    } else {
-      prompt += `\n\nFormatting requirements:
-- Use "____" to indicate the part to be filled in.
-- The blank should be a key concept or term.
-- The question should have enough context.`;
+      prompt += `
+
+**Instructions for Question/Answer Card:**
+- The question must be specific, clear, and target a core concept. Avoid overly broad questions.
+- The answer must be accurate, concise, and directly address the question.`;
+    } else { // Cloze
+      prompt += `
+
+**Instructions for Cloze Deletion Card:**
+- Create a sentence or a short paragraph that provides strong context.
+- The blank, represented by "____", must replace a single, critical keyword or a very short, essential phrase.
+- The term being blanked out should be a non-obvious, core concept that requires genuine understanding to fill in.`;
     }
 
     if (config.includeHints) {
-      prompt += `\n- Provide a short hint to guide thinking.`;
+      prompt += `\n- **Hint:** Provide a short, clever hint to guide the student towards the answer without giving it away.`;
     }
 
     if (config.includeExplanations) {
-      prompt += `\n- Provide a detailed explanation of the principle or background of the answer.`;
+      prompt += `\n- **Explanation:** Provide a detailed explanation of the answer's underlying principles or background, enhancing the learning value.`;
     }
 
     if (config.customPrompt) {
-      prompt += `\n\nUser's special request: ${config.customPrompt}`;
+      prompt += `\n\n**User's Custom Instructions:** ${config.customPrompt}`;
     }
 
-    prompt += `\n\nPlease return in JSON format:
+    prompt += `
+
+**Output Format:** Please return **only** a valid JSON object with the following structure:
 {
-  "question": "Question content",
-  "answer": "Answer content",
-  ${config.includeHints ? '"hint": "Hint content",' : ''}
-  ${config.includeExplanations ? '"explanation": "Explanation content",' : ''}
-  "tags": ["Tag1", "Tag2"],
+  "question": "The generated question content.",
+  "answer": "The generated answer content.",
+  "card_type": "${cardType}",
+  ${config.includeHints ? '"hint": "The generated hint content.",' : ''}
+  ${config.includeExplanations ? '"explanation": "The generated explanation content.",' : ''}
+  "tags": ["Relevant_Tag1", "Relevant_Tag2"],
   "confidence": 0.95
 }`;
 
     return prompt;
   }, [presetTopics]);
 
-  // Simulate AI generation (replace with a real AI API call in a real project)
+  // Generate a single card using the real AI service
   const generateSingleCard = async (cardType: 'basic' | 'cloze', index: number): Promise<GeneratedCard> => {
-    const prompt = buildPrompt(config, cardType, index);
+    const prompt = buildPrompt(config, cardType);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200));
-    
-    // Simulate AI generation (this should be replaced with a real AI API call)
-    const mockCard = generateMockCard(config, cardType, index);
+    const aiCard = await flashcardAI.generateFlashcard(prompt);
     
     return {
-      ...mockCard,
+      ...aiCard,
       id: `card-${Date.now()}-${index}`,
       isSelected: true,
-      confidence: 0.85 + Math.random() * 0.15 // Simulate confidence
     };
-  };
-
-  // Improved mock generation function (with a better algorithm)
-  const generateMockCard = (config: GenerationConfig, cardType: 'basic' | 'cloze', index: number): Omit<GeneratedCard, 'id' | 'isSelected' | 'confidence'> => {
-    const selectedTopic = presetTopics.find(t => t.value === config.topic);
-    const topicName = selectedTopic?.label || config.topic.replace('custom-', '');
-    
-    // Use a smarter template generation system
-    const templates = getEnhancedTemplates(config.topic, config.difficulty, cardType);
-    const template = templates[index % templates.length];
-    
-    // Adjust content based on configuration
-    let question = template.question.replace('{topic}', topicName);
-    let answer = template.answer;
-    
-    // Adjust complexity based on difficulty
-    if (config.difficulty === 'advanced') {
-      question = question.replace('What is', 'Analyze in detail') + ', and explain its application scenarios.';
-    } else if (config.difficulty === 'beginner') {
-      question = 'Briefly explain: ' + question;
-    }
-
-    return {
-      question,
-      answer,
-      hint: config.includeHints ? template.hint : undefined,
-      explanation: config.includeExplanations ? template.explanation : undefined,
-      tags: [...(selectedTopic?.tags || [topicName]), config.difficulty, ...(config.focusAreas.slice(0, 2))],
-      card_type: cardType
-    };
-  };
-
-  // Enhanced template system
-  const getEnhancedTemplates = (topic: string, difficulty: string, cardType: 'basic' | 'cloze') => {
-    const baseTemplates = {
-      'javascript': {
-        basic: [
-          {
-            question: 'What is a closure in JavaScript? Please provide an example.',
-            answer: 'A closure is a function that can access variables from its outer scope, even after the outer function has finished executing. For example: function outer() { let x = 1; return function inner() { console.log(x); }; }',
-            hint: 'Think about function scope and lexical environment.',
-            explanation: 'When a function is created, it creates a closure, which saves the variables in its creation scope. This is why `inner` can access `x`.'
-          },
-          {
-            question: 'Explain the difference between `let`, `const`, and `var`.',
-            answer: '`var` is function-scoped, can be re-declared and updated. `let` is block-scoped, cannot be re-declared but can be updated. `const` is block-scoped, cannot be re-declared or updated, and must be initialized at declaration.',
-            hint: 'Consider scope, hoisting, and re-assignability.',
-            explanation: '`let` and `const` were introduced in ES6 to solve problems with `var`, such as variable hoisting and lack of block scope, making the code more predictable and less prone to errors.'
-          }
-        ],
-        cloze: [
-          {
-            question: 'In asynchronous JavaScript, `____` is a new feature in ES2017 that makes asynchronous code look and behave more like synchronous code.',
-            answer: 'async/await',
-            hint: 'A pair of keywords used with Promises.',
-            explanation: '`async/await` is syntactic sugar built on top of Promises, making complex asynchronous logic easier to write and read, avoiding "callback hell".'
-          }
-        ]
-      },
-      'react': {
-        basic: [
-          {
-            question: 'What is the function of the `key` prop in React?',
-            answer: 'The `key` prop is a special string attribute you need to include when creating lists of elements. Keys help React identify which items have changed, are added, or are removed. Keys should be stable, predictable, and unique.',
-            hint: 'How does React efficiently update the UI when a list changes?',
-            explanation: 'Using `key` allows React to perform more efficient diffing algorithms, minimizing DOM manipulations and improving performance. Using array indices as keys is generally not recommended as it can lead to bugs with re-ordering.'
-          }
-        ]
-      }
-    };
-
-    // Fallback for custom topics
-    const defaultTemplates = {
-      basic: [{
-        question: 'What is the core concept of {topic}?',
-        answer: 'The core concept of {topic} is...',
-        hint: 'Think about the most fundamental idea.',
-        explanation: 'This concept is central to understanding the entire subject.'
-      }],
-      cloze: [{
-        question: 'In {topic}, the term `____` refers to a key principle.',
-        answer: 'key principle',
-        hint: 'It is a foundational term.',
-        explanation: 'Understanding this term is crucial for further study.'
-      }]
-    };
-
-    // @ts-ignore
-    return (baseTemplates[topic] || defaultTemplates)[cardType];
   };
 
   const generateCards = async () => {
