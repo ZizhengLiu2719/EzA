@@ -59,6 +59,17 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
   const { analysis, grade_level, scored_questions, totalScore, percentage } = result;
   const { strengths, weaknesses, recommendations } = analysis;
 
+  const getFullCorrectAnswer = (question: ExamQuestion): string => {
+    if (!question.options || (question.type !== 'single_choice' && question.type !== 'multiple_choice')) {
+      return Array.isArray(question.correct_answer) ? question.correct_answer.join(', ') : String(question.correct_answer ?? 'N/A');
+    }
+    const correctKeys = Array.isArray(question.correct_answer) ? question.correct_answer : [question.correct_answer];
+    const correctOptions = question.options.filter(option => 
+        correctKeys.some(key => option.startsWith(String(key)))
+    );
+    return correctOptions.length > 0 ? correctOptions.join(', ') : correctKeys.join(', ');
+  };
+
   const handleCreateMistakeSet = async () => {
     setCreationStatus('loading')
     setIsCreatingSet(true)
@@ -471,27 +482,21 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                         )}
                       </div>
                       <div className={styles.questionDetailsGrid}>
-                        <div key={`student-answer-${question.id}`}>
-                          <span className={styles.detailLabel}>Your Answer:</span>
-                          <span className={styles.detailValue}>
+                        <div className={styles.answerDetail}>
+                          <span className={styles.label}>Your Answer:</span>
+                          <span className={styles.answerText}>
                             {Array.isArray(response?.student_answer)
                               ? response.student_answer.join(', ')
-                              : response?.student_answer || 'Not Answered'}
+                              : String(response?.student_answer ?? 'Not Answered')}
                           </span>
                         </div>
-                        <div key={`correct-answer-${question.id}`}>
-                          <span className={styles.detailLabel}>Correct Answer:</span>
-                          <span
-                            className={`${styles.detailValue} ${styles.correctAnswer}`}
-                          >
-                            {Array.isArray(question.correct_answer)
-                              ? question.correct_answer.join(', ')
-                              : question.correct_answer}
-                          </span>
+                        <div className={styles.answerDetail}>
+                          <span className={styles.label}>Correct Answer:</span>
+                          <span className={styles.correctText}>{getFullCorrectAnswer(question)}</span>
                         </div>
-                        <div key={`response-time-${question.id}`}>
-                          <span className={styles.detailLabel}>Response Time:</span>
-                          <span className={styles.detailValue}>
+                        <div className={styles.answerDetail}>
+                          <span className={styles.label}>Response Time:</span>
+                          <span className={styles.answerText}>
                             {response
                               ? (response.response_time / 1000).toFixed(1)
                               : 0}

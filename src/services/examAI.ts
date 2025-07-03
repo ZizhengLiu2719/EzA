@@ -124,8 +124,23 @@ Output the complete exam structure in JSON format.
     exam: GeneratedExam,
     responses: ExamResponse[]
   ): Promise<ExamResult> {
+    const getCorrectAnswerText = (q: ExamQuestion): string => {
+      if (!q.options || (q.type !== 'single_choice' && q.type !== 'multiple_choice')) {
+        return Array.isArray(q.correct_answer) ? q.correct_answer.join(', ') : String(q.correct_answer);
+      }
+      const correctKeys = Array.isArray(q.correct_answer) ? q.correct_answer : [q.correct_answer];
+      return correctKeys.map(key => {
+        return q.options?.find(opt => opt.startsWith(String(key))) || key;
+      }).join(', ');
+    };
+    
     const prompt = `
-As an experienced AI educational analyst, please conduct a rigorous, detailed scoring and in-depth diagnostic analysis of the following exam session.
+As an expert AI educational analyst, conduct a rigorous, detailed scoring and in-depth diagnostic analysis of the exam session.
+
+### Critical Scoring Instructions
+- **Compare answers intelligently.** A student's answer might include the option letter (e.g., "A. Node system") while the correct answer key is just "A". You **must** recognize this as a correct answer.
+- **Be case-insensitive.** This is especially important for True/False questions ("True" vs "true") and fill-in-the-blank answers.
+- **Base your judgment on the *meaning and substance* of the answer**, not just exact string matching. For subjective questions, award reasonable partial credit.
 
 ### Critical Task Requirements
 
@@ -180,7 +195,9 @@ You **must** strictly adhere to the JSON structure below. **No fields can be omi
 ${exam.questions.map(q => `
 - Question ID: ${q.id}
   - Question: ${q.question}
-  - Correct Answer: ${Array.isArray(q.correct_answer) ? q.correct_answer.join(', ') : q.correct_answer}
+  - Options: ${q.options ? q.options.join(' | ') : 'N/A'}
+  - Correct Answer (Key): ${Array.isArray(q.correct_answer) ? q.correct_answer.join(', ') : q.correct_answer}
+  - Correct Answer (Full Text): ${getCorrectAnswerText(q)}
   - Points: ${q.points}
   - Type: ${q.type}
   - Topic: ${q.topic}
