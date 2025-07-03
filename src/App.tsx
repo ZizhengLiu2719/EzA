@@ -12,7 +12,6 @@ import { Route, Routes } from 'react-router-dom'
 import Dashboard from './pages/Dashboard'
 import DatabaseSetup from './pages/DatabaseSetup'
 import FlashcardTest from './pages/FlashcardTest'
-import LearningInsights from './pages/LearningInsights'
 
 function App() {
   return (
@@ -30,8 +29,6 @@ function App() {
         <Route path="/review" element={<Review />} />
         <Route path="/database-setup" element={<DatabaseSetup />} />
         <Route path="/flashcard-test" element={<FlashcardTest />} />
-        <Route path="/learning-insights" element={<LearningInsights />} />
-        <Route path="/weekly-report" element={<LearningInsights />} />
         <Route path="/subscription" element={<Subscription />} />
         <Route path="/courses/:courseId" element={<CourseDetail />} />
       </Routes>

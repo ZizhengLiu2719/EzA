@@ -1,5 +1,5 @@
 import AIModelSelector from '@/components/AIModelSelector'
-import { LucideBarChart2, LucideBookOpen, LucideBot, LucideBrain, LucideCalendar, LucideCrown } from 'lucide-react'
+import { LucideBookOpen, LucideBot, LucideBrain, LucideCalendar, LucideCrown } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import styles from './Dashboard.module.css'
 
@@ -39,15 +39,6 @@ const modules = [
     emoji: '🤖',
     status: 'ONLINE',
     xp: '+200 XP'
-  },
-  {
-    icon: <LucideBarChart2 size={48} color="#6366f1" />,
-          title: 'AI Learning Insights',
-      desc: 'Advanced analytics, performance patterns, predictive recommendations, learning health score',
-    to: '/learning-insights',
-    emoji: '📊',
-    status: 'ANALYZING',
-    xp: '+130 XP'
   },
   {
     icon: <LucideBrain size={48} color="#ec4899" />,
