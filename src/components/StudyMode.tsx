@@ -48,7 +48,7 @@ const StudyMode: React.FC<StudyModeProps> = ({ cards, setId, onComplete, onExit 
   const currentCard = cards[currentCardIndex];
   const progress = ((currentCardIndex) / cards.length) * 100;
 
-  // 键盘快捷键
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       if (!showAnswer) {
@@ -59,7 +59,7 @@ const StudyMode: React.FC<StudyModeProps> = ({ cards, setId, onComplete, onExit 
         return;
       }
 
-      // 评分快捷键
+      // Rating shortcuts
       switch (event.key) {
         case '1':
           handleRating(ReviewRating.AGAIN);
@@ -83,7 +83,7 @@ const StudyMode: React.FC<StudyModeProps> = ({ cards, setId, onComplete, onExit 
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [showAnswer, currentCard]);
 
-  // 显示答案
+  // Show answer
   const handleShowAnswer = useCallback(() => {
     setIsFlipped(true);
     setTimeout(() => {
@@ -91,7 +91,7 @@ const StudyMode: React.FC<StudyModeProps> = ({ cards, setId, onComplete, onExit 
     }, 150);
   }, []);
 
-  // 处理评分
+  // Handle rating
   const handleRating = async (rating: ReviewRating) => {
     if (!currentCard || loading) return;
     
@@ -99,10 +99,10 @@ const StudyMode: React.FC<StudyModeProps> = ({ cards, setId, onComplete, onExit 
     const responseTime = Date.now() - cardStartTime;
 
     try {
-      // 提交评分到后端，让FSRS算法处理
+      // Submit rating to the backend for FSRS algorithm processing
       await submitCardReview(currentCard.id, rating, undefined, responseTime);
       
-      // 更新会话统计
+      // Update session statistics
       const isCorrect = rating === ReviewRating.GOOD || rating === ReviewRating.EASY;
       setSession(prev => ({
         ...prev,
@@ -121,14 +121,14 @@ const StudyMode: React.FC<StudyModeProps> = ({ cards, setId, onComplete, onExit 
         }
       }));
 
-      // 移动到下一张卡片
+      // Move to the next card
       if (currentCardIndex < cards.length - 1) {
         setCurrentCardIndex(currentCardIndex + 1);
         setIsFlipped(false);
         setShowAnswer(false);
         setCardStartTime(Date.now());
       } else {
-        // 学习完成
+        // Study complete
         const totalTime = Date.now() - sessionStartTime;
         const finalSession = {
           ...session,
@@ -148,31 +148,31 @@ const StudyMode: React.FC<StudyModeProps> = ({ cards, setId, onComplete, onExit 
           }
         };
         
-        // 更新集合的最后学习时间
+        // Update the set's last studied time
         await updateSetLastStudied(setId);
         
         onComplete(finalSession);
       }
     } catch (error) {
-      console.error('评分提交失败:', error);
-      alert('评分提交失败，请重试');
+      console.error('Failed to submit review:', error);
+      alert('Failed to submit review, please try again');
     } finally {
       setLoading(false);
     }
   };
 
-  // 获取卡片状态文本
+  // Get card state text
   const getCardStateText = (state: FSRSState) => {
     switch (state) {
-      case FSRSState.NEW: return '新卡片';
-      case FSRSState.LEARNING: return '学习中';
-      case FSRSState.REVIEW: return '复习';
-      case FSRSState.RELEARNING: return '重新学习';
-      default: return '未知';
+      case FSRSState.NEW: return 'New Card';
+      case FSRSState.LEARNING: return 'Learning';
+      case FSRSState.REVIEW: return 'Review';
+      case FSRSState.RELEARNING: return 'Relearning';
+      default: return 'Unknown';
     }
   };
 
-  // 获取难度颜色
+  // Get difficulty color
   const getDifficultyColor = (difficulty: number) => {
     if (difficulty <= 3) return '#00ff7f';
     if (difficulty <= 6) return '#ff9f0a';
@@ -180,12 +180,12 @@ const StudyMode: React.FC<StudyModeProps> = ({ cards, setId, onComplete, onExit 
   };
 
   if (!currentCard) {
-    return <div className={styles.container}>没有可学习的卡片</div>;
+    return <div className={styles.container}>No cards to study</div>;
   }
 
   return (
     <div className={styles.container}>
-      {/* 头部信息 */}
+      {/* Header Info */}
       <div className={styles.header}>
         <div className={styles.progress}>
           <div className={styles.progressBar}>
@@ -207,29 +207,29 @@ const StudyMode: React.FC<StudyModeProps> = ({ cards, setId, onComplete, onExit 
             className={styles.cardDifficulty}
             style={{ color: getDifficultyColor(currentCard.difficulty) }}
           >
-            难度: {currentCard.difficulty.toFixed(1)}
+            Difficulty: {currentCard.difficulty.toFixed(1)}
           </span>
         </div>
         
         <button onClick={onExit} className={styles.exitButton}>
-          ✕ 退出
+          ✕ Exit
         </button>
       </div>
 
-      {/* 卡片区域 */}
+      {/* Card Area */}
       <div className={styles.cardContainer}>
         <div className={`${styles.card} ${isFlipped ? styles.flipped : ''}`}>
-          {/* 正面 - 问题 */}
+          {/* Front - Question */}
           <div className={styles.cardFront}>
             <div className={styles.cardContent}>
-              <div className={styles.questionLabel}>问题</div>
+              <div className={styles.questionLabel}>Question</div>
               <div className={styles.question}>
                 {currentCard.question}
               </div>
               
               {currentCard.hint && (
                 <div className={styles.hint}>
-                  💡 提示: {currentCard.hint}
+                  💡 Hint: {currentCard.hint}
                 </div>
               )}
               
@@ -245,22 +245,17 @@ const StudyMode: React.FC<StudyModeProps> = ({ cards, setId, onComplete, onExit 
             </div>
           </div>
 
-          {/* 背面 - 答案 */}
+          {/* Back - Answer */}
           <div className={styles.cardBack}>
             <div className={styles.cardContent}>
-              <div className={styles.questionLabel}>问题</div>
-              <div className={styles.questionSmall}>
-                {currentCard.question}
-              </div>
-              
-              <div className={styles.answerLabel}>答案</div>
+              <div className={styles.answerLabel}>Answer</div>
               <div className={styles.answer}>
                 {currentCard.answer}
               </div>
               
               {currentCard.explanation && (
                 <div className={styles.explanation}>
-                  📝 解释: {currentCard.explanation}
+                  📝 Explanation: {currentCard.explanation}
                 </div>
               )}
             </div>
@@ -268,91 +263,93 @@ const StudyMode: React.FC<StudyModeProps> = ({ cards, setId, onComplete, onExit 
         </div>
       </div>
 
-      {/* 操作区域 */}
+      {/* Action Area */}
       <div className={styles.actions}>
         {!showAnswer ? (
-          <button 
-            onClick={handleShowAnswer}
+          <button
             className={styles.showAnswerButton}
-            disabled={loading}
+            onClick={handleShowAnswer}
           >
-            <span>显示答案</span>
-            <span className={styles.shortcut}>空格键</span>
+            Show Answer
+            <span className={styles.shortcut}>Spacebar</span>
           </button>
+        ) : loading ? (
+          <div className={styles.ratingButtons}>
+            <div className={styles.ratingTitle}>How well did you know this?</div>
+            <div className={styles.buttons}>
+              <button className={styles.processingButton} disabled>
+                Processing...
+              </button>
+            </div>
+          </div>
         ) : (
           <div className={styles.ratingButtons}>
-            <div className={styles.ratingTitle}>
-              你记住了这张卡片吗？
-            </div>
-            
+            <div className={styles.ratingTitle}>How well did you know this?</div>
             <div className={styles.buttons}>
               <button
-                onClick={() => handleRating(ReviewRating.AGAIN)}
                 className={`${styles.ratingButton} ${styles.again}`}
+                onClick={() => handleRating(ReviewRating.AGAIN)}
                 disabled={loading}
               >
-                <span className={styles.ratingLabel}>忘记了</span>
-                <span className={styles.ratingDescription}>需要重新学习</span>
+                <div className={styles.ratingLabel}>Again</div>
+                <div className={styles.ratingDescription}>Complete Review</div>
                 <span className={styles.shortcut}>1</span>
               </button>
-              
               <button
-                onClick={() => handleRating(ReviewRating.HARD)}
                 className={`${styles.ratingButton} ${styles.hard}`}
+                onClick={() => handleRating(ReviewRating.HARD)}
                 disabled={loading}
               >
-                <span className={styles.ratingLabel}>困难</span>
-                <span className={styles.ratingDescription}>勉强想起来</span>
+                <div className={styles.ratingLabel}>Hard</div>
+                <div className={styles.ratingDescription}>Review Tomorrow</div>
                 <span className={styles.shortcut}>2</span>
               </button>
-              
               <button
-                onClick={() => handleRating(ReviewRating.GOOD)}
                 className={`${styles.ratingButton} ${styles.good}`}
+                onClick={() => handleRating(ReviewRating.GOOD)}
                 disabled={loading}
               >
-                <span className={styles.ratingLabel}>良好</span>
-                <span className={styles.ratingDescription}>正确回忆</span>
+                <div className={styles.ratingLabel}>Good</div>
+                <div className={styles.ratingDescription}>Review in 3 days</div>
                 <span className={styles.shortcut}>3</span>
               </button>
-              
               <button
-                onClick={() => handleRating(ReviewRating.EASY)}
                 className={`${styles.ratingButton} ${styles.easy}`}
+                onClick={() => handleRating(ReviewRating.EASY)}
                 disabled={loading}
               >
-                <span className={styles.ratingLabel}>简单</span>
-                <span className={styles.ratingDescription}>轻松回忆</span>
+                <div className={styles.ratingLabel}>Easy</div>
+                <div className={styles.ratingDescription}>Review in 7 days</div>
                 <span className={styles.shortcut}>4</span>
               </button>
             </div>
           </div>
         )}
-      </div>
 
-      {/* 会话统计 */}
-      <div className={styles.sessionStats}>
-        <div className={styles.stat}>
-          <span className={styles.statValue}>{session.cardsReviewed}</span>
-          <span className={styles.statLabel}>已学习</span>
-        </div>
-        <div className={styles.stat}>
-          <span className={styles.statValue}>
-            {session.cardsReviewed > 0 ? Math.round((session.correctAnswers / session.cardsReviewed) * 100) : 0}%
-          </span>
-          <span className={styles.statLabel}>正确率</span>
-        </div>
-        <div className={styles.stat}>
-          <span className={styles.statValue}>
-            {Math.round((Date.now() - sessionStartTime) / 60000)}
-          </span>
-          <span className={styles.statLabel}>分钟</span>
+        {/* Session Stats */}
+        <div className={styles.sessionStats}>
+          <div className={styles.stat}>
+            <div className={styles.statValue}>{session.cardsReviewed}</div>
+            <div className={styles.statLabel}>Reviewed</div>
+          </div>
+          <div className={styles.stat}>
+            <div className={styles.statValue}>
+              {session.cardsReviewed > 0 
+                ? `${Math.round((session.correctAnswers / session.cardsReviewed) * 100)}%`
+                : '0%'}
+            </div>
+            <div className={styles.statLabel}>Correct</div>
+          </div>
+          <div className={styles.stat}>
+            <div className={styles.statValue}>{session.totalCards}</div>
+            <div className={styles.statLabel}>Total</div>
+          </div>
         </div>
       </div>
 
       {loading && (
         <div className={styles.loadingOverlay}>
-          <div className={styles.loadingSpinner}>处理中...</div>
+          <div className={styles.loadingSpinner}></div>
         </div>
       )}
     </div>

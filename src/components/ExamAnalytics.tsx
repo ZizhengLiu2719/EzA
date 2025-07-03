@@ -18,6 +18,7 @@ import {
 import React, { useMemo, useState } from 'react'
 import { createSetFromMistakes } from '../api/flashcards'
 import type { ExamQuestion, ExamResult, ExamSession, GeneratedExam } from '../types/examTypes'
+import BackToDashboardButton from './BackToDashboardButton'
 import styles from './ExamAnalytics.module.css'
 
 interface ExamAnalyticsProps {
@@ -209,7 +210,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
 
   return (
     <div className={`${styles.analyticsContainer} ${className}`}>
-      {/* <BackToDashboardButton /> */}
+      <BackToDashboardButton />
       {/* Header */}
       <motion.div 
         className={styles.header}

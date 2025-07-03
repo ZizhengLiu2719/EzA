@@ -39,7 +39,7 @@ interface StudyMode {
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced'
   estimatedTime: string
   features: string[]
-  inspiration: string // 来源app
+  inspiration: string // Source app
 }
 
 interface ExamType {

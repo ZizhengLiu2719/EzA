@@ -336,13 +336,12 @@
 }
 
 .ratingButton.easy:hover:not(:disabled) {
-  background: rgba(0, 255, 127, 0.1);
-  box-shadow: 0 8px 25px rgba(0, 255, 127, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 255, 127, 0.3);
 }
 
 .ratingLabel {
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -488,4 +487,22 @@
   .question, .answer {
     font-size: 1rem;
   }
+}
+
+.processingButton {
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background: rgba(0, 210, 255, 0.1);
+  color: #00d2ff;
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: wait;
 } 

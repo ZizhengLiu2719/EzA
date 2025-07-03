@@ -29,11 +29,12 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
       setFlashcards([
         {
           id: 'demo-1',
-          question: '什么是React?',
-          answer: '一个用于构建用户界面的JavaScript库',
-          hint: 'Facebook开发的前端框架',
-          explanation: 'React使用虚拟DOM来提高性能',
-          tags: ['前端', 'JavaScript'],
+          set_id: 'demo-set',
+          question: 'What is React?',
+          answer: 'A JavaScript library for building user interfaces',
+          hint: 'A front-end framework developed by Facebook',
+          explanation: 'React uses a virtual DOM to improve performance',
+          tags: ['Frontend', 'JavaScript'],
           due: new Date(),
           stability: 2.5,
           difficulty: 1.3,
@@ -51,10 +52,11 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
         },
         {
           id: 'demo-2',
-          question: '什么是useEffect?',
-          answer: 'React Hook，用于处理副作用',
-          hint: '函数组件中的生命周期',
-          explanation: '可以在函数组件中执行数据获取、订阅或手动修改DOM',
+          set_id: 'demo-set',
+          question: 'What is useEffect?',
+          answer: 'A React Hook for handling side effects',
+          hint: 'Lifecycle methods in function components',
+          explanation: 'Can perform data fetching, subscriptions, or manual DOM manipulations in function components',
           tags: ['React', 'Hooks'],
           due: new Date(),
           stability: 2.5,
@@ -87,16 +89,17 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
     } catch (err) {
       console.error('Error loading flashcards:', err)
       
-      // 在开发阶段，如果API调用失败，使用模拟数据
+      // During development, if the API call fails, use mock data
       console.warn('API call failed, falling back to demo data for development')
       setFlashcards([
         {
           id: 'demo-1',
-          question: '什么是React?',
-          answer: '一个用于构建用户界面的JavaScript库',
-          hint: 'Facebook开发的前端框架',
-          explanation: 'React使用虚拟DOM来提高性能',
-          tags: ['前端', 'JavaScript'],
+          set_id: 'demo-set',
+          question: 'What is React?',
+          answer: 'A JavaScript library for building user interfaces',
+          hint: 'A front-end framework developed by Facebook',
+          explanation: 'React uses a virtual DOM to improve performance',
+          tags: ['Frontend', 'JavaScript'],
           due: new Date(),
           stability: 2.5,
           difficulty: 1.3,
@@ -114,10 +117,11 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
         },
         {
           id: 'demo-2',
-          question: '什么是useEffect?',
-          answer: 'React Hook，用于处理副作用',
-          hint: '函数组件中的生命周期',
-          explanation: '可以在函数组件中执行数据获取、订阅或手动修改DOM',
+          set_id: 'demo-set',
+          question: 'What is useEffect?',
+          answer: 'A React Hook for handling side effects',
+          hint: 'Lifecycle methods in function components',
+          explanation: 'Can perform data fetching, subscriptions, or manual DOM manipulations in function components',
           tags: ['React', 'Hooks'],
           due: new Date(),
           stability: 2.5,
@@ -136,7 +140,7 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
         }
       ])
       
-      // 显示友好的开发提示而不是错误
+      // Display a friendly development tip instead of an error
       console.info('Using demo data - this is normal during development')
     } finally {
       setLoading(false)

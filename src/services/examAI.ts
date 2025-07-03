@@ -140,17 +140,19 @@ As an experienced AI educational analyst, please conduct a rigorous, detailed sc
     -   **Weaknesses & Error Patterns**: **This is the most critical part.** Deeply analyze the student's error patterns. Don't just say "Question 5 was wrong." Explain **why** it was wrong. For example: "The student appears to confuse the concepts of 'mutation' and 'side effect', leading to errors in all related React Hooks questions." Pinpoint the fundamental gaps in their knowledge structure.
     -   **Overall Feedback**: Provide actionable, global recommendations for improvement.
 
-3.  **Calculate Totals**:
+3.  **Calculate Totals and Grade**:
     -   Sum up all scores to calculate \`totalScore\` and \`percentage\`.
+    -   Assign a \`grade_level\` (A, B, C, D, F) based on the percentage: A (90-100%), B (80-89%), C (70-79%), D (60-69%), F (<60%).
 
 ### **Strict Output Format (JSON)**
 
-You **must** strictly adhere to the JSON structure below. **No fields can be omitted**, especially the \`scored_questions\` array.
+You **must** strictly adhere to the JSON structure below. **No fields can be omitted**, especially the \`scored_questions\` and \`grade_level\` fields.
 
 \`\`\`json
 {
   "totalScore": 100,
   "percentage": 85.5,
+  "grade_level": "B",
   "analysis": {
     "strengths": ["Demonstrates a solid understanding of core concept A."],
     "weaknesses": ["Shows confusion when applying knowledge point B."]
@@ -215,12 +217,13 @@ Now, please provide the complete analysis in the specified JSON format.
       // Stricter validation based on the ExamResult type
       if (
         !parsed.analysis ||
+        !parsed.grade_level ||
         !Array.isArray(parsed.analysis.strengths) ||
         !Array.isArray(parsed.analysis.weaknesses) ||
         !Array.isArray(parsed.scored_questions)
       ) {
         throw new Error(
-          "AI response is missing required fields for exam scoring (analysis, scored_questions)."
+          "AI response is missing required fields for exam scoring (analysis, grade_level, scored_questions)."
         )
       }
       return parsed as ExamResult
