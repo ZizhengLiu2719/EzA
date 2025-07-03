@@ -101,6 +101,8 @@ const Review = () => {
   const [pendingSetData, setPendingSetData] = useState<CreateFlashcardSetData | null>(null)
   const [examFlowOpen, setExamFlowOpen] = useState(false)
   const [selectedExamType, setSelectedExamType] = useState<ExamType | null>(null)
+  // State to track if we are in a creation flow that needs cleanup on cancel
+  const [isCreatingSetSubflow, setIsCreatingSetSubflow] = useState(false);
 
   // Load flashcard sets
   const loadFlashcardSets = async () => {
@@ -264,19 +266,23 @@ const Review = () => {
   }, [focusMode])
 
   // Handle creating new flashcard set
-  const handleCreateFlashcardSet = async (data: CreateFlashcardSetData) => {
+  const handleCreateFlashcardSet = async (data: CreateFlashcardSetData, shouldRefresh: boolean = true) => {
     try {
       const newSet = await createFlashcardSet(data)
       
-      // Refresh data to display the newly created set
-      await loadFlashcardSets()
+      // Conditionally refresh data to display the newly created set
+      if (shouldRefresh) {
+        await loadFlashcardSets()
+      }
       
       console.log('Created new flashcard set:', newSet)
       
       setShowCreateModal(false)
       
       // Show success notification (you might want to add a toast system)
-      alert('Flashcard set created successfully!')
+      if (shouldRefresh) {
+        alert('Flashcard set created successfully!')
+      }
       
       return newSet // <== Key: Return the new set for use in subsequent flows
     } catch (error) {
@@ -352,9 +358,16 @@ const Review = () => {
   const handleMethodSelected = async (method: 'manual' | 'import' | 'ai-generate', setData: CreateFlashcardSetData) => {
     console.log('Selected method:', method, 'with data:', setData)
     
+    // For manual, we create and refresh immediately.
+    if (method === 'manual') {
+      await handleCreateFlashcardSet(setData, true);
+      return;
+    }
+
     try {
-      // First, create the basic set and get its info
-      const newSet = await handleCreateFlashcardSet(setData)
+      // For AI/Import, create the set first BUT DO NOT refresh the UI list yet.
+      const newSet = await handleCreateFlashcardSet(setData, false)
+      setIsCreatingSetSubflow(true); // Mark that we've entered a subflow
       
       // Save set data for later use
       setPendingSetData(setData)
@@ -397,11 +410,44 @@ const Review = () => {
     setPendingSetData(null);
   };
 
-  const handleCloseBatchImportModal = () => {
+  const handleCloseBatchImportModal = async () => {
+    if (isCreatingSetSubflow && selectedSet) {
+      console.log('Cancelling subflow. Deleting orphaned set:', selectedSet.id);
+      await deleteFlashcardSet(selectedSet.id);
+    }
     setShowBatchImportModal(false);
     setSelectedSet(null);
     setPendingSetData(null);
+    setIsCreatingSetSubflow(false);
   };
+
+  const handleCloseAIGenerator = async () => {
+    if (isCreatingSetSubflow && selectedSet) {
+      console.log('Cancelling subflow. Deleting orphaned set:', selectedSet.id);
+      await deleteFlashcardSet(selectedSet.id);
+    }
+    setShowAIGenerator(false);
+    setSelectedSet(null);
+    setPendingSetData(null);
+    setIsCreatingSetSubflow(false);
+  };
+
+  const handleCardsGeneratedAndSaved = (count: number) => {
+    console.log(`${count} cards generated and saved. Refreshing flashcard sets.`);
+    setIsCreatingSetSubflow(false); // The subflow is successfully completed
+    loadFlashcardSets(); // Now refresh the list to show the new set with its cards
+    
+    if (showBatchImportModal) {
+      setShowBatchImportModal(false);
+    }
+    if (showAIGenerator) {
+      setShowAIGenerator(false);
+    }
+
+    setSelectedSet(null);
+    setPendingSetData(null);
+    alert(`🎉 Successfully generated and saved ${count} flashcards!`);
+  }
 
   // Start study mode
   const handleStartStudy = async (set: FlashcardSet) => {
@@ -1276,7 +1322,7 @@ const Review = () => {
         <BatchImportModal
           isOpen={showBatchImportModal}
           onClose={handleCloseBatchImportModal}
-          onCardsGenerated={handleCardsGenerated}
+          onCardsGenerated={handleCardsGeneratedAndSaved}
           setId={selectedSet.id}
         />
       )}
@@ -1285,12 +1331,8 @@ const Review = () => {
       {showAIGenerator && pendingSetData && selectedSet && (
         <AIFlashcardGenerator
           setId={selectedSet.id}
-          onClose={() => setShowAIGenerator(false)}
-          onGenerated={(count) => {
-            setShowAIGenerator(false);
-            alert(`🎉 Successfully generated ${count} flashcards!`);
-            console.log('AI generated cards:', count);
-          }}
+          onClose={handleCloseAIGenerator}
+          onGenerated={handleCardsGeneratedAndSaved}
         />
       )}
 
