@@ -2855,3 +2855,148 @@
 .modernSetCard:nth-child(4) { animation-delay: 0.4s; }
 .modernSetCard:nth-child(5) { animation-delay: 0.5s; }
 .modernSetCard:nth-child(6) { animation-delay: 0.6s; } 
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.deleteButton,
+.cancelButton {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.cancelButton {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.cancelButton:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.deleteButton {
+  background-color: #e53e3e; /* Red */
+  color: white;
+  border-color: #c53030;
+}
+
+.deleteButton:hover:not(:disabled) {
+  background-color: #c53030;
+}
+
+.deleteButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Exam Flow Modal */
+.examFlowModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000; /* High z-index to be on top */
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalContent {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 32px 40px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(79, 70, 229, 0.2);
+  animation: slideInFromTop 0.4s ease-out;
+  text-align: center;
+}
+
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-50px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.modalTitle {
+  font-size: 22px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 16px 0;
+}
+
+.modalMessage {
+  font-size: 16px;
+  color: #a0aec0;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap; /* Allows \n to work for line breaks */
+}
+
+.modalActions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.deleteButton,
+.cancelButton {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.cancelButton {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.cancelButton:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.deleteButton {
+  background-color: #e53e3e; /* Red */
+  color: white;
+  border-color: #c53030;
+}
+
+.deleteButton:hover:not(:disabled) {
+  background-color: #c53030;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(229, 62, 62, 0.4);
+}
+
+.deleteButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

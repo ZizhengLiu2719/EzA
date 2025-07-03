@@ -119,6 +119,11 @@ const Review = () => {
     }
   }
 
+  const handleCardsGenerated = (count: number) => {
+    console.log(`${count} cards generated. Refreshing flashcard sets.`)
+    loadFlashcardSets()
+  }
+
   // Load data on component mount and user change
   useEffect(() => {
     loadFlashcardSets()
@@ -1271,28 +1276,13 @@ const Review = () => {
         <BatchImportModal
           isOpen={showBatchImportModal}
           onClose={handleCloseBatchImportModal}
-          onImport={async (cards) => {
-            try {
-              console.log('Importing cards to set:', selectedSet.id, cards);
-              // TODO: Implement the actual import logic
-              // const importedCards = await createFlashcards(cards);
-              
-              // Simulate a successful import
-              console.log('Mock import successful:', cards.length, 'cards');
-              alert(`✅ Successfully imported ${cards.length} cards into "${selectedSet.title}"!\n\nImported cards:\n${cards.slice(0, 3).map(card => `• ${card.question}`).join('\n')}${cards.length > 3 ? '\n...' : ''}`);
-              
-              handleCloseBatchImportModal();
-            } catch (error) {
-              console.error('Import failed:', error);
-              alert(`❌ Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            }
-          }}
+          onCardsGenerated={handleCardsGenerated}
           setId={selectedSet.id}
         />
       )}
 
       {/* AI Flashcard Generator */}
-      {selectedSet && showAIGenerator && (
+      {showAIGenerator && pendingSetData && selectedSet && (
         <AIFlashcardGenerator
           setId={selectedSet.id}
           onClose={() => setShowAIGenerator(false)}
@@ -1306,115 +1296,17 @@ const Review = () => {
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmModal.isOpen && (
-        <div 
-          className={styles.modalOverlay} 
-          onClick={handleCancelDelete}
-          style={{ zIndex: 9999 }}
-        >
-          <div 
-            className={styles.deleteConfirmModal}
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-              border: '1px solid rgba(255, 0, 0, 0.3)',
-              borderRadius: '16px',
-              padding: '32px',
-              textAlign: 'center',
-              maxWidth: '450px',
-              width: '90vw',
-              boxShadow: '0 25px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 0, 0, 0.2)',
-              animation: 'slideIn 0.3s ease-out'
-            }}
-          >
-            <div style={{ fontSize: '64px', marginBottom: '20px' }}>
-              ⚠️
-            </div>
-            
-            <h3 style={{ 
-              color: '#ffffff', 
-              marginBottom: '16px', 
-              fontSize: '24px',
-              fontWeight: '600' 
-            }}>
-              {deleteConfirmModal.type === 'single' ? 'Confirm Set Deletion' : 'Confirm Deletion of All Sets'}
-            </h3>
-            
-            <p style={{ 
-              color: '#cccccc', 
-              marginBottom: '32px', 
-              lineHeight: '1.6',
-              fontSize: '16px'
-            }}>
-              {deleteConfirmModal.type === 'single' 
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h2 className={styles.modalTitle}>Confirm Deletion</h2>
+            <p className={styles.modalMessage}>
+              {deleteConfirmModal.type === 'single'
                 ? `Are you sure you want to delete the set "${deleteConfirmModal.setTitle}"?\n\nThis action cannot be undone. All cards and study progress will be permanently deleted.`
-                : `Are you sure you want to delete all ${flashcardSets.length} sets?\n\nThis action cannot be undone. All cards and study progress will be permanently deleted.`
-              }
+                : `Are you sure you want to delete all ${flashcardSets.length} sets?\n\nThis action cannot be undone. All cards and study progress will be permanently deleted.`}
             </p>
-
-            <div style={{ 
-              display: 'flex', 
-              gap: '16px', 
-              justifyContent: 'center' 
-            }}>
-              <button
-                onClick={handleCancelDelete}
-                disabled={isDeleting}
-                style={{
-                  padding: '14px 28px',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  color: '#ffffff',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  borderRadius: '10px',
-                  cursor: isDeleting ? 'not-allowed' : 'pointer',
-                  fontSize: '16px',
-                  fontWeight: '500',
-                  transition: 'all 0.2s ease',
-                  opacity: isDeleting ? 0.6 : 1
-                }}
-                onMouseEnter={(e) => {
-                  if (!isDeleting) {
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.2)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isDeleting) {
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.1)';
-                  }
-                }}
-              >
-                Cancel
-              </button>
-              
-              <button
-                onClick={handleConfirmDelete}
-                disabled={isDeleting}
-                style={{
-                  padding: '14px 28px',
-                  background: isDeleting ? 'rgba(255, 0, 0, 0.3)' : '#ef4444',
-                  color: '#ffffff',
-                  border: '1px solid #dc2626',
-                  borderRadius: '10px',
-                  cursor: isDeleting ? 'not-allowed' : 'pointer',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  transition: 'all 0.2s ease',
-                  opacity: isDeleting ? 0.6 : 1
-                }}
-                onMouseEnter={(e) => {
-                  if (!isDeleting) {
-                    const btn = e.currentTarget as HTMLElement;
-                    btn.style.background = '#dc2626';
-                    btn.style.transform = 'translateY(-2px)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isDeleting) {
-                    const btn = e.currentTarget as HTMLElement;
-                    btn.style.background = '#ef4444';
-                    btn.style.transform = 'translateY(0)';
-                  }
-                }}
-              >
+            <div className={styles.modalActions}>
+              <button onClick={handleCancelDelete} className={styles.cancelButton}>Cancel</button>
+              <button onClick={handleConfirmDelete} className={styles.deleteButton} disabled={isDeleting}>
                 {isDeleting ? 'Deleting...' : 'Confirm Delete'}
               </button>
             </div>
@@ -1434,4 +1326,4 @@ const Review = () => {
   )
 }
 
-export default Review 
+export default Review

@@ -263,7 +263,7 @@ export const deleteAllFlashcardSets = async (): Promise<void> => {
 };
 
 /**
- * Delete multiple flashcard sets by IDs
+ * Delete multiple flashcard sets by their IDs.
  */
 export const deleteFlashcardSets = async (setIds: string[]): Promise<void> => {
   const { data: { user } } = await supabase.auth.getUser();

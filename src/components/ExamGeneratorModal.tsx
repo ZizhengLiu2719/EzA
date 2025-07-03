@@ -7,6 +7,7 @@ import { AlertCircle } from 'lucide-react'
 import React, { useCallback, useMemo, useState } from 'react'
 import { CreateFlashcardSetData, FlashcardSetWithStats, getFlashcardsBySetIds } from '../api/flashcards'
 import { examAI, ExamConfiguration, ExamQuestion, GeneratedExam } from '../services/examAI'
+import { flashcardAI } from '../services/flashcardAI'
 import ContentUploader from './ContentUploader'
 import styles from './ExamGeneratorModal.module.css'
 
@@ -104,6 +105,7 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
   const [step, setStep] = useState<'settings' | 'generating' | 'error'>('settings')
   const [source, setSource] = useState<'flashcards' | 'files'>('flashcards');
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isExtractingTopics, setIsExtractingTopics] = useState(false)
   const [selectedSetIds, setSelectedSetIds] = useState<string[]>([])
   const [extractedTopics, setExtractedTopics] = useState<string[]>([]);
   const [settings, setSettings] = useState<ExamSettings>({
@@ -133,6 +135,19 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
     updateSettings({
       selectedTopics: Array.from(new Set([...settings.selectedTopics, ...topics]))
     });
+  };
+
+  const handleContentUpload = async (content: string) => {
+    setIsExtractingTopics(true);
+    setError('');
+    try {
+        const topics = await flashcardAI.extractTopicsFromDocument(content);
+        handleTopicsExtracted(topics);
+    } catch (err: any) {
+        setError(err.message || 'Failed to extract topics from your document.');
+    } finally {
+        setIsExtractingTopics(false);
+    }
   };
 
   const handleSetSelectionChange = (setId: string) => {
@@ -429,7 +444,20 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
             {source === 'files' && (
               <div className={styles.configSection}>
                 <p className={styles.sectionTitle}>Upload Study Materials</p>
-                <ContentUploader onTopicsExtracted={handleTopicsExtracted} />
+                {isExtractingTopics ? (
+                    <div className={styles.centeredContent} style={{padding: '20px 0'}}>
+                        <div className={styles.spinner}></div>
+                        <p style={{marginTop: '10px'}}>AI is analyzing your document for topics...</p>
+                    </div>
+                ) : (
+                    <ContentUploader 
+                        onContentExtracted={handleContentUpload} 
+                        onExtractionError={(errText) => {
+                            setError(errText);
+                            setStep('error');
+                        }} 
+                    />
+                )}
               </div>
             )}
 

@@ -1,144 +1,146 @@
-import { motion } from 'framer-motion';
-import { BrainCircuit, CheckCircle, FileUp, Loader2, XCircle } from 'lucide-react';
+/**
+ * Content Uploader Component
+ * A unified component for uploading various file types (PDF, DOCX, TXT, images)
+ * and extracting their text content on the client-side.
+ */
+import { UploadCloud } from 'lucide-react';
+import mammoth from 'mammoth';
+import * as pdfjs from 'pdfjs-dist';
+// @ts-ignore
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import React, { useCallback, useState } from 'react';
-import { examAI } from '../services/examAI';
+import Tesseract from 'tesseract.js';
 import styles from './ContentUploader.module.css';
 
+pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+
 interface ContentUploaderProps {
-  onTopicsExtracted: (topics: string[]) => void;
-  className?: string;
+  onContentExtracted: (content: string, fileName: string) => void;
+  onExtractionError: (error: string) => void;
 }
 
 type UploadState = 'idle' | 'processing' | 'success' | 'error';
 
-const ContentUploader: React.FC<ContentUploaderProps> = ({ onTopicsExtracted, className }) => {
+const ContentUploader: React.FC<ContentUploaderProps> = ({
+  onContentExtracted,
+  onExtractionError,
+}) => {
   const [uploadState, setUploadState] = useState<UploadState>('idle');
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [statusText, setStatusText] = useState('Drag & drop your files here, or click to browse');
 
-  const handleFile = useCallback(async (file: File | null) => {
-    if (!file) return;
-
-    const supportedTypes = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain'
-    ];
-    if (!supportedTypes.includes(file.type)) {
-      setErrorMessage('Unsupported file type. Please upload a PDF, DOCX, or TXT file.');
-      setUploadState('error');
-      return;
-    }
-
-    setUploadState('processing');
-    setFileName(file.name);
-    setErrorMessage(null);
-
-    try {
-      const topics = await examAI.extractTopicsFromDocument(file);
-      onTopicsExtracted(topics);
-      setUploadState('success');
-    } catch (error: any) {
-      console.error('Error extracting topics from document:', error);
-      setErrorMessage(error.message || 'An unknown error occurred.');
-      setUploadState('error');
-    }
-  }, [onTopicsExtracted]);
-
-  const onDragOver = useCallback((e: React.DragEvent<HTMLLabelElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleFileChange = useCallback(async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    await processFile(file);
   }, []);
 
-  const onDrop = useCallback((e: React.DragEvent<HTMLLabelElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFile(e.dataTransfer.files[0]);
-    }
-  }, [handleFile]);
+  const processFile = async (file: File) => {
+    setUploadState('processing');
+    setStatusText(`Processing: ${file.name}`);
+    setProgress(0);
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFile(e.target.files[0]);
+    try {
+      let text = '';
+      const fileType = file.type;
+
+      if (fileType === 'application/pdf') {
+        text = await parsePdf(file);
+      } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        text = await parseDocx(file);
+      } else if (fileType.startsWith('image/')) {
+        text = await parseImage(file);
+      } else if (fileType === 'text/plain') {
+        text = await file.text();
+      } else {
+        throw new Error(`Unsupported file type: ${fileType}`);
+      }
+      
+      onContentExtracted(text, file.name);
+      setUploadState('success');
+      setStatusText(`Successfully extracted content from ${file.name}`);
+    } catch (error: any) {
+      console.error('File processing error:', error);
+      const errorMessage = error.message || 'An unknown error occurred during file processing.';
+      onExtractionError(errorMessage);
+      setUploadState('error');
+      setStatusText(errorMessage);
     }
   };
 
-  const resetState = () => {
-    setUploadState('idle');
-    setFileName(null);
-    setErrorMessage(null);
-  }
-
-  const renderStateContent = () => {
-    switch (uploadState) {
-      case 'processing':
-        return (
-          <>
-            <Loader2 className={`w-8 h-8 text-blue-500 animate-spin ${styles.icon}`} />
-            <p className="font-semibold text-blue-600">AI is analyzing your document...</p>
-            <p className="text-sm text-gray-500">{fileName}</p>
-          </>
-        );
-      case 'success':
-        return (
-          <>
-            <CheckCircle className={`w-8 h-8 text-green-500 ${styles.icon}`} />
-            <p className="font-semibold text-green-600">Successfully extracted topics!</p>
-            <button onClick={resetState} className={styles.tryAgainButton}>Upload another file</button>
-          </>
-        );
-      case 'error':
-        return (
-          <>
-            <XCircle className={`w-8 h-8 text-red-500 ${styles.icon}`} />
-            <p className="font-semibold text-red-600">Analysis Failed</p>
-            <p className="text-sm text-red-500 px-4">{errorMessage}</p>
-            <button onClick={resetState} className={styles.tryAgainButton}>Try Again</button>
-          </>
-        );
-      case 'idle':
-      default:
-        return (
-          <>
-            <div className="flex items-center justify-center gap-2 text-gray-500">
-               <FileUp className={`w-6 h-6 ${styles.icon}`} />
-               <BrainCircuit className={`w-6 h-6 ${styles.icon}`} />
-            </div>
-            <p className="font-semibold text-gray-700">Drop your syllabus, notes, or PPT here</p>
-            <p className="text-sm text-gray-500">or <span className="text-blue-600 font-medium">click to browse</span></p>
-            <p className="text-xs text-gray-400 mt-2">Supports PDF, DOCX, TXT</p>
-          </>
-        );
+  const parsePdf = async (file: File): Promise<string> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjs.getDocument(arrayBuffer).promise;
+    let fullText = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      fullText += textContent.items.map(item => ('str' in item ? item.str : '')).join(' ');
+      setProgress(Math.round((i / pdf.numPages) * 100));
     }
+    return fullText;
+  };
+
+  const parseDocx = async (file: File): Promise<string> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const { value } = await mammoth.extractRawText({ arrayBuffer });
+    return value;
+  };
+
+  const parseImage = async (file: File): Promise<string> => {
+    setStatusText('Performing OCR on image...');
+    const { data: { text } } = await (Tesseract as any).recognize(file, 'eng', {
+      logger: (m: any) => {
+        if (m.status === 'recognizing text') {
+          setProgress(Math.round(m.progress * 100));
+        }
+      },
+    });
+    return text;
+  };
+
+  const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleFileChange(e.dataTransfer.files);
   };
 
   return (
-    <div className={`${styles.container} ${className}`}>
-      <input
-        type="file"
-        id="file-upload"
-        className={styles.fileInput}
-        onChange={onFileChange}
-        accept=".pdf,.docx,.txt"
-        disabled={uploadState === 'processing'}
-      />
-      <label
-        htmlFor="file-upload"
-        className={`${styles.dropzone} ${uploadState !== 'idle' ? styles.processing : ''}`}
+    <div className={styles.uploaderContainer}>
+      <div 
+        className={`${styles.dropzone} ${uploadState === 'processing' ? styles.processing : ''}`}
         onDragOver={onDragOver}
         onDrop={onDrop}
+        onClick={() => (document.getElementById('file-input') as HTMLInputElement).click()}
       >
-        <motion.div
-          key={uploadState}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-          className={styles.stateContent}
-        >
-          {renderStateContent()}
-        </motion.div>
-      </label>
+        <input
+          id="file-input"
+          type="file"
+          className={styles.fileInput}
+          onChange={(e) => handleFileChange(e.target.files)}
+          accept=".pdf,.docx,.txt,.jpg,.jpeg,.png"
+        />
+        <div className={styles.uploaderContent}>
+          <UploadCloud size={48} className={styles.uploadIcon} />
+          <p className={styles.statusText}>{statusText}</p>
+          {uploadState === 'processing' && (
+            <div className={styles.progressBarContainer}>
+              <div 
+                className={styles.progressBar}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          )}
+          <p className={styles.supportedFormats}>
+            Supported formats: PDF, DOCX, TXT, JPG, PNG
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
