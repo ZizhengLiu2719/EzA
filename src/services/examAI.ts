@@ -60,12 +60,12 @@ class ExamAI {
             question_distribution: this.calculateRemainingDistribution(config.question_distribution, generatedQuestions, questionsNeeded),
         };
         
-        const professorModeInstruction = isProfessorMode 
-          ? `**Style Instruction (Professor Mode):** 
-    Please adopt the style of a top-tier university professor when creating questions. Avoid simple recall-based questions and focus on assessing the student's ability to analyze, evaluate, and apply knowledge. The questions should be profound and challenging, possibly requiring the integration of multiple concepts.`
-          : '';
+    const professorModeInstruction = isProfessorMode 
+      ? `**Style Instruction (Professor Mode):** 
+Please adopt the style of a top-tier university professor when creating questions. Avoid simple recall-based questions and focus on assessing the student's ability to analyze, evaluate, and apply knowledge. The questions should be profound and challenging, possibly requiring the integration of multiple concepts.`
+      : '';
 
-        const prompt = `
+    const prompt = `
 As an expert in exam design, generate a highly personalized exam based on the provided flashcard data and FSRS spaced repetition algorithm information. You must generate exactly the number of questions specified in the distribution.
 
 **Attempt ${attempts}/${maxAttempts}**. You need to generate ${questionsNeeded} more questions.
@@ -116,12 +116,12 @@ Please generate a complete exam including the following:
 
 Output the complete exam structure in JSON format.
 `
-        try {
-          const response = await this.callOpenAI(prompt, {
+    try {
+      const response = await this.callOpenAI(prompt, {
             temperature: 0.5 + attempts * 0.1, // Increase creativity on retries
-            max_tokens: 4000,
-            response_format: { type: "json_object" },
-          })
+        max_tokens: 4000,
+        response_format: { type: "json_object" },
+      })
 
           const parsedExam = this.parseGeneratedExam(response, config);
           const newQuestions = parsedExam.questions.filter(newQ => 
@@ -129,7 +129,7 @@ Output the complete exam structure in JSON format.
           );
           generatedQuestions.push(...newQuestions);
 
-        } catch (error) {
+    } catch (error) {
           console.error(`Exam generation attempt ${attempts} failed:`, error);
           if (attempts >= maxAttempts) {
              // If all attempts fail and we have SOME questions, proceed with what we have.
@@ -226,10 +226,24 @@ Output the complete exam structure in JSON format.
         switch (question.type) {
             case 'single_choice':
             case 'true_false': {
-                const correctAnswer = String(question.correct_answer).toLowerCase().trim();
-                const studentAnswer = String(response.student_answer).toLowerCase().trim();
-                // Handles 'A' vs 'A) Option' and 'true' vs 'True'
-                if (studentAnswer.startsWith(correctAnswer)) {
+                // Robustly extract the answer key (e.g., 'A', 'B', 'True', 'False')
+                const getAnswerKey = (str: unknown): string => {
+                    const s = String(str).toLowerCase().trim();
+                    if (s === 'true' || s === 'false') return s;
+                    // Extracts the first letter if it's followed by a common separator or is the only character.
+                    // This handles formats like "A) ...", "A. ...", or just "A".
+                    const match = s.match(/^[a-z](?=[). ]|$)/);
+                    // If a key like 'a' is found, use it. Otherwise, use the full trimmed string for comparison.
+                    return match ? match[0] : s;
+                };
+
+                const correctAnswerKey = getAnswerKey(question.correct_answer);
+                const studentAnswerKey = getAnswerKey(response.student_answer);
+
+                // Now, comparison is much more robust. 'a' vs 'a' or 'true' vs 'true'.
+                // Using startsWith to still allow the AI to provide just 'A' as the correct answer,
+                // while the student's answer might be 'A) Some text'.
+                if (studentAnswerKey.startsWith(correctAnswerKey)) {
                     score = question.points;
                     is_correct = true;
                 }
