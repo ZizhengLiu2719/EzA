@@ -5,13 +5,13 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  BarChart3,
-  Brain,
-  CheckCircle,
-  Clock,
-  Lightbulb,
-  Target,
-  XCircle
+    BarChart3,
+    Brain,
+    CheckCircle,
+    Clock,
+    Lightbulb,
+    Target,
+    XCircle
 } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
 import { createSetFromMistakes } from '../api/flashcards'
@@ -56,14 +56,21 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
   const { strengths, weaknesses, recommendations } = analysis;
 
   const getFullCorrectAnswer = (question: ExamQuestion): string => {
-    if (!question.options || (question.type !== 'single_choice')) {
+    if (!question.options || (question.type !== 'single_choice' && question.type !== 'multiple_choice')) {
       return Array.isArray(question.correct_answer) ? question.correct_answer.join(', ') : String(question.correct_answer ?? 'N/A');
     }
-    const correctKeys = Array.isArray(question.correct_answer) ? question.correct_answer : [question.correct_answer];
-    const correctOptions = question.options.filter(option => 
-        correctKeys.some(key => option.startsWith(String(key)))
-    );
-    return correctOptions.length > 0 ? correctOptions.join(', ') : correctKeys.join(', ');
+    const correctKeys = Array.isArray(question.correct_answer) ? question.correct_answer : [String(question.correct_answer)];
+    
+    const correctOptions = question.options.filter(option => {
+      const optionValue = typeof option === 'object' && option.option ? option.option : String(option);
+      return correctKeys.some(key => optionValue.startsWith(key));
+    });
+
+    if (correctOptions.length > 0) {
+      return correctOptions.map(opt => typeof opt === 'object' && opt.text ? opt.text : String(opt)).join(', ');
+    }
+    
+    return correctKeys.join(', ');
   };
 
   const handleCreateMistakeSet = async () => {
@@ -452,7 +459,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                     )
 
                     return (
-                      <div key={question.id} className={styles.questionItem}>
+                      <div key={`${question.id}-${index}`} className={styles.questionItem}>
                         <div className={styles.questionHeader}>
                           <span
                             className={`${styles.questionNumber} ${
@@ -510,6 +517,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
                             </button>
                             {showExplanation && (
                               <motion.div
+                                key={`explanation-${question.id}-${index}`}
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
                                 className={styles.explanation}

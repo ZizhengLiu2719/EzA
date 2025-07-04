@@ -297,7 +297,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
 
               return (
                 <button 
-                  key={q.id || `question-nav-${index}`}
+                  key={`${q.id}-${index}`}
                   onClick={() => navigateToQuestion(index)}
                   className={`${styles.questionNavItem} ${
                     isCurrent ? styles.current : ''
@@ -328,7 +328,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
       <div className={styles.mainContent}>
         <AnimatePresence mode="wait">
             <motion.div
-                key={currentQuestion.id}
+                key={`${currentQuestion.id}-${session.current_question_index}`}
                 className={styles.questionContainer}
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
