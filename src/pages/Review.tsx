@@ -103,6 +103,11 @@ const Review = () => {
   const [selectedExamType, setSelectedExamType] = useState<ExamType | null>(null)
   // State to track if we are in a creation flow that needs cleanup on cancel
   const [isCreatingSetSubflow, setIsCreatingSetSubflow] = useState(false);
+  const [notification, setNotification] = useState<{
+    isOpen: boolean;
+    message: string;
+    type: 'success' | 'error';
+  }>({ isOpen: false, message: '', type: 'success' });
 
   // Load flashcard sets
   const loadFlashcardSets = async () => {
@@ -280,7 +285,11 @@ const Review = () => {
       
       // Show success notification (you might want to add a toast system)
       if (shouldRefresh) {
-        alert('Flashcard set created successfully!')
+        setNotification({
+          isOpen: true,
+          message: '✅ Flashcard set created successfully!',
+          type: 'success'
+        });
       }
       
       return newSet // <== Key: Return the new set for use in subsequent flows
@@ -320,12 +329,20 @@ const Review = () => {
     try {
       setIsDeleting(true)
 
-      if (deleteConfirmModal.type === 'single' && deleteConfirmModal.setId) {
-        await deleteFlashcardSet(deleteConfirmModal.setId)
-        alert(`✅ Successfully deleted set "${deleteConfirmModal.setTitle}"`)
-      } else if (deleteConfirmModal.type === 'all') {
+      if (deleteConfirmModal.type === 'all') {
         await deleteAllFlashcardSets()
-        alert('✅ Successfully deleted all sets')
+        setNotification({
+          isOpen: true,
+          message: '✅ Successfully deleted all sets',
+          type: 'success'
+        });
+      } else if (deleteConfirmModal.type === 'single' && deleteConfirmModal.setId) {
+        await deleteFlashcardSet(deleteConfirmModal.setId)
+        setNotification({
+          isOpen: true,
+          message: `✅ Successfully deleted set "${deleteConfirmModal.setTitle}"`,
+          type: 'success'
+        });
       }
 
       // Refresh data
@@ -339,7 +356,11 @@ const Review = () => {
 
     } catch (error) {
       console.error('Error deleting flashcard set(s):', error)
-      alert(`❌ Deletion failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setNotification({
+        isOpen: true,
+        message: `❌ Deletion failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        type: 'error'
+      });
     } finally {
       setIsDeleting(false)
     }
@@ -950,6 +971,26 @@ const Review = () => {
               <button onClick={handleCancelDelete} className={styles.cancelButton}>Cancel</button>
               <button onClick={handleConfirmDelete} className={styles.deleteButton} disabled={isDeleting}>
                 {isDeleting ? 'Deleting...' : 'Confirm Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification Modal */}
+      {notification.isOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={`${styles.modalContent} ${styles.notificationModal}`}>
+            <h2 className={styles.modalTitle}>
+              {notification.type === 'success' ? 'Success' : 'Error'}
+            </h2>
+            <p className={styles.modalMessage}>{notification.message}</p>
+            <div className={styles.modalActions}>
+              <button 
+                onClick={() => setNotification({ isOpen: false, message: '', type: 'success' })} 
+                className={styles.primaryButton}
+              >
+                OK
               </button>
             </div>
           </div>

@@ -3000,3 +3000,29 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.deleteButton:hover {
+  background-color: #b91c1c;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+}
+
+.notificationModal {
+  max-width: 500px;
+  height: auto;
+}
+
+.primaryButton {
+  background-color: #4f46e5;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.primaryButton:hover {
+  background-color: #6366f1;
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+}
