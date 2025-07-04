@@ -28,8 +28,9 @@ const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, on
   const [generatedCards, setGeneratedCards] = useState<GeneratedAICard[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [generationCount, setGenerationCount] = useState<number>(10);
+  const [fileNames, setFileNames] = useState<string[]>([])
 
-  const handleContentExtracted = async (content: string, fileName: string) => {
+  const handleContentExtracted = async (content: string, fileNames: string[]) => {
     setStep('generating')
     setIsProcessing(true)
     setError('')
@@ -38,6 +39,7 @@ const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, on
       const topics = await flashcardAI.extractTopicsFromDocument(content)
       setExtractedTopics(topics)
       setSelectedTopics(topics)
+      setFileNames(fileNames)
       setStep('topic_selection')
     } catch (e: any) {
       handleError(e.message || 'Failed to extract topics from the document.')
@@ -136,6 +138,7 @@ const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, on
     setGeneratedCards([])
     setIsProcessing(false)
     setGenerationCount(10)
+    setFileNames([])
     onClose()
   }
   
@@ -161,7 +164,7 @@ const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, on
           <div className={styles.stepContainer}>
             <div className={styles.header}>
               <h2 className={styles.title}>Select Key Topics</h2>
-              <p className={styles.subtitle}>AI has identified these topics. Choose which ones to focus on for generation.</p>
+              <p className={styles.subtitle}>AI has identified these topics from your documents. Choose which ones to focus on for generation.</p>
             </div>
             <div className={styles.topicList}>
               {extractedTopics.map((topic, index) => (

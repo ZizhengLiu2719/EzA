@@ -245,7 +245,7 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
     });
   };
 
-  const handleContentUpload = async (content: string) => {
+  const handleContentUpload = async (content: string, fileNames: string[]) => {
     setIsExtractingTopics(true);
     setError('');
     try {
@@ -587,7 +587,7 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
                         onExtractionError={(errText) => {
                             setError(errText);
                             setStep('error');
-                        }} 
+                        }}
                     />
                 )}
               </div>

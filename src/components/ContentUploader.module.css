@@ -58,4 +58,107 @@
 
 .tryAgainButton:hover {
   background-color: #e5e7eb;
+}
+
+.supportedFormats {
+  font-size: 0.8rem;
+  color: #8a919e;
+  margin-top: 8px;
+}
+
+.hasFiles {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.fileList {
+  border: 2px dashed #394251;
+  border-top: none;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  padding: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.fileRow {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  background-color: #2c3440;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.fileRow:last-child {
+  margin-bottom: 0;
+}
+
+.fileIcon {
+  margin-right: 12px;
+  color: #a0a8b5;
+}
+
+.fileInfo {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.fileName {
+  font-size: 0.9rem;
+  color: #e0e6f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+}
+
+.statusIcon {
+  margin-left: 12px;
+}
+
+.successIcon {
+  color: #22c55e; /* green-500 */
+}
+
+.errorIcon {
+  color: #ef4444; /* red-500 */
+}
+
+.errorText {
+  font-size: 0.8rem;
+  color: #ef4444; /* red-500 */
+}
+
+.actionsContainer {
+  padding: 12px 8px 8px 8px;
+  border: 2px dashed #394251;
+  border-top: none;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  background-color: #1f2937; /* gray-800 */
+}
+
+.processButton {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background-color: #4f46e5; /* indigo-600 */
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.processButton:hover {
+  background-color: #4338ca; /* indigo-700 */
+}
+
+.processButton:disabled {
+  background-color: #374151; /* gray-700 */
+  cursor: not-allowed;
+  color: #9ca3af; /* gray-400 */
 } 
