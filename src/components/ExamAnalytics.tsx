@@ -215,6 +215,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
 
   return (
     <div className={`${styles.analyticsContainer} ${className}`}>
+      <BackToDashboardButton />
       <motion.div 
         className={styles.header}
         initial={{ opacity: 0, y: -20 }}
@@ -243,7 +244,6 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
               </div>
             </div>
           </div>
-          <BackToDashboardButton />
         </div>
       </motion.div>
 

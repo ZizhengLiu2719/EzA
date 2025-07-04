@@ -124,6 +124,22 @@ Output the complete exam structure in JSON format.
     exam: GeneratedExam,
     responses: ExamResponse[]
   ): Promise<ExamResult> {
+    // Pre-process responses to handle unanswered questions deterministically
+    const answeredResponses = responses.filter(r => 
+        r.student_answer !== null && 
+        r.student_answer !== undefined && 
+        String(r.student_answer).trim() !== '' &&
+        String(r.student_answer).trim().toLowerCase() !== 'not answered'
+    );
+    const unansweredQuestionIds = new Set(
+        responses.filter(r => !answeredResponses.includes(r)).map(r => r.question_id)
+    );
+
+    // If all questions are unanswered, return a zero score result immediately
+    if (answeredResponses.length === 0) {
+      return this.getFallbackExamResult(exam, responses);
+    }
+    
     const getCorrectAnswerText = (q: ExamQuestion): string => {
       if (!q.options || (q.type !== 'single_choice' && q.type !== 'multiple_choice')) {
         return Array.isArray(q.correct_answer) ? q.correct_answer.join(', ') : String(q.correct_answer);
@@ -204,7 +220,7 @@ ${exam.questions.map(q => `
 `).join('')}
 
 **Student Answers:**
-${responses.map(r => `
+${answeredResponses.map(r => `
 - Question ID: ${r.question_id}
   - Student Answer: ${Array.isArray(r.student_answer) ? r.student_answer.join(', ') : r.student_answer}
 `).join('')}
@@ -243,6 +259,32 @@ Now, please provide the complete analysis in the specified JSON format.
           "AI response is missing required fields for exam scoring (analysis, grade_level, scored_questions)."
         )
       }
+
+      // Manually add the results for unanswered questions
+      unansweredQuestionIds.forEach(id => {
+          parsed.scored_questions.push({
+              question_id: id,
+              is_correct: false,
+              score: 0,
+              feedback: "This question was not answered."
+          });
+      });
+
+      // Recalculate total score and percentage
+      const totalScore = parsed.scored_questions.reduce((sum: number, q: any) => sum + (q.score || 0), 0);
+      const totalPossiblePoints = exam.config.total_points > 0 ? exam.config.total_points : exam.questions.reduce((sum, q) => sum + q.points, 0);
+      const percentage = totalPossiblePoints > 0 ? (totalScore / totalPossiblePoints) * 100 : 0;
+      
+      parsed.totalScore = totalScore;
+      parsed.percentage = percentage;
+
+      // Recalculate grade
+      if (percentage >= 90) parsed.grade_level = 'A';
+      else if (percentage >= 80) parsed.grade_level = 'B';
+      else if (percentage >= 70) parsed.grade_level = 'C';
+      else if (percentage >= 60) parsed.grade_level = 'D';
+      else parsed.grade_level = 'F';
+
       return parsed as ExamResult
     } catch (error: any) {
       console.error('Failed to parse scored exam from AI:', error, 'Raw response:', response);
@@ -557,56 +599,72 @@ Now, provide the list of key topics in a JSON array format.
       }
       let parsed = JSON.parse(jsonMatch[0]);
 
-      // Handle cases where the response is wrapped in an "exam" object
-      if (parsed.exam) {
+      // Handle cases where the response is nested under an "exam" key
+      if (parsed.exam && parsed.exam.questions) {
         parsed = parsed.exam;
       }
 
-      let allQuestions: ExamQuestion[] = [];
+      const questionsFromAI = parsed.questions;
 
-      if (Array.isArray(parsed.questions)) {
-        // Handles the case where "questions" is a flat array
-        allQuestions = parsed.questions;
-      } else if (typeof parsed.questions === 'object' && parsed.questions !== null) {
-        // Handles the case where "questions" is an object grouping questions by type
-        for (const type in parsed.questions) {
-          if (Object.prototype.hasOwnProperty.call(parsed.questions, type)) {
-            const questionsOfType = parsed.questions[type as keyof typeof parsed.questions];
-            if (Array.isArray(questionsOfType)) {
-              const questionsWithTypes = questionsOfType.map((q: any) => ({
-                ...q,
-                type: type 
-              }));
-              allQuestions.push(...questionsWithTypes);
-            }
+      if (!Array.isArray(questionsFromAI) || questionsFromAI.length === 0) {
+        throw new Error('AI response did not contain any valid questions.');
+      }
+
+      // Data Sanitization and Mapping from AI response to our internal types
+      const sanitizedQuestions: ExamQuestion[] = questionsFromAI
+        .map((q: any, index: number): ExamQuestion | null => {
+          const correctAnswer = q.correct_answer || q.answer;
+          if (!q.question || !q.type || !correctAnswer) {
+            return null;
           }
-        }
-      }
-      
-      const validQuestions = allQuestions
-        .filter(q => 
-          q && q.type && q.question && q.correct_answer
-        )
-        .map((q, index) => ({
-          ...q,
-          id: q.id || `gen_q_${Date.now()}_${index}` 
-        }));
+          return {
+            id: q.id || `q_${Date.now()}_${index}`,
+            type: q.type,
+            question: q.question,
+            options: q.options,
+            correct_answer: correctAnswer,
+            points: q.points || 10,
+            difficulty: q.difficulty || 5,
+            topic: q.topic || config.subject || 'General',
+            cognitive_level: q.cognitive_level || 'remember',
+            hint: q.hint,
+            explanation: q.explanation || q.rationale,
+            estimated_time: q.estimated_time || 60,
+            subject_area: q.subject_area || config.subject,
+          };
+        })
+        .filter((q): q is ExamQuestion => q !== null);
 
-      if (validQuestions.length === 0) {
-        console.error('Could not extract any valid questions from the AI response:', parsed);
-        throw new Error("AI response did not contain any valid questions.");
+      if (sanitizedQuestions.length === 0) {
+        throw new Error('AI response did not contain any valid questions after sanitization.');
       }
 
-      const generatedExam: GeneratedExam = {
-        id: parsed.id || `exam_${Date.now()}`,
-        config: config,
-        questions: validQuestions,
-        metadata: parsed.metadata || {},
-        instructions: parsed.instructions || "Please review the questions carefully and answer to the best of your ability.",
-        answer_key: parsed.answer_key || [],
+      // Construct a valid GeneratedExam object matching the type definition
+      const finalExam: GeneratedExam = {
+        id: `exam_${Date.now()}`,
+        config: {
+            ...config,
+            title: parsed.title || config.title,
+            subject: parsed.subject || config.subject,
+            duration: parsed.duration || config.duration,
+            total_points: parsed.total_points || config.total_points,
+            topics: parsed.topics || config.topics,
+        },
+        questions: sanitizedQuestions,
+        metadata: {
+          generated_at: new Date(),
+          total_questions: sanitizedQuestions.length,
+          estimated_completion_time: sanitizedQuestions.reduce((sum, q) => sum + (q.estimated_time || 60), 0),
+          difficulty_average: sanitizedQuestions.reduce((sum, q) => sum + q.difficulty, 0) / (sanitizedQuestions.length || 1),
+          cognitive_level_distribution: {},
+          ai_confidence: 0.85
+        },
+        instructions: "Please answer the following questions to the best of your ability.",
+        answer_key: [],
       };
 
-      return generatedExam;
+      return finalExam;
+
     } catch (error: any) {
       console.error('Failed to parse generated exam from AI:', error, 'Raw response:', response);
       throw new Error(`AI failed to return a valid exam structure. ${error.message}`);

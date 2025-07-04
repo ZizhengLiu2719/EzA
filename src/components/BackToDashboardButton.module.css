@@ -1,9 +1,8 @@
 .backButton {
-  /* position: absolute; */
-  /* top: 24px; */
-  /* right: 32px; */
-  /* z-index: 1100; */
-  align-self: center;
+  position: absolute;
+  top: 24px;
+  right: 32px;
+  z-index: 1100;
   
   /* Layout */
   display: flex;
@@ -182,8 +181,8 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .backButton {
-    /* top: 16px; */
-    /* right: 16px; */
+    top: 16px;
+    right: 16px;
     padding: 10px 16px;
     gap: 8px;
     background: rgba(255, 255, 255, 0.15);
@@ -205,8 +204,8 @@
 
 @media (max-width: 480px) {
   .backButton {
-    /* top: 12px; */
-    /* right: 12px; */
+    top: 12px;
+    right: 12px;
     padding: 8px 12px;
     gap: 6px;
     background: rgba(255, 255, 255, 0.15);
