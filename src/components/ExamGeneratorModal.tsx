@@ -195,6 +195,7 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
   const [extractedTopics, setExtractedTopics] = useState<string[]>([]);
   const [newTopic, setNewTopic] = useState('')
   const [error, setError] = useState<string>('')
+  const [extractedContent, setExtractedContent] = useState<string>('');
 
   // Get preset configuration based on examType
   const getInitialSettings = useCallback((): ExamSettings => {
@@ -246,6 +247,7 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
   };
 
   const handleContentUpload = async (content: string, fileNames: string[]) => {
+    setExtractedContent(content); // Save the content
     setIsExtractingTopics(true);
     setError('');
     try {
@@ -381,12 +383,13 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
         const cardsForExam = await getFlashcardsBySetIds(selectedSetIds);
         generatedExam = await examAI.generateExamFromCards(cardsForExam, examConfig, settings.isProfessorMode)
       } else {
-        // TODO: Implement generateExamFromContent
-        // For now, we'll use a placeholder or throw an error
-        setError('File-based exam generation is not implemented yet.');
-        setStep('error');
-        setIsGenerating(false);
-        return;
+        if (!extractedContent) {
+          setError('Please upload at least one file to generate an exam from content.');
+          setStep('error');
+          setIsGenerating(false);
+          return;
+        }
+        generatedExam = await examAI.generateExamFromContent(extractedContent, examConfig, settings.isProfessorMode);
       }
       onExamGenerated(generatedExam)
     } catch (err: any) {
@@ -404,7 +407,8 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
     totalQuestions, 
     createExamConfig, 
     onExamGenerated, 
-    settings.isProfessorMode
+    settings.isProfessorMode,
+    extractedContent
   ]);
 
   const updateSettings = (newSettings: Partial<ExamSettings>) => {

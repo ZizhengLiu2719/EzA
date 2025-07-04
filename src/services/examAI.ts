@@ -215,6 +215,92 @@ Return the complete exam structure in the exact JSON format specified above.
   }
 
   /**
+   * Generates an exam from raw text content.
+   */
+  async generateExamFromContent(
+    content: string,
+    config: ExamConfiguration,
+    isProfessorMode: boolean = false
+  ): Promise<GeneratedExam> {
+    const totalQuestionsRequired = config.question_distribution.reduce((sum, dist) => sum + dist.count, 0);
+
+    const professorModeInstruction = isProfessorMode 
+      ? `**Style Instruction (Professor Mode):** 
+Please adopt the style of a top-tier university professor when creating questions. Avoid simple recall-based questions and focus on assessing the student's ability to analyze, evaluate, and apply knowledge. The questions should be profound and challenging, possibly requiring the integration of multiple concepts.`
+      : '';
+
+    const prompt = `
+As an expert in exam design, generate a high-quality exam based on the provided document content. You must generate exactly the number of questions specified in the distribution.
+
+**CRITICAL JSON FORMAT REQUIREMENTS:**
+- Return ONLY valid JSON without any markdown formatting or code blocks.
+- Use double quotes for all strings and property names.
+- No trailing commas.
+
+**Required JSON Structure:**
+{
+  "title": "Exam Title",
+  "subject": "Subject Name",
+  "duration": "Duration in minutes",
+  "questions": [
+    {
+      "id": "q_1",
+      "type": "single_choice",
+      "question": "Question text...",
+      "options": [
+        {"option": "A", "text": "Option A"},
+        {"option": "B", "text": "Option B"},
+        {"option": "C", "text": "Option C"},
+        {"option": "D", "text": "Option D"}
+      ],
+      "correctAnswer": "A",
+      "points": 5
+    }
+    // ... other questions
+  ]
+}
+
+**Creativity & Variety Mandate:**
+You MUST ensure a high degree of novelty in the generated questions. AVOID rephrasing or slightly modifying sentences from the source document. Instead, generate questions that test the underlying concepts in NEW and UNEXPECTED ways.
+
+**Rule for Multiple Choice Questions:**
+- All questions of type 'single_choice' MUST have exactly 4 options.
+
+**Exam Configuration:**
+- Title: ${config.title}
+- Subject: ${config.subject}
+- Duration: ${config.duration} minutes
+- Total Points: ${config.total_points}
+- Topics to Focus On: ${config.topics.join(', ')}
+
+**Question Distribution Requirements:**
+${config.question_distribution.map(dist => 
+  `- ${dist.type}: ${dist.count} questions, ${dist.points_per_question} points each`
+).join('\n')}
+
+**Source Document Content (first 15000 chars):**
+---
+${content.substring(0, 15000)}
+---
+
+Generate a complete exam based on the provided configuration and document content. Return the complete exam structure in the exact JSON format specified above.
+`;
+
+    try {
+      const response = await this.callOpenAI(prompt, {
+        temperature: 0.7,
+        max_tokens: 4000,
+        response_format: { type: "json_object" },
+      });
+      return this.parseGeneratedExam(response, config);
+    } catch (error) {
+      console.error('Exam generation from content failed:', error);
+      // Consider a fallback mechanism if this is critical
+      throw new Error(`Failed to generate exam from content: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
    * Helper to calculate remaining question distribution for retries.
   */
   private calculateRemainingDistribution(
