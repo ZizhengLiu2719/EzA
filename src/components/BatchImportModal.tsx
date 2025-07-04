@@ -13,12 +13,13 @@ interface BatchImportModalProps {
   isOpen: boolean
   onClose: () => void
   onCardsGenerated: (count: number) => void
+  onError?: (error: string) => void
   setId: string
 }
 
 type ImportStep = 'upload' | 'topic_selection' | 'generating' | 'preview' | 'success' | 'error'
 
-const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, onCardsGenerated, setId }) => {
+const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, onCardsGenerated, onError, setId }) => {
   const [step, setStep] = useState<ImportStep>('upload')
   const [error, setError] = useState<string>('')
   const [extractedContent, setExtractedContent] = useState('')
@@ -55,9 +56,20 @@ const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, on
     setError('')
     try {
       const cards = await flashcardAI.generateFlashcardsFromDocument(extractedContent, selectedTopics, generationCount)
+      
+      // Validate that we got a reasonable number of cards
+      if (cards.length === 0) {
+        throw new Error('AI failed to generate any flashcards from the document. Please try with different topics or content.')
+      }
+      
+      if (cards.length < Math.ceil(generationCount * 0.5)) {
+        console.warn(`Generated only ${cards.length} cards out of ${generationCount} requested`)
+      }
+      
       setGeneratedCards(cards)
       setStep('preview')
     } catch (e: any) {
+      console.error('Card generation failed:', e)
       handleError(e.message || 'An unknown error occurred while AI was generating cards.')
     } finally {
       setIsProcessing(false)
@@ -65,6 +77,11 @@ const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, on
   }
 
   const handleSaveCards = async () => {
+    if (generatedCards.length === 0) {
+      setError('No cards available to save. Please generate cards first.')
+      return
+    }
+    
     setStep('generating') // Show a generic processing/saving state
     setIsProcessing(true)
     setError('')
@@ -73,12 +90,17 @@ const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, on
         question: card.question,
         answer: card.answer,
         set_id: setId,
+        hint: card.hint,
+        explanation: card.explanation,
+        card_type: card.card_type,
+        tags: card.tags
       }))
 
       await createFlashcards(cardsToSave)
       onCardsGenerated(cardsToSave.length)
       setStep('success') // Go to success step
     } catch (e: any) {
+      console.error('Card saving failed:', e)
       handleError(e.message || 'Failed to save the generated cards.')
     } finally {
       setIsProcessing(false)
@@ -94,8 +116,14 @@ const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, on
   }
 
   const handleError = (errorMessage: string) => {
+    console.error('BatchImportModal error:', errorMessage);
     setError(errorMessage)
     setStep('error')
+    
+    // Notify parent component about the error
+    if (onError) {
+      onError(errorMessage);
+    }
   }
 
   const handleClose = () => {

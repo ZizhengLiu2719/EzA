@@ -433,34 +433,90 @@ const Review = () => {
   const handleCloseBatchImportModal = async () => {
     if (isCreatingSetSubflow && selectedSet) {
       console.log('Cancelling subflow. Deleting orphaned set:', selectedSet.id);
-      await deleteFlashcardSet(selectedSet.id);
+      try {
+        await deleteFlashcardSet(selectedSet.id);
+        console.log('Successfully deleted orphaned set');
+      } catch (error) {
+        console.error('Failed to delete orphaned set:', error);
+      }
     }
     setShowBatchImportModal(false);
     setSelectedSet(null);
     setPendingSetData(null);
     setIsCreatingSetSubflow(false);
+    
+    // Refresh the flashcard sets list to ensure UI is in sync
+    await loadFlashcardSets();
   };
 
   const handleCloseAIGenerator = async () => {
     if (isCreatingSetSubflow && selectedSet) {
       console.log('Cancelling subflow. Deleting orphaned set:', selectedSet.id);
-      await deleteFlashcardSet(selectedSet.id);
+      try {
+        await deleteFlashcardSet(selectedSet.id);
+        console.log('Successfully deleted orphaned set');
+      } catch (error) {
+        console.error('Failed to delete orphaned set:', error);
+      }
     }
     setShowAIGenerator(false);
     setSelectedSet(null);
     setPendingSetData(null);
     setIsCreatingSetSubflow(false);
+    
+    // Refresh the flashcard sets list to ensure UI is in sync
+    await loadFlashcardSets();
   };
 
   const handleCardsGeneratedAndSaved = (count: number) => {
+    console.log(`Successfully generated and saved ${count} cards`);
     // We want to fully close the sub-flow
-    setShowAIGenerator(false)
-    setPendingSetData(null)
-    setIsCreatingSetSubflow(false)
+    setShowBatchImportModal(false);
+    setShowAIGenerator(false);
+    setPendingSetData(null);
+    setIsCreatingSetSubflow(false);
+    setSelectedSet(null);
+    
+    // Show success notification
+    setNotification({
+      isOpen: true,
+      message: `✅ Successfully generated and saved ${count} flashcards!`,
+      type: 'success'
+    });
     
     // And refresh the main list
-    loadFlashcardSets()
+    loadFlashcardSets();
   }
+
+  const handleBatchImportError = async (errorMessage: string) => {
+    console.error('Batch import failed:', errorMessage);
+    
+    // If we're in a creation subflow and have an empty set, clean it up
+    if (isCreatingSetSubflow && selectedSet) {
+      console.log('Cleaning up empty set due to generation error:', selectedSet.id);
+      try {
+        await deleteFlashcardSet(selectedSet.id);
+        console.log('Successfully cleaned up empty set');
+      } catch (deleteError) {
+        console.error('Failed to clean up empty set:', deleteError);
+      }
+    }
+    
+    // Show error notification
+    setNotification({
+      isOpen: true,
+      message: `❌ Failed to generate cards: ${errorMessage}`,
+      type: 'error'
+    });
+    
+    // Reset state
+    setIsCreatingSetSubflow(false);
+    setSelectedSet(null);
+    setPendingSetData(null);
+    
+    // Refresh to ensure UI is in sync
+    await loadFlashcardSets();
+  };
 
   // Start study mode
   const handleStartStudy = async (set: FlashcardSet) => {
@@ -944,6 +1000,7 @@ const Review = () => {
           isOpen={showBatchImportModal}
           onClose={handleCloseBatchImportModal}
           onCardsGenerated={handleCardsGeneratedAndSaved}
+          onError={handleBatchImportError}
           setId={selectedSet.id}
         />
       )}

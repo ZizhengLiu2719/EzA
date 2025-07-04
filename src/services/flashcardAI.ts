@@ -45,7 +45,7 @@ class FlashcardAI {
    * @param prompt - The prompt to send to the AI.
    * @returns A promise that resolves to the AI's response text.
    */
-  private async callOpenAI(prompt: string, options: { max_tokens?: number } = {}): Promise<string> {
+  private async callOpenAI(prompt: string, options: { max_tokens?: number; temperature?: number } = {}): Promise<string> {
     const aiModelId = getAIModel(); // Gets the currently selected AI model ID
 
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -57,7 +57,7 @@ class FlashcardAI {
       body: JSON.stringify({
         model: aiModelId,
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7,
+        temperature: options.temperature || 0.7,
         max_tokens: options.max_tokens || 2048,
         response_format: { type: "json_object" },
       }),
@@ -257,8 +257,18 @@ Return the output as a SINGLE JSON object with a key "topics", which contains an
    * @returns A promise that resolves to an array of generated cards.
    */
   async generateFlashcardsFromDocument(textContent: string, topics: string[], count: number = 10): Promise<GeneratedAICard[]> {
-    const prompt = `
-As an expert instructional designer, your task is to analyze the provided document text and generate a set of ${count} high-quality, university-level flashcards.
+    let attempts = 0;
+    const maxAttempts = 3;
+    let allGeneratedCards: GeneratedAICard[] = [];
+
+    while (attempts < maxAttempts && allGeneratedCards.length < count) {
+      attempts++;
+      const remainingCount = count - allGeneratedCards.length;
+      
+      console.log(`Attempt ${attempts}/${maxAttempts}: Generating ${remainingCount} cards (${allGeneratedCards.length} already generated)`);
+      
+      const prompt = `
+As an expert instructional designer, your task is to analyze the provided document text and generate a set of ${remainingCount} high-quality, university-level flashcards.
 
 **Crucially, you must focus *only* on the following specified topics:**
 ---
@@ -271,14 +281,16 @@ As an expert instructional designer, your task is to analyze the provided docume
 ${textContent.substring(0, 8000)}
 ---
 
-**Your Instructions:**
-1.  **Targeted Generation:** Generate flashcards *only* for the concepts, definitions, and key information related to the "Topics to Cover". Ignore other information in the document.
-2.  **Generate Diverse Cards:** Create a mix of 'Question/Answer' and 'Cloze Deletion' (fill-in-the-blank) flashcards.
-3.  **Adhere to Quality Standards:**
+**IMPORTANT GENERATION REQUIREMENTS:**
+1. **Exact Count**: Generate EXACTLY ${remainingCount} flashcards. Do not generate fewer.
+2. **Targeted Generation:** Generate flashcards *only* for the concepts, definitions, and key information related to the "Topics to Cover". Ignore other information in the document.
+3. **Generate Diverse Cards:** Create a mix of 'Question/Answer' and 'Cloze Deletion' (fill-in-the-blank) flashcards.
+4. **Avoid Duplicates:** ${allGeneratedCards.length > 0 ? 'Make sure your questions are different from previously generated ones.' : 'Ensure each card tests a unique concept.'}
+5. **Adhere to Quality Standards:**
     *   **Atomicity:** Each card should test only ONE single, atomic concept.
     *   **Clarity:** Questions must be unambiguous and clear.
     *   **Meaningful Cloze:** For cloze deletions, the blanked-out word must be a critical, non-obvious term.
-4.  **Format:** Return the output as a SINGLE JSON object with a key "flashcards" which contains an array of the generated card objects. Each card object must have the fields: \`question\`, \`answer\`, \`card_type\`, \`hint\`, \`explanation\`, and \`tags\`.
+6. **Format:** Return the output as a SINGLE JSON object with a key "flashcards" which contains an array of EXACTLY ${remainingCount} card objects. Each card object must have the fields: \`question\`, \`answer\`, \`card_type\`, \`hint\`, \`explanation\`, and \`tags\`.
 
 **CRITICAL JSON FORMATTING REQUIREMENTS:**
 - All property names MUST be in double quotes
@@ -286,6 +298,7 @@ ${textContent.substring(0, 8000)}
 - NO trailing commas
 - NO unescaped newlines in string values
 - Use \\n for line breaks within strings if needed
+- Generate EXACTLY ${remainingCount} cards in the array
 
 **Example JSON structure:**
 {
@@ -300,34 +313,84 @@ ${textContent.substring(0, 8000)}
     }
   ]
 }
+
+**Remember: You MUST generate exactly ${remainingCount} cards. If you cannot generate enough unique cards from the content, be more creative with different question types, perspectives, or levels of detail.**
 `;
-    try {
-      const response = await this.callOpenAI(prompt, { max_tokens: 2048 });
-      const parsed = this.parseRobustJSON(response);
-      if (parsed.flashcards && Array.isArray(parsed.flashcards)) {
-        const cleanedCards = this.validateAndCleanCards(parsed.flashcards);
-        if (cleanedCards.length === 0) {
-          throw new Error("No valid flashcards could be generated from the AI response.");
+
+      try {
+        const response = await this.callOpenAI(prompt, { 
+          max_tokens: Math.min(4096, remainingCount * 200), // Increase tokens for more cards
+          temperature: 0.7 + (attempts - 1) * 0.1 // Increase creativity with each attempt
+        });
+        
+        const parsed = this.parseRobustJSON(response);
+        if (parsed.flashcards && Array.isArray(parsed.flashcards)) {
+          const cleanedCards = this.validateAndCleanCards(parsed.flashcards);
+          
+          // Filter out duplicates based on question similarity
+          const uniqueCards = cleanedCards.filter(newCard => {
+            return !allGeneratedCards.some(existingCard => 
+              this.areSimilarQuestions(newCard.question, existingCard.question)
+            );
+          });
+          
+          console.log(`Generated ${cleanedCards.length} cards, ${uniqueCards.length} are unique`);
+          allGeneratedCards.push(...uniqueCards);
+          
+          // If we got enough cards, break early
+          if (allGeneratedCards.length >= count) {
+            break;
+          }
+        } else {
+          console.warn(`Attempt ${attempts}: AI response did not contain a 'flashcards' array`);
         }
-        return cleanedCards;
+      } catch (error: any) {
+        console.error(`Attempt ${attempts} failed:`, error);
+        if (attempts === maxAttempts) {
+          // On final attempt failure, provide fallback cards
+          const fallbackCardsNeeded = Math.max(1, count - allGeneratedCards.length);
+          const fallbackCards: GeneratedAICard[] = Array.from({ length: fallbackCardsNeeded }, (_, i) => ({
+            question: `Review Question ${i + 1}: ${topics[i % topics.length]}`,
+            answer: `This is a review question about ${topics[i % topics.length]}. Please refer to your study materials for detailed information.`,
+            card_type: 'basic' as const,
+            hint: `Think about the key concepts related to ${topics[i % topics.length]}.`,
+            explanation: `This fallback card was created because the AI service encountered difficulties generating cards from your document. The topic focuses on ${topics[i % topics.length]}.`,
+            tags: [topics[i % topics.length]],
+            confidence: 0.3,
+          }));
+          
+          allGeneratedCards.push(...fallbackCards);
+        }
       }
-      throw new Error("AI response did not contain a 'flashcards' array.");
-    } catch (error: any) {
-      console.error('Failed to generate flashcards from document:', error);
-      
-      // Provide a fallback card if everything fails
-      const fallbackCards: GeneratedAICard[] = [{
-        question: "Document Review",
-        answer: `Key topics from this document include: ${topics.join(', ')}`,
-        card_type: 'basic',
-        hint: "Review the main topics covered in the uploaded document.",
-        explanation: "This fallback card was created because the AI service encountered an error while generating flashcards from your document.",
-        tags: topics.slice(0, 3), // Use first 3 topics as tags
-        confidence: 0.5,
-      }];
-      
-      return fallbackCards;
     }
+
+    // Trim to exact count if we generated too many
+    const finalCards = allGeneratedCards.slice(0, count);
+    
+    console.log(`Final result: Generated ${finalCards.length} out of ${count} requested cards`);
+    
+    if (finalCards.length === 0) {
+      throw new Error("Failed to generate any valid flashcards from the document.");
+    }
+    
+    return finalCards;
+  }
+
+  /**
+   * Check if two questions are similar to avoid duplicates
+   */
+  private areSimilarQuestions(q1: string, q2: string): boolean {
+    const normalize = (str: string) => str.toLowerCase().replace(/[^\w\s]/g, '').trim();
+    const norm1 = normalize(q1);
+    const norm2 = normalize(q2);
+    
+    // Check if questions are very similar (more than 70% overlap)
+    const words1 = norm1.split(/\s+/);
+    const words2 = norm2.split(/\s+/);
+    const commonWords = words1.filter(word => words2.includes(word) && word.length > 2);
+    const similarity = commonWords.length / Math.max(words1.length, words2.length);
+    
+    return similarity > 0.7;
   }
 
   /**
