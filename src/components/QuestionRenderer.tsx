@@ -146,71 +146,28 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
   // Render short answer question
   const renderShortAnswer = () => {
-    const answerText = Array.isArray(currentAnswer) ? currentAnswer.join('\n') : currentAnswer || ''
-
     return (
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-800 mb-4">
-          {question.question}
-        </h3>
-        
-        <div className="space-y-2">
-          <textarea
-            value={answerText}
-            onChange={(e) => handleSelectionChange(e.target.value)}
-            disabled={disabled}
-            placeholder="Please enter your answer here..."
-            className={`${styles.textarea} w-full p-4 border-2 rounded-lg resize-none focus:outline-none focus:ring-2 focus:border-transparent ${disabled ? 'cursor-not-allowed' : ''}`}
-          />
-          <div className="flex justify-between items-center text-sm text-gray-500">
-            <span>Suggested word count: 50-200 words</span>
-            <span>{answerText.length} characters</span>
-          </div>
-        </div>
-      </div>
-    )
+      <textarea
+        className={styles.shortAnswerInput}
+        value={(currentAnswer as string) || ''}
+        onChange={(e) => handleSelectionChange(e.target.value)}
+        placeholder="Type your answer here..."
+        rows={5}
+      />
+    );
   }
 
   // Render essay question
   const renderEssay = () => {
-    const answerText = Array.isArray(currentAnswer) ? currentAnswer.join('\n') : currentAnswer || ''
-
     return (
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-800 mb-4">
-          {question.question}
-        </h3>
-        
-        {question.rubric && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <h4 className="font-medium text-blue-800 mb-2 flex items-center gap-2">
-              <BookOpen className="w-4 h-4" />
-              Scoring Rubric
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-              <div className="text-green-700"><strong>Excellent:</strong> {question.rubric.excellent}</div>
-              <div className="text-blue-700"><strong>Good:</strong> {question.rubric.good}</div>
-              <div className="text-yellow-700"><strong>Satisfactory:</strong> {question.rubric.satisfactory}</div>
-              <div className="text-red-700"><strong>Needs Improvement:</strong> {question.rubric.needs_improvement}</div>
-            </div>
-          </div>
-        )}
-        
-        <div className="space-y-2">
-          <textarea
-            value={answerText}
-            onChange={(e) => handleSelectionChange(e.target.value)}
-            disabled={disabled}
-            placeholder="Please elaborate your views, paying attention to logical clarity and sufficient argumentation..."
-            className={`${styles.textarea} w-full p-4 border-2 rounded-lg resize-none focus:outline-none focus:ring-2 focus:border-transparent ${disabled ? 'cursor-not-allowed' : ''}`}
-          />
-          <div className="flex justify-between items-center text-sm text-gray-500">
-            <span>Suggested word count: 300-800 words</span>
-            <span>{answerText.length} characters</span>
-          </div>
-        </div>
-      </div>
-    )
+      <textarea
+        className={styles.essayInput}
+        value={(currentAnswer as string) || ''}
+        onChange={(e) => handleSelectionChange(e.target.value)}
+        placeholder="Compose your essay here..."
+        rows={10}
+      />
+    );
   }
 
   // Render fill-in-the-blank question

@@ -155,7 +155,6 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
 
   const handleAnswerSubmit = useCallback(
     (questionId: string, student_answer: string | string[], confidence_level?: number) => {
-      // Start timer if not running
       if (!timer.isRunning) {
         setTimer((prev) => ({ ...prev, isRunning: true }))
       }
@@ -163,39 +162,57 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
       responseStartTime.current = Date.now()
 
       setSession((prevSession) => {
-        const questionExists = exam.questions.some(q => q.id === questionId)
-        if (!questionExists) {
-          return prevSession
+        const question = exam.questions.find(q => q.id === questionId);
+        if (!question) {
+          return prevSession;
         }
 
-        const newResponses = [...prevSession.responses]
+        const newResponses = [...prevSession.responses];
         const existingResponseIndex = newResponses.findIndex(
           (r) => r.question_id === questionId
-        )
+        );
+
+        let finalAnswer: string | string[];
+
+        if (question.type === 'multiple_choice') {
+          const currentAnswers = (existingResponseIndex > -1 
+            ? newResponses[existingResponseIndex].student_answer 
+            : []) as string[];
+            
+          const newOption = student_answer as string; // It will be a single option string from the renderer
+          
+          if (currentAnswers.includes(newOption)) {
+            finalAnswer = currentAnswers.filter(ans => ans !== newOption);
+          } else {
+            finalAnswer = [...currentAnswers, newOption];
+          }
+        } else {
+          finalAnswer = student_answer; // For single_choice, true_false etc., just replace.
+        }
 
         const newResponse: ExamResponse = {
           question_id: questionId,
-          student_answer,
+          student_answer: finalAnswer,
           response_time: Date.now() - (responseStartTime.current || Date.now()),
           confidence_level: confidence_level || 3,
           timestamp: new Date(),
-        }
+        };
 
         if (existingResponseIndex > -1) {
-          newResponses[existingResponseIndex] = newResponse
+          newResponses[existingResponseIndex] = newResponse;
         } else {
-          newResponses.push(newResponse)
+          newResponses.push(newResponse);
         }
         
         const updatedSession = {
           ...prevSession,
           responses: newResponses,
-        }
+        };
         return updatedSession;
       })
     },
     [exam.questions, timer.isRunning]
-  )
+  );
 
   const navigateToQuestion = useCallback((index: number) => {
     if (index >= 0 && index < exam.questions.length) {

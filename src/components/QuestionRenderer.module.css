@@ -123,4 +123,35 @@
 .textarea:focus, .fillBlankInput:focus {
     outline: none;
     border-color: #3b82f6;
+}
+
+.confidenceSlider {
+    width: 100%;
+}
+
+.essayInput,
+.shortAnswerInput {
+    width: 100%;
+    min-height: 150px;
+    padding: 12px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.essayInput:focus,
+.shortAnswerInput:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.2);
+}
+
+/* Base styles for text inputs, can be extended */
+.textInput {
+    width: 100%;
 } 
