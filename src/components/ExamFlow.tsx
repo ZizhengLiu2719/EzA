@@ -114,6 +114,7 @@ const ExamFlow: React.FC<ExamFlowProps> = ({ isOpen, examType: _examType, onClos
         onClose={onClose}
         flashcardSets={flashcardSets}
         onExamGenerated={handleExamGenerated}
+        examType={_examType}
       />
     )
   }

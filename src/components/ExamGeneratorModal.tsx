@@ -4,7 +4,7 @@
  */
 
 import { AlertCircle } from 'lucide-react'
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { CreateFlashcardSetData, FlashcardSetWithStats, getFlashcardsBySetIds } from '../api/flashcards'
 import { examAI, ExamConfiguration, ExamQuestion, GeneratedExam } from '../services/examAI'
 import { flashcardAI } from '../services/flashcardAI'
@@ -76,6 +76,7 @@ interface ExamGeneratorModalProps {
   onClose: () => void
   flashcardSets: FlashcardSetWithStats[]
   onExamGenerated: (exam: GeneratedExam) => void
+  examType?: any // Add this prop to receive the exam type preset
 }
 
 interface ExamSettings {
@@ -95,11 +96,96 @@ interface ExamSettings {
   isProfessorMode: boolean
 }
 
+// Add exam type presets configuration
+const EXAM_TYPE_PRESETS = {
+  'unit-test': {
+    title: 'Unit Test',
+    subject: 'Academic Subject',
+    duration: 50,
+    question_types: {
+      single_choice: 15,
+      true_false: 5,
+      short_answer: 3,
+      essay: 1,
+      fill_blank: 1,
+    },
+    difficulty_focus: 'medium' as const,
+    cognitive_focus: 'understand' as const,
+    selectedTopics: ['Unit Concepts Review', 'Key Learning Objectives', 'Practice Applications'],
+    isProfessorMode: false,
+  },
+  'chapter-exam': {
+    title: 'Chapter Exam',
+    subject: 'Academic Subject',
+    duration: 75,
+    question_types: {
+      single_choice: 20,
+      true_false: 8,
+      short_answer: 5,
+      essay: 2,
+      fill_blank: 0,
+    },
+    difficulty_focus: 'mixed' as const,
+    cognitive_focus: 'mixed' as const,
+    selectedTopics: ['Chapter Overview', 'Core Concepts', 'Applied Knowledge', 'Critical Analysis'],
+    isProfessorMode: false,
+  },
+  'midterm': {
+    title: 'Midterm Examination',
+    subject: 'Course Material',
+    duration: 90,
+    question_types: {
+      single_choice: 25,
+      true_false: 10,
+      short_answer: 7,
+      essay: 3,
+      fill_blank: 0,
+    },
+    difficulty_focus: 'mixed' as const,
+    cognitive_focus: 'mixed' as const,
+    selectedTopics: ['Comprehensive Review', 'Integration of Concepts', 'Problem Solving', 'Analytical Thinking'],
+    isProfessorMode: true,
+  },
+  'final-exam': {
+    title: 'Final Examination',
+    subject: 'Complete Course',
+    duration: 120,
+    question_types: {
+      single_choice: 30,
+      true_false: 15,
+      short_answer: 10,
+      essay: 5,
+      fill_blank: 0,
+    },
+    difficulty_focus: 'hard' as const,
+    cognitive_focus: 'analyze' as const,
+    selectedTopics: ['Cumulative Knowledge', 'Advanced Applications', 'Synthesis & Evaluation', 'Research Skills'],
+    isProfessorMode: true,
+  },
+  'pop-quiz': {
+    title: 'Pop Quiz',
+    subject: 'Recent Material',
+    duration: 15,
+    question_types: {
+      single_choice: 8,
+      true_false: 2,
+      short_answer: 0,
+      essay: 0,
+      fill_blank: 0,
+    },
+    difficulty_focus: 'easy' as const,
+    cognitive_focus: 'remember' as const,
+    selectedTopics: ['Recent Class Material', 'Basic Concepts', 'Quick Review'],
+    isProfessorMode: false,
+  }
+}
+
 const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
   isOpen,
   onClose,
   flashcardSets,
-  onExamGenerated
+  onExamGenerated,
+  examType
 }) => {
   const [step, setStep] = useState<'settings' | 'generating' | 'error'>('settings')
   const [source, setSource] = useState<'flashcards' | 'files'>('flashcards');
@@ -107,26 +193,50 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
   const [isExtractingTopics, setIsExtractingTopics] = useState(false)
   const [selectedSetIds, setSelectedSetIds] = useState<string[]>([])
   const [extractedTopics, setExtractedTopics] = useState<string[]>([]);
-  const [settings, setSettings] = useState<ExamSettings>({
-    title: 'Review Test',
-    subject: 'General',
-    duration: 30,
-    question_types: {
-      single_choice: 5,
-      true_false: 3,
-      short_answer: 2,
-      essay: 0,
-      fill_blank: 0,
-    },
-    difficulty_focus: 'mixed',
-    cognitive_focus: 'mixed',
-    selectedTopics: ['Test Knowledge Mastery', 'Reinforce Learning Outcomes'],
-    isProfessorMode: false,
-  })
   const [newTopic, setNewTopic] = useState('')
   const [error, setError] = useState<string>('')
 
+  // Get preset configuration based on examType
+  const getInitialSettings = useCallback((): ExamSettings => {
+    if (examType?.id && EXAM_TYPE_PRESETS[examType.id as keyof typeof EXAM_TYPE_PRESETS]) {
+      const preset = EXAM_TYPE_PRESETS[examType.id as keyof typeof EXAM_TYPE_PRESETS]
+      return {
+        ...preset,
+        // Override with examType data if available
+        title: examType.name || preset.title,
+        duration: examType.duration || preset.duration,
+      }
+    }
+    
+    // Default fallback settings
+    return {
+      title: 'Review Test',
+      subject: 'General',
+      duration: 30,
+      question_types: {
+        single_choice: 5,
+        true_false: 3,
+        short_answer: 2,
+        essay: 0,
+        fill_blank: 0,
+      },
+      difficulty_focus: 'mixed',
+      cognitive_focus: 'mixed',
+      selectedTopics: ['Test Knowledge Mastery', 'Reinforce Learning Outcomes'],
+      isProfessorMode: false,
+    }
+  }, [examType])
+
+  const [settings, setSettings] = useState<ExamSettings>(getInitialSettings())
+  
   const totalQuestions = Object.values(settings.question_types).reduce((sum, count) => sum + count, 0)
+  
+  // Reset settings when examType changes
+  useEffect(() => {
+    if (isOpen) {
+      setSettings(getInitialSettings())
+    }
+  }, [examType, isOpen, getInitialSettings])
 
   const handleTopicsExtracted = (topics: string[]) => {
     setExtractedTopics(topics);
@@ -335,6 +445,30 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
   const renderSettings = () => (
     <>
       <div className={styles.modalBody}>
+        {/* Exam Type Header */}
+        {examType && (
+          <div className={styles.examTypeHeader}>
+            <div className={styles.examTypeInfo}>
+              <h2 className={styles.examTypeName}>{examType.name}</h2>
+              <p className={styles.examTypeDescription}>{examType.description}</p>
+              <div className={styles.examTypeDetails}>
+                <span className={styles.examTypeDetail}>
+                  <span className={styles.detailIcon}>⏱️</span>
+                  Duration: {examType.duration} minutes
+                </span>
+                <span className={styles.examTypeDetail}>
+                  <span className={styles.detailIcon}>❓</span>
+                  Target: {examType.questionCount} questions
+                </span>
+                <span className={styles.examTypeDetail}>
+                  <span className={styles.detailIcon}>📊</span>
+                  Difficulty: {examType.difficulty}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className={styles.mainArea}>
           {/* Left Panel: Settings */}
           <div className={styles.configPanel}>
