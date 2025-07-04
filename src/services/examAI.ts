@@ -203,7 +203,7 @@ Output the complete exam structure in JSON format.
     exam: GeneratedExam,
     responses: ExamResponse[]
   ): Promise<ExamResult> {
-    const objectiveTypes = ['single_choice', 'multiple_choice', 'true_false'];
+    const objectiveTypes = ['single_choice', 'true_false'];
     
     const objectiveResponses = responses.filter(r => {
         const question = exam.questions.find(q => q.id === r.question_id);
@@ -250,23 +250,6 @@ Output the complete exam structure in JSON format.
                 feedback = is_correct ? 'Correct.' : `Incorrect. The correct answer is ${question.correct_answer}.`;
                 break;
             }
-            case 'multiple_choice': {
-                if (!Array.isArray(question.correct_answer) || !Array.isArray(response.student_answer)) {
-                    feedback = "Invalid question or answer format for multiple choice.";
-                    break;
-                }
-                const correctOptions = new Set(question.correct_answer);
-                const studentOptions = new Set(response.student_answer);
-                let rawScore = 0;
-                studentOptions.forEach(option => {
-                    rawScore += correctOptions.has(option) ? 1 : -1;
-                });
-                const normalizedScore = Math.max(0, rawScore) / correctOptions.size;
-                score = normalizedScore * question.points;
-                is_correct = normalizedScore === 1;
-                feedback = `Scored ${score.toFixed(2)}/${question.points}.`;
-                break;
-            }
         }
         
         return {
@@ -304,7 +287,7 @@ Output the complete exam structure in JSON format.
     }
     
     const getCorrectAnswerText = (q: ExamQuestion): string => {
-      if (!q.options || (q.type !== 'single_choice' && q.type !== 'multiple_choice')) {
+      if (!q.options || (q.type !== 'single_choice')) {
         return Array.isArray(q.correct_answer) ? q.correct_answer.join(', ') : String(q.correct_answer);
       }
       const correctKeys = Array.isArray(q.correct_answer) ? q.correct_answer : [q.correct_answer];

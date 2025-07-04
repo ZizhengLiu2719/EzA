@@ -4,7 +4,7 @@
 
 export interface ExamQuestion {
   id: string
-  type: 'single_choice' | 'multiple_choice' | 'true_false' | 'short_answer' | 'essay' | 'fill_blank' | 'matching'
+  type: 'single_choice' | 'true_false' | 'short_answer' | 'essay' | 'fill_blank' | 'matching'
   question: string
   options?: string[] // for multiple choice
   correct_answer: string | string[]

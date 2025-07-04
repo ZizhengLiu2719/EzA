@@ -84,7 +84,6 @@ interface ExamSettings {
   duration: number // 分钟
   question_types: {
     single_choice: number;
-    multiple_choice: number
     true_false: number
     short_answer: number
     essay: number
@@ -113,8 +112,7 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
     subject: 'General',
     duration: 30,
     question_types: {
-      single_choice: 0,
-      multiple_choice: 5,
+      single_choice: 5,
       true_false: 3,
       short_answer: 2,
       essay: 0,
@@ -391,7 +389,7 @@ const ExamGeneratorModal: React.FC<ExamGeneratorModalProps> = ({
               <div className={styles.questionTypeGrid}>
                 {(Object.keys(settings.question_types) as Array<keyof typeof settings.question_types>).map(type => (
                   <div key={type} className={styles.stepperRow}>
-                    <span className={styles.stepperLabel}>{type.replace(/_/g, ' ')}</span>
+                    <span className={styles.stepperLabel}>{type === 'single_choice' ? 'Multiple Choice' : type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
                     <div className={styles.stepper}>
                       <button onClick={() => updateQuestionCount(type, -1)} disabled={settings.question_types[type] <= 0}>-</button>
                       <span>{settings.question_types[type]}</span>
