@@ -4,7 +4,7 @@ import { formatDateTime, getPriorityColor, isOverdue } from '@/utils';
 import interactionPlugin, { Draggable } from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import { AlertTriangle, Book, BookOpen, ClipboardCheck, FileText, Loader2, Lock, Pencil, Presentation, Unlock } from 'lucide-react';
+import { AlertTriangle, Book, BookOpen, ClipboardCheck, FileText, Lock, Pencil, Presentation, Unlock } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Planner.module.css';
@@ -522,10 +522,6 @@ const Planner: React.FC = () => {
                   </button>
                 ))}
               </div>
-              <button onClick={handleAutoScheduleClick} className={styles.scheduleButton} disabled={isScheduling}>
-                {isScheduling ? <Loader2 className={styles.loader} /> : null}
-                {isScheduling ? 'Scheduling...' : 'Auto-Schedule'}
-              </button>
             </div>
             <div className={styles.tasks}>
               {loading ? (
