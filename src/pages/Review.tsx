@@ -3,7 +3,7 @@ import ExamFlow from '@/components/ExamFlow'
 import { useUser } from '@/context/UserContext'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createFlashcardSet, CreateFlashcardSetData, deleteAllFlashcardSets, deleteFlashcardSet, FlashcardSetWithStats, getDueFlashcards, getFlashcardSets } from '../api/flashcards'
+import { CreateFlashcardData, createFlashcards, createFlashcardSet, CreateFlashcardSetData, deleteAllFlashcardSets, deleteFlashcardSet, FlashcardSetWithStats, getDueFlashcards, getFlashcardSets } from '../api/flashcards'
 import AIFlashcardGenerator from '../components/AIFlashcardGenerator'
 import BatchImportModal from '../components/BatchImportModal'
 import CreateFlashcardSetModal from '../components/CreateFlashcardSetModal'
@@ -299,6 +299,55 @@ const Review = () => {
     }
   }
 
+  // New function to create the set and cards together
+  const handleSaveNewSetWithCards = async (cards: Omit<CreateFlashcardData, 'set_id'>[]) => {
+    if (!pendingSetData) {
+      console.error("No pending set data available to create a new set.");
+      setNotification({
+        isOpen: true,
+        message: '❌ Failed to save: No set details found.',
+        type: 'error'
+      });
+      return;
+    }
+
+    try {
+      // Step 1: Create the flashcard set
+      const newSet = await createFlashcardSet(pendingSetData);
+      
+      // Step 2: Prepare cards with the new set's ID
+      const cardsWithSetId = cards.map(card => ({
+        ...card,
+        set_id: newSet.id,
+      }));
+
+      // Step 3: Create the flashcards
+      await createFlashcards(cardsWithSetId);
+
+      // Step 4: Finalize and clean up
+      setNotification({
+        isOpen: true,
+        message: `✅ Successfully created set "${newSet.title}" with ${cards.length} cards!`,
+        type: 'success'
+      });
+      
+      setShowBatchImportModal(false);
+      setShowAIGenerator(false);
+      setPendingSetData(null);
+      setIsCreatingSetSubflow(false);
+      setSelectedSet(null);
+      await loadFlashcardSets();
+
+    } catch (error) {
+      console.error('Error creating set with cards:', error);
+      setNotification({
+        isOpen: true,
+        message: `❌ Failed to save new set: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        type: 'error'
+      });
+    }
+  };
+
   // Handle deleting a single flashcard set
   const handleDeleteSet = async (setId: string, setTitle: string) => {
     setDeleteConfirmModal({
@@ -384,42 +433,14 @@ const Review = () => {
       return;
     }
 
-    try {
-      // For AI/Import, create the set first BUT DO NOT refresh the UI list yet.
-      const newSet = await handleCreateFlashcardSet(setData, false)
-      setIsCreatingSetSubflow(true); // Mark that we've entered a subflow
-      
-      // Save set data for later use
-      setPendingSetData(setData)
-      
-      // Construct a temporary object with the real ID for the modal to use
-      const tempSet: FlashcardSet = {
-        id: newSet.id, // Use real UUID to avoid "temp-id" database errors
-        title: newSet.title,
-        description: newSet.description || '',
-        subject: newSet.subject || 'Other',
-        cardCount: 0,
-        difficulty: (setData.difficulty || 1) as 1 | 2 | 3 | 4 | 5,
-        isPublic: setData.is_public || false,
-        author: 'current-user',
-        masteryLevel: 0,
-        estimatedStudyTime: 0,
-        tags: setData.tags || [],
-        dueForReview: false
-      }
-      
-      // Open the corresponding modal based on the selected method
-      if (method === 'import') {
-        setSelectedSet(tempSet)
-        setShowBatchImportModal(true)
-      } else if (method === 'ai-generate') {
-        setSelectedSet(tempSet)
-        setShowAIGenerator(true)
-      }
-      // The 'manual' method is handled in handleCreateFlashcardSet
-      
-    } catch (error) {
-      console.error('Error in method selection:', error)
+    // For AI/Import, just save the data and open the modal.
+    setPendingSetData(setData);
+    setIsCreatingSetSubflow(true);
+
+    if (method === 'import') {
+      setShowBatchImportModal(true)
+    } else if (method === 'ai-generate') {
+      setShowAIGenerator(true)
     }
   }
 
@@ -431,41 +452,17 @@ const Review = () => {
   };
 
   const handleCloseBatchImportModal = async () => {
-    if (isCreatingSetSubflow && selectedSet) {
-      console.log('Cancelling subflow. Deleting orphaned set:', selectedSet.id);
-      try {
-        await deleteFlashcardSet(selectedSet.id);
-        console.log('Successfully deleted orphaned set');
-      } catch (error) {
-        console.error('Failed to delete orphaned set:', error);
-      }
-    }
     setShowBatchImportModal(false);
     setSelectedSet(null);
     setPendingSetData(null);
     setIsCreatingSetSubflow(false);
-    
-    // Refresh the flashcard sets list to ensure UI is in sync
-    await loadFlashcardSets();
   };
 
   const handleCloseAIGenerator = async () => {
-    if (isCreatingSetSubflow && selectedSet) {
-      console.log('Cancelling subflow. Deleting orphaned set:', selectedSet.id);
-      try {
-        await deleteFlashcardSet(selectedSet.id);
-        console.log('Successfully deleted orphaned set');
-      } catch (error) {
-        console.error('Failed to delete orphaned set:', error);
-      }
-    }
     setShowAIGenerator(false);
     setSelectedSet(null);
     setPendingSetData(null);
     setIsCreatingSetSubflow(false);
-    
-    // Refresh the flashcard sets list to ensure UI is in sync
-    await loadFlashcardSets();
   };
 
   const handleCardsGeneratedAndSaved = (count: number) => {
@@ -995,22 +992,28 @@ const Review = () => {
       )}
 
       {/* Batch Import Modal */}
-      {selectedSet && (
-        <BatchImportModal
+      {showBatchImportModal && (
+        <BatchImportModal 
           isOpen={showBatchImportModal}
           onClose={handleCloseBatchImportModal}
-          onCardsGenerated={handleCardsGeneratedAndSaved}
+          onSave={handleSaveNewSetWithCards}
           onError={handleBatchImportError}
-          setId={selectedSet.id}
         />
       )}
 
-      {/* AI Flashcard Generator */}
-      {showAIGenerator && pendingSetData && selectedSet && (
-        <AIFlashcardGenerator
-          setId={selectedSet.id}
+      {showAIGenerator && (
+        <AIFlashcardGenerator 
           onClose={handleCloseAIGenerator}
-          onGenerated={handleCardsGeneratedAndSaved}
+          onSave={handleSaveNewSetWithCards}
+        />
+      )}
+      
+      {studyMode === 'studying' && selectedSet && (
+        <StudyMode 
+          cards={studyCards}
+          setId={selectedSet.id}
+          onComplete={handleStudyComplete}
+          onExit={handleExitStudy}
         />
       )}
 

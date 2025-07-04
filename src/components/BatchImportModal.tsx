@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react'
-import { CreateFlashcardData, createFlashcards } from '../api/flashcards'
+import { CreateFlashcardData } from '../api/flashcards'
 import { flashcardAI, GeneratedAICard } from '../services/flashcardAI'
 import styles from './BatchImportModal.module.css'
 import ContentUploader from './ContentUploader'
@@ -12,14 +12,13 @@ import ContentUploader from './ContentUploader'
 interface BatchImportModalProps {
   isOpen: boolean
   onClose: () => void
-  onCardsGenerated: (count: number) => void
+  onSave: (cards: Omit<CreateFlashcardData, 'set_id'>[]) => Promise<void>
   onError?: (error: string) => void
-  setId: string
 }
 
 type ImportStep = 'upload' | 'topic_selection' | 'generating' | 'preview' | 'success' | 'error'
 
-const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, onCardsGenerated, onError, setId }) => {
+const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, onSave, onError }) => {
   const [step, setStep] = useState<ImportStep>('upload')
   const [error, setError] = useState<string>('')
   const [extractedContent, setExtractedContent] = useState('')
@@ -88,19 +87,16 @@ const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onClose, on
     setIsProcessing(true)
     setError('')
     try {
-      const cardsToSave: CreateFlashcardData[] = generatedCards.map(card => ({
+      const cardsToSave: Omit<CreateFlashcardData, 'set_id'>[] = generatedCards.map(card => ({
         question: card.question,
         answer: card.answer,
-        set_id: setId,
         hint: card.hint,
         explanation: card.explanation,
         card_type: card.card_type,
         tags: card.tags
       }))
 
-      await createFlashcards(cardsToSave)
-      onCardsGenerated(cardsToSave.length)
-      setStep('success') // Go to success step
+      await onSave(cardsToSave)
     } catch (e: any) {
       console.error('Card saving failed:', e)
       handleError(e.message || 'Failed to save the generated cards.')

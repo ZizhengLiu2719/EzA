@@ -1,14 +1,13 @@
 import { X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
-import { CreateFlashcardData, createFlashcards } from '../api/flashcards';
+import { CreateFlashcardData } from '../api/flashcards';
 import { flashcardAI } from '../services/flashcardAI';
 import styles from './AIFlashcardGenerator.module.css';
 import AlertModal from './AlertModal';
 
 interface AIFlashcardGeneratorProps {
-  setId: string;
   onClose: () => void;
-  onGenerated: (count: number) => void;
+  onSave: (cards: Omit<CreateFlashcardData, 'set_id'>[]) => Promise<void>;
 }
 
 interface GenerationConfig {
@@ -43,9 +42,8 @@ interface GenerationProgress {
 }
 
 const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
-  setId,
   onClose,
-  onGenerated
+  onSave
 }) => {
   const [config, setConfig] = useState<GenerationConfig>({
     topic: '',
@@ -262,16 +260,16 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
   };
 
   const saveCards = async () => {
-    const selectedCards = generatedCards.filter(card => card.isSelected);
+    const selectedCards = generatedCards.filter(c => c.isSelected);
     if (selectedCards.length === 0) {
-      setError("Please select at least one card to save.");
+      setError("No cards selected to save.");
       return;
     }
-
     setStep('saving');
+    setLoading(true);
+    setError(null);
     try {
-      const cardsToCreate: CreateFlashcardData[] = selectedCards.map(card => ({
-        set_id: setId,
+      const cardsToSave: Omit<CreateFlashcardData, 'set_id'>[] = selectedCards.map(card => ({
         question: card.question,
         answer: card.answer,
         hint: card.hint,
@@ -280,16 +278,15 @@ const AIFlashcardGenerator: React.FC<AIFlashcardGeneratorProps> = ({
         tags: card.tags
       }));
 
-      await createFlashcards(cardsToCreate);
-      onGenerated(selectedCards.length);
+      await onSave(cardsToSave);
+      // Parent component now handles success state and closing
       
-      setSuccessMessage(`🎉 Successfully generated and saved ${selectedCards.length} flashcards!`);
-      setShowSuccessModal(true);
-
-    } catch (error) {
-      console.error('Saving failed:', error);
-      setError(error instanceof Error ? error.message : 'An unknown error occurred while saving.');
-      setStep('preview');
+    } catch (err: any) {
+      console.error('Error saving cards:', err);
+      setError(err.message || 'An unknown error occurred while saving.');
+      setStep('preview'); // Go back to preview on error
+    } finally {
+      setLoading(false);
     }
   };
 
