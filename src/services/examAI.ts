@@ -45,28 +45,42 @@ class ExamAI {
     config: ExamConfiguration,
     isProfessorMode: boolean = false
   ): Promise<GeneratedExam> {
-    const professorModeInstruction = isProfessorMode 
-      ? `**Style Instruction (Professor Mode):** 
-Please adopt the style of a top-tier university professor when creating questions. Avoid simple recall-based questions and focus on assessing the student's ability to analyze, evaluate, and apply knowledge. The questions should be profound and challenging, possibly requiring the integration of multiple concepts.`
-      : '';
+    const totalQuestionsRequired = config.question_distribution.reduce((sum, dist) => sum + dist.count, 0);
+    let generatedQuestions: ExamQuestion[] = [];
+    let attempts = 0;
+    const maxAttempts = 3;
 
-    const prompt = `
-As an expert in exam design, generate a highly personalized exam based on the provided flashcard data and FSRS spaced repetition algorithm information.
+    while (generatedQuestions.length < totalQuestionsRequired && attempts < maxAttempts) {
+        attempts++;
+        const questionsNeeded = totalQuestionsRequired - generatedQuestions.length;
 
-**Question Selection Strategy:**
-Prioritize assessing the student's weaker areas. When selecting questions, focus on cards with **low stability**, **high lapses (error count)**, or **due dates that have passed**, as these indicate potential weaknesses. Use this data intelligently to select questions that maximize the review efficiency of this exam.
+        // Dynamically adjust the prompt to ask for the remaining questions
+        const currentConfig = {
+            ...config,
+            question_distribution: this.calculateRemainingDistribution(config.question_distribution, generatedQuestions, questionsNeeded),
+        };
+        
+        const professorModeInstruction = isProfessorMode 
+          ? `**Style Instruction (Professor Mode):** 
+    Please adopt the style of a top-tier university professor when creating questions. Avoid simple recall-based questions and focus on assessing the student's ability to analyze, evaluate, and apply knowledge. The questions should be profound and challenging, possibly requiring the integration of multiple concepts.`
+          : '';
 
-${professorModeInstruction}
+        const prompt = `
+As an expert in exam design, generate a highly personalized exam based on the provided flashcard data and FSRS spaced repetition algorithm information. You must generate exactly the number of questions specified in the distribution.
+
+**Attempt ${attempts}/${maxAttempts}**. You need to generate ${questionsNeeded} more questions.
+
+${ generatedQuestions.length > 0 ? `AVOID REPEATING: You have already generated ${generatedQuestions.length} questions. Do not generate questions similar to these existing ones.` : '' }
 
 Exam Configuration:
-- Title: ${config.title}
-- Subject: ${config.subject}
-- Duration: ${config.duration} minutes
-- Total Points: ${config.total_points}
-- Topics: ${config.topics.join(', ')}
+- Title: ${currentConfig.title}
+- Subject: ${currentConfig.subject}
+- Duration: ${currentConfig.duration} minutes
+- Total Points: ${currentConfig.total_points}
+- Topics: ${currentConfig.topics.join(', ')}
 
 Question Distribution Requirements:
-${config.question_distribution.map(dist => 
+${currentConfig.question_distribution.map(dist => 
   `- ${dist.type}: ${dist.count} questions, ${dist.points_per_question} points each`
 ).join('\n')}
 
@@ -102,19 +116,84 @@ Please generate a complete exam including the following:
 
 Output the complete exam structure in JSON format.
 `
+        try {
+          const response = await this.callOpenAI(prompt, {
+            temperature: 0.5 + attempts * 0.1, // Increase creativity on retries
+            max_tokens: 4000,
+            response_format: { type: "json_object" },
+          })
 
-    try {
-      const response = await this.callOpenAI(prompt, {
-        temperature: 0.5,
-        max_tokens: 4000,
-        response_format: { type: "json_object" },
-      })
+          const parsedExam = this.parseGeneratedExam(response, config);
+          const newQuestions = parsedExam.questions.filter(newQ => 
+              !generatedQuestions.some(existingQ => existingQ.question === newQ.question)
+          );
+          generatedQuestions.push(...newQuestions);
 
-      return this.parseGeneratedExam(response, config)
-    } catch (error) {
-      console.error('Exam generation failed:', error)
-      return this.getFallbackExam(cards, config)
+        } catch (error) {
+          console.error(`Exam generation attempt ${attempts} failed:`, error);
+          if (attempts >= maxAttempts) {
+             // If all attempts fail and we have SOME questions, proceed with what we have.
+             if (generatedQuestions.length > 0) {
+                 break; 
+             }
+             // Otherwise, rethrow to trigger the fallback.
+             throw new Error(`Failed to generate any questions after ${maxAttempts} attempts.`);
+          }
+        }
     }
+    
+    if (generatedQuestions.length < totalQuestionsRequired) {
+        console.warn(`AI only generated ${generatedQuestions.length}/${totalQuestionsRequired} questions after ${maxAttempts} attempts. Proceeding with a partial exam.`);
+    }
+
+    // Manually construct the final exam object with the collected questions.
+    const finalQuestions = generatedQuestions.slice(0, totalQuestionsRequired);
+    const finalExam: GeneratedExam = {
+        id: `exam_${Date.now()}`,
+        config: {
+            ...config,
+            total_points: finalQuestions.reduce((sum, q) => sum + q.points, 0),
+        },
+        questions: finalQuestions,
+        metadata: {
+          generated_at: new Date(),
+          total_questions: finalQuestions.length,
+          estimated_completion_time: finalQuestions.reduce((sum, q) => sum + (q.estimated_time || 60), 0),
+          difficulty_average: finalQuestions.reduce((sum, q) => sum + q.difficulty, 0) / (finalQuestions.length || 1),
+          cognitive_level_distribution: {}, // This can be computed if needed
+          ai_confidence: 0.85 
+        },
+        instructions: "Please answer the following questions to the best of your ability.",
+        answer_key: [],
+    };
+
+    return finalExam;
+  }
+
+  /**
+   * Helper to calculate remaining question distribution for retries.
+  */
+  private calculateRemainingDistribution(
+      originalDistribution: ExamConfiguration['question_distribution'], 
+      generatedQuestions: ExamQuestion[],
+      questionsNeeded: number
+  ): ExamConfiguration['question_distribution'] {
+      const generatedCounts: { [key: string]: number } = {};
+      generatedQuestions.forEach(q => {
+          generatedCounts[q.type] = (generatedCounts[q.type] || 0) + 1;
+      });
+
+      let remainingDistribution = originalDistribution.map(dist => ({
+          ...dist,
+          count: Math.max(0, dist.count - (generatedCounts[dist.type] || 0))
+      })).filter(dist => dist.count > 0);
+      
+      // If the distribution calculation is complex, fallback to a simpler request
+      if (remainingDistribution.length === 0 && questionsNeeded > 0) {
+          return [{ type: 'multiple_choice', count: questionsNeeded, points_per_question: 5 }];
+      }
+
+      return remainingDistribution;
   }
 
   /**
@@ -621,7 +700,7 @@ Now, provide the list of key topics in a JSON array format.
             id: q.id || `q_${Date.now()}_${index}`,
             type: q.type,
             question: q.question,
-            options: q.options,
+            options: q.options || [],
             correct_answer: correctAnswer,
             points: q.points || 10,
             difficulty: q.difficulty || 5,

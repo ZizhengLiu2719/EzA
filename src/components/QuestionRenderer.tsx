@@ -86,6 +86,10 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
   // Render multiple choice question
   const renderMultipleChoice = () => {
+    // Defensive check to ensure options is an array before mapping
+    if (!Array.isArray(question?.options)) {
+      return <div className={styles.errorText}>This multiple-choice question has no options available.</div>;
+    }
     const currentAnswers = Array.isArray(currentAnswer) ? currentAnswer : []
     const handleSelect = (option: string) => {
       const newAnswers = currentAnswers.includes(option)
