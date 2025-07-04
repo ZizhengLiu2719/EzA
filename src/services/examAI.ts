@@ -96,7 +96,9 @@ ${ generatedQuestions.length > 0 ? `AVOID REPEATING: You have already generated 
       "question": "Question text without control characters",
       "options": [
         {"option": "A", "text": "Option A text"},
-        {"option": "B", "text": "Option B text"}
+        {"option": "B", "text": "Option B text"},
+        {"option": "C", "text": "Option C text"},
+        {"option": "D", "text": "Option D text"}
       ],
       "correctAnswer": "A",
       "points": 5,
@@ -109,6 +111,9 @@ ${ generatedQuestions.length > 0 ? `AVOID REPEATING: You have already generated 
 
 **Creativity & Variety Mandate:**
 You MUST ensure a high degree of novelty in the generated questions. AVOID rephrasing or slightly modifying questions from the source flashcards. Instead, generate questions that test the underlying concepts in NEW and UNEXPECTED ways. Each question should be distinct from the source material and any other questions in this exam.
+
+**Rule for Multiple Choice Questions:**
+- All questions of type 'single_choice' MUST have exactly 4 options.
 
 Exam Configuration:
 - Title: ${currentConfig.title}
@@ -332,8 +337,26 @@ Return the complete exam structure in the exact JSON format specified above.
       if (!q.options || (q.type !== 'single_choice')) {
         return Array.isArray(q.correct_answer) ? q.correct_answer.join(', ') : String(q.correct_answer);
       }
-      const correctKeys = Array.isArray(q.correct_answer) ? q.correct_answer : [q.correct_answer];
-      return correctKeys.map(key => q.options?.find(opt => opt.startsWith(String(key))) || key).join(', ');
+      const correctKeys = Array.isArray(q.correct_answer) ? q.correct_answer : [String(q.correct_answer)];
+      
+      return correctKeys.map(key => {
+        const foundOption = q.options?.find(opt => {
+          if (typeof opt === 'string') {
+            // e.g., "A) Paris"
+            return opt.startsWith(key);
+          }
+          // e.g., { option: "A", text: "Paris" }
+          return opt.option === key;
+        });
+
+        if (typeof foundOption === 'string') {
+          return foundOption;
+        }
+        if (typeof foundOption === 'object' && foundOption !== null) {
+          return foundOption.text;
+        }
+        return key; // Fallback to the key itself
+      }).join(', ');
     };
     
     const prompt = `
