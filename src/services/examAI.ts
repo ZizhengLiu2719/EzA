@@ -50,6 +50,9 @@ class ExamAI {
     let attempts = 0;
     const maxAttempts = 3;
 
+    // Solution 3: Randomize input data to ensure the AI sees different reference material each time.
+    const shuffledCards = [...cards].sort(() => Math.random() - 0.5);
+
     while (generatedQuestions.length < totalQuestionsRequired && attempts < maxAttempts) {
         attempts++;
         const questionsNeeded = totalQuestionsRequired - generatedQuestions.length;
@@ -71,6 +74,9 @@ As an expert in exam design, generate a highly personalized exam based on the pr
 **Attempt ${attempts}/${maxAttempts}**. You need to generate ${questionsNeeded} more questions.
 
 ${ generatedQuestions.length > 0 ? `AVOID REPEATING: You have already generated ${generatedQuestions.length} questions. Do not generate questions similar to these existing ones.` : '' }
+
+**Creativity & Variety Mandate:**
+You MUST ensure a high degree of novelty in the generated questions. AVOID rephrasing or slightly modifying questions from the source flashcards. Instead, generate questions that test the underlying concepts in NEW and UNEXPECTED ways. Each question should be distinct from the source material and any other questions in this exam.
 
 Exam Configuration:
 - Title: ${currentConfig.title}
@@ -95,7 +101,7 @@ ${config.cognitive_distribution.map(dist =>
 ).join('\n')}
 
 Available Flashcards (${cards.length}) - FSRS Data:
-${cards.slice(0, 150).map((card, index) => {
+${shuffledCards.slice(0, 150).map((card, index) => {
   const isDue = new Date(card.due) <= new Date();
   return `${index + 1}. Question: ${card.question.substring(0, 100)}...
    Answer: ${card.answer.substring(0, 100)}...
@@ -118,7 +124,8 @@ Output the complete exam structure in JSON format.
 `
     try {
       const response = await this.callOpenAI(prompt, {
-            temperature: 0.5 + attempts * 0.1, // Increase creativity on retries
+            // Solution 1: Increase AI's creative temperature.
+            temperature: 0.7 + attempts * 0.1, // Start at 0.7 and increase on retries.
         max_tokens: 4000,
         response_format: { type: "json_object" },
       })
