@@ -42,7 +42,16 @@ const StemSolver = () => {
     fetchHistory();
   }, [fetchHistory]);
 
+  const resetSolverState = () => {
+    setInputText('');
+    setSolution(null);
+    setRecognizedText(null);
+    setError(null);
+    setSelectedHistoryItem(null);
+  };
+
   const handleManualSolve = async () => {
+    resetSolverState();
     if (!inputText.trim()) {
       setError('Please enter a problem to solve.');
       return;
@@ -68,11 +77,8 @@ const StemSolver = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    resetSolverState();
     setIsLoading(true);
-    setError(null);
-    setSolution(null);
-    setRecognizedText(null);
-    setSelectedHistoryItem(null);
 
     if (!OPENAI_API_KEY) {
       setError('OpenAI API Key is not configured in your .env file.');
@@ -134,7 +140,6 @@ const StemSolver = () => {
     setIsLoading(true);
     setError(null);
     setSolution(null);
-    setSelectedHistoryItem(null);
 
     if (!OPENAI_API_KEY) {
       setError('OpenAI API Key is not configured in your .env file.');
@@ -210,11 +215,14 @@ const StemSolver = () => {
   };
 
   const handleHistoryClick = (item: ProblemHistoryItem) => {
+    resetSolverState();
     setSelectedHistoryItem(item);
     setSolution(item.ai_solution);
-    setRecognizedText(item.problem_type === 'image' ? item.problem_title : null);
-    setInputText(item.problem_type === 'text' ? item.problem_input : '');
-    setError(null);
+    if (item.problem_type === 'image') {
+      setRecognizedText(item.problem_title);
+    } else {
+      setInputText(item.problem_input);
+    }
   };
 
   const handleDeleteSingle = (id: string) => {
