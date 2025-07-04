@@ -47,14 +47,13 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
     start_time: new Date(),
     current_question_index: 0,
     responses: [],
-    time_remaining: exam.config.duration * 60, // convert to seconds
     created_at: new Date()
   }))
 
   const [timer, setTimer] = useState<TimerState>({
-    timeRemaining: exam.config.duration * 60,
+    timeRemaining: (Number(exam.config.duration) || 30) * 60,
     isRunning: true,
-    totalTime: exam.config.duration * 60
+    totalTime: (Number(exam.config.duration) || 30) * 60
   })
 
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set())
@@ -102,32 +101,31 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
 
   // Timer management
   useEffect(() => {
-    if (timer.isRunning && timer.timeRemaining > 0) {
-      timerRef.current = setInterval(() => {
-        setTimer((prev: TimerState) => {
-          const newTimeRemaining = prev.timeRemaining - 1
-          
-          setSession((s: ExamSession) => ({
-            ...s,
-            time_remaining: newTimeRemaining
-          }))
-
-          if (newTimeRemaining <= 0) {
-            handleSubmitExam()
-            return { ...prev, timeRemaining: 0, isRunning: false }
-          }
-
-          return { ...prev, timeRemaining: newTimeRemaining }
-        })
-      }, 1000)
+    // We only want to run the timer if it's active and there's time left.
+    if (!timer.isRunning || timer.timeRemaining <= 0) {
+      return;
     }
 
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current)
-      }
-    }
-  }, [timer.isRunning, handleSubmitExam])
+    // Set up the interval.
+    const intervalId = setInterval(() => {
+      setTimer(prev => {
+        const newTime = prev.timeRemaining - 1;
+        // When the timer reaches zero, stop it and submit the exam.
+        if (newTime <= 0) {
+          clearInterval(intervalId); // Stop this interval.
+          handleSubmitExam();
+          return { ...prev, timeRemaining: 0, isRunning: false };
+        }
+        // Otherwise, just tick down.
+        return { ...prev, timeRemaining: newTime };
+      });
+    }, 1000);
+
+    // This is the cleanup function. It runs when the component unmounts
+    // or when the dependencies in the array below change.
+    return () => clearInterval(intervalId);
+
+  }, [timer.isRunning, handleSubmitExam]); // <-- Corrected dependency array
 
   const toggleTimer = useCallback(() => {
     setTimer(prev => ({ ...prev, isRunning: !prev.isRunning }))

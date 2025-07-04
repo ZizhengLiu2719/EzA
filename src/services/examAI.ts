@@ -50,14 +50,12 @@ class ExamAI {
     let attempts = 0;
     const maxAttempts = 3;
 
-    // Solution 3: Randomize input data to ensure the AI sees different reference material each time.
     const shuffledCards = [...cards].sort(() => Math.random() - 0.5);
 
     while (generatedQuestions.length < totalQuestionsRequired && attempts < maxAttempts) {
         attempts++;
         const questionsNeeded = totalQuestionsRequired - generatedQuestions.length;
 
-        // Dynamically adjust the prompt to ask for the remaining questions
         const currentConfig = {
             ...config,
             question_distribution: this.calculateRemainingDistribution(config.question_distribution, generatedQuestions, questionsNeeded),
@@ -70,11 +68,8 @@ Please adopt the style of a top-tier university professor when creating question
 
     const prompt = `
 As an expert in exam design, generate a highly personalized exam based on the provided flashcard data and FSRS spaced repetition algorithm information. You must generate exactly the number of questions specified in the distribution.
-
-**Attempt ${attempts}/${maxAttempts}**. You need to generate ${questionsNeeded} more questions.
-
+Attempt ${attempts}/${maxAttempts}. You need to generate ${questionsNeeded} more questions.
 ${ generatedQuestions.length > 0 ? `AVOID REPEATING: You have already generated ${generatedQuestions.length} questions. Do not generate questions similar to these existing ones.` : '' }
-
 **CRITICAL JSON FORMAT REQUIREMENTS:**
 - Return ONLY valid JSON without any markdown formatting or code blocks
 - Use double quotes for all strings
@@ -82,7 +77,6 @@ ${ generatedQuestions.length > 0 ? `AVOID REPEATING: You have already generated 
 - Use proper JSON escaping for quotes within strings
 - No trailing commas
 - All property names must be quoted
-
 **Required JSON Structure:**
 {
   "title": "Exam Title",
@@ -108,35 +102,28 @@ ${ generatedQuestions.length > 0 ? `AVOID REPEATING: You have already generated 
     }
   ]
 }
-
 **Creativity & Variety Mandate:**
 You MUST ensure a high degree of novelty in the generated questions. AVOID rephrasing or slightly modifying questions from the source flashcards. Instead, generate questions that test the underlying concepts in NEW and UNEXPECTED ways. Each question should be distinct from the source material and any other questions in this exam.
-
 **Rule for Multiple Choice Questions:**
 - All questions of type 'single_choice' MUST have exactly 4 options.
-
 Exam Configuration:
 - Title: ${currentConfig.title}
 - Subject: ${currentConfig.subject}
 - Duration: ${currentConfig.duration} minutes
 - Total Points: ${currentConfig.total_points}
 - Topics: ${currentConfig.topics.join(', ')}
-
 Question Distribution Requirements:
 ${currentConfig.question_distribution.map(dist => 
   `- ${dist.type}: ${dist.count} questions, ${dist.points_per_question} points each`
 ).join('\n')}
-
 Difficulty Distribution:
 ${config.difficulty_distribution.map(dist => 
   `- Difficulty ${dist.difficulty_range[0]}-${dist.difficulty_range[1]}: ${dist.percentage}%`
 ).join('\n')}
-
 Cognitive Level Distribution:
 ${config.cognitive_distribution.map(dist => 
   `- ${dist.level}: ${dist.percentage}%`
 ).join('\n')}
-
 Available Flashcards (${cards.length}) - FSRS Data:
 ${shuffledCards.slice(0, 150).map((card, index) => {
   const isDue = new Date(card.due) <= new Date();
@@ -145,10 +132,8 @@ ${shuffledCards.slice(0, 150).map((card, index) => {
    FSRS Data: stability=${card.stability.toFixed(2)}, lapses=${card.lapses}, due=${new Date(card.due).toLocaleDateString()}, is_due=${isDue ? 'YES' : 'NO'}`
 }).join('\n')}
 ${cards.length > 150 ? `\n... and ${cards.length - 150} other cards` : ''}
-
 Learning Objectives:
 ${config.learning_objectives.join('\n')}
-
 Generate a complete exam with:
 1. A diverse mix of question types
 2. Conformance to the specified difficulty and cognitive distributions
@@ -156,31 +141,27 @@ Generate a complete exam with:
 4. Accurate answers and grading criteria
 5. Helpful hints and explanations
 6. Clean, parseable JSON format
-
 Return the complete exam structure in the exact JSON format specified above.
 `
     try {
       const response = await this.callOpenAI(prompt, {
-            // Solution 1: Increase AI's creative temperature.
-            temperature: 0.7 + attempts * 0.1, // Start at 0.7 and increase on retries.
+        temperature: 0.7 + attempts * 0.1,
         max_tokens: 4000,
         response_format: { type: "json_object" },
       })
 
-          const parsedExam = this.parseGeneratedExam(response, config);
-          const newQuestions = parsedExam.questions.filter(newQ => 
-              !generatedQuestions.some(existingQ => existingQ.question === newQ.question)
-          );
-          generatedQuestions.push(...newQuestions);
+      const parsedExam = this.parseGeneratedExam(response, config);
+      const newQuestions = parsedExam.questions.filter(newQ => 
+          !generatedQuestions.some(existingQ => existingQ.question === newQ.question)
+      );
+      generatedQuestions.push(...newQuestions);
 
     } catch (error) {
           console.error(`Exam generation attempt ${attempts} failed:`, error);
           if (attempts >= maxAttempts) {
-             // If all attempts fail and we have SOME questions, proceed with what we have.
              if (generatedQuestions.length > 0) {
                  break; 
              }
-             // Otherwise, rethrow to trigger the fallback.
              throw new Error(`Failed to generate any questions after ${maxAttempts} attempts.`);
           }
         }
@@ -190,7 +171,6 @@ Return the complete exam structure in the exact JSON format specified above.
         console.warn(`AI only generated ${generatedQuestions.length}/${totalQuestionsRequired} questions after ${maxAttempts} attempts. Proceeding with a partial exam.`);
     }
 
-    // Manually construct the final exam object with the collected questions.
     const finalQuestions = generatedQuestions.slice(0, totalQuestionsRequired);
     const finalExam: GeneratedExam = {
         id: `exam_${Date.now()}`,
@@ -204,7 +184,7 @@ Return the complete exam structure in the exact JSON format specified above.
           total_questions: finalQuestions.length,
           estimated_completion_time: finalQuestions.reduce((sum, q) => sum + (q.estimated_time || 60), 0),
           difficulty_average: finalQuestions.reduce((sum, q) => sum + q.difficulty, 0) / (finalQuestions.length || 1),
-          cognitive_level_distribution: {}, // This can be computed if needed
+          cognitive_level_distribution: {},
           ai_confidence: 0.85 
         },
         instructions: "Please answer the following questions to the best of your ability.",
@@ -231,12 +211,10 @@ Please adopt the style of a top-tier university professor when creating question
 
     const prompt = `
 As an expert in exam design, generate a high-quality exam based on the provided document content. You must generate exactly the number of questions specified in the distribution.
-
 **CRITICAL JSON FORMAT REQUIREMENTS:**
 - Return ONLY valid JSON without any markdown formatting or code blocks.
 - Use double quotes for all strings and property names.
 - No trailing commas.
-
 **Required JSON Structure:**
 {
   "title": "Exam Title",
@@ -256,33 +234,26 @@ As an expert in exam design, generate a high-quality exam based on the provided 
       "correctAnswer": "A",
       "points": 5
     }
-    // ... other questions
   ]
 }
-
 **Creativity & Variety Mandate:**
 You MUST ensure a high degree of novelty in the generated questions. AVOID rephrasing or slightly modifying sentences from the source document. Instead, generate questions that test the underlying concepts in NEW and UNEXPECTED ways.
-
 **Rule for Multiple Choice Questions:**
 - All questions of type 'single_choice' MUST have exactly 4 options.
-
 **Exam Configuration:**
 - Title: ${config.title}
 - Subject: ${config.subject}
 - Duration: ${config.duration} minutes
 - Total Points: ${config.total_points}
 - Topics to Focus On: ${config.topics.join(', ')}
-
 **Question Distribution Requirements:**
 ${config.question_distribution.map(dist => 
   `- ${dist.type}: ${dist.count} questions, ${dist.points_per_question} points each`
 ).join('\n')}
-
 **Source Document Content (first 15000 chars):**
 ---
 ${content.substring(0, 15000)}
 ---
-
 Generate a complete exam based on the provided configuration and document content. Return the complete exam structure in the exact JSON format specified above.
 `;
 
@@ -295,7 +266,6 @@ Generate a complete exam based on the provided configuration and document conten
       return this.parseGeneratedExam(response, config);
     } catch (error) {
       console.error('Exam generation from content failed:', error);
-      // Consider a fallback mechanism if this is critical
       throw new Error(`Failed to generate exam from content: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -318,7 +288,6 @@ Generate a complete exam based on the provided configuration and document conten
           count: Math.max(0, dist.count - (generatedCounts[dist.type] || 0))
       })).filter(dist => dist.count > 0);
       
-      // If the distribution calculation is complex, fallback to a simpler request
       if (remainingDistribution.length === 0 && questionsNeeded > 0) {
           return [{ type: 'single_choice', count: questionsNeeded, points_per_question: 5 }];
       }
@@ -356,23 +325,16 @@ Generate a complete exam based on the provided configuration and document conten
         switch (question.type) {
             case 'single_choice':
             case 'true_false': {
-                // Robustly extract the answer key (e.g., 'A', 'B', 'True', 'False')
                 const getAnswerKey = (str: unknown): string => {
                     const s = String(str).toLowerCase().trim();
                     if (s === 'true' || s === 'false') return s;
-                    // Extracts the first letter if it's followed by a common separator or is the only character.
-                    // This handles formats like "A) ...", "A. ...", or just "A".
                     const match = s.match(/^[a-z](?=[). ]|$)/);
-                    // If a key like 'a' is found, use it. Otherwise, use the full trimmed string for comparison.
                     return match ? match[0] : s;
                 };
 
                 const correctAnswerKey = getAnswerKey(question.correct_answer);
                 const studentAnswerKey = getAnswerKey(response.student_answer);
 
-                // Now, comparison is much more robust. 'a' vs 'a' or 'true' vs 'true'.
-                // Using startsWith to still allow the AI to provide just 'A' as the correct answer,
-                // while the student's answer might be 'A) Some text'.
                 if (studentAnswerKey.startsWith(correctAnswerKey)) {
                     score = question.points;
                     is_correct = true;
@@ -390,7 +352,6 @@ Generate a complete exam based on the provided configuration and document conten
         };
     }).filter(q => q !== null);
 
-    // If there are no subjective questions to score, we can return early.
     if (subjectiveResponses.length === 0) {
         const totalScore = manuallyScoredQuestions.reduce((sum, q) => sum + q.score, 0);
         const totalPossiblePoints = exam.config.total_points > 0 ? exam.config.total_points : exam.questions.reduce((sum, q) => sum + q.points, 0);
@@ -428,10 +389,8 @@ Generate a complete exam based on the provided configuration and document conten
       return correctKeys.map(key => {
         const foundOption = q.options?.find(opt => {
           if (typeof opt === 'string') {
-            // e.g., "A) Paris"
             return opt.startsWith(key);
           }
-          // e.g., { option: "A", text: "Paris" }
           return opt.option === key;
         });
 
@@ -441,22 +400,19 @@ Generate a complete exam based on the provided configuration and document conten
         if (typeof foundOption === 'object' && foundOption !== null) {
           return foundOption.text;
         }
-        return key; // Fallback to the key itself
+        return key;
       }).join(', ');
     };
     
     const prompt = `
 You are an AI educational analyst. You will score a SUBSET of exam questions that are subjective (e.g., short answer, essay). Objective questions have already been scored.
-
 ### Scoring Instructions
 - Base your judgment on the *meaning and substance* of the answer.
 - Award reasonable partial credit for incomplete but correct answers.
-
 ### Task Requirements
 1.  **Per-Question Scoring**: For each question, provide \`is_correct\` (true/false), a \`score\`, and brief \`feedback\`.
 2.  **Overall Analysis**: Summarize Strengths and Weaknesses based ONLY on the subjective questions provided.
 3.  **Return ONLY JSON** that adheres to the documented structure.
-
 ### Required JSON Format:
 {
   "questions": [
@@ -472,16 +428,12 @@ You are an AI educational analyst. You will score a SUBSET of exam questions tha
     "weaknesses": ["Weakness 1", "Weakness 2"]
   }
 }
-
 **CRITICAL**: strengths and weaknesses MUST be arrays of strings, not single strings.
-
 ---
 ### Subjective Questions for Analysis
-
 **Exam Information:**
 - Title: ${exam.config.title}
 - Total Points for this subset: ${subjectiveResponses.reduce((sum, r) => exam.questions.find(q => q.id === r.question_id)?.points || 0, 0)}
-
 **Questions & Correct Answers:**
 ${exam.questions.filter(q => subjectiveResponses.some(r => r.question_id === q.id)).map(q => `
 - Question ID: ${q.id}
@@ -489,7 +441,6 @@ ${exam.questions.filter(q => subjectiveResponses.some(r => r.question_id === q.i
   - Correct Answer: ${getCorrectAnswerText(q)}
   - Points: ${q.points}
 `).join('')}
-
 **Student Answers:**
 ${subjectiveResponses.map(r => `
 - Question ID: ${r.question_id}
@@ -531,7 +482,6 @@ Provide your analysis in the exact JSON format specified above. Remember: streng
       else if (percentage >= 70) finalGrade = 'C';
       else if (percentage >= 60) finalGrade = 'D';
 
-      // Ensure strengths and weaknesses are arrays, not strings
       if (typeof analysis.strengths === 'string') {
         analysis.strengths = [analysis.strengths];
       } else if (!Array.isArray(analysis.strengths)) {
@@ -544,12 +494,11 @@ Provide your analysis in the exact JSON format specified above. Remember: streng
         analysis.weaknesses = [];
       }
 
-      // Now it's safe to use array methods
       analysis.strengths.push("Objective questions were scored deterministically.");
 
       return {
         ...parsed,
-        analysis, // Use the unified analysis object
+        analysis,
         totalScore: parseFloat(totalScore.toFixed(2)),
         percentage: parseFloat(percentage.toFixed(2)),
         grade_level: finalGrade,
@@ -562,6 +511,7 @@ Provide your analysis in the exact JSON format specified above. Remember: streng
     }
   }
 
+  // ... (The rest of the file remains the same)
   /**
    * Adaptive Exam Engine
    */
@@ -579,27 +529,22 @@ Provide your analysis in the exact JSON format specified above. Remember: streng
   }> {
     const prompt = `
 As an adaptive testing expert, select the optimal next question based on the student's current performance:
-
 **Student's Current State:**
 - Estimated Ability (Theta): ${current_ability_estimate.toFixed(3)}
 - Performance History (${previous_responses.length} questions answered):
 ${previous_responses.map(r => `  - Q-ID ${r.question_id}: Answered: "${Array.isArray(r.student_answer) ? r.student_answer.join(', ') : r.student_answer}", Confidence: ${r.confidence_level || 'N/A'}`).join('\n')}
-
 **Available Question Bank (${available_questions.length} questions):**
 - Questions are characterized by difficulty, discrimination, and guessing parameters (IRT model).
 - The goal is to choose a question that provides the maximum information about the student's true ability level.
 - Priority should be given to questions where the student's current ability level has the highest probability of being answered correctly (around 50-70% for maximum information gain), i.e., question difficulty is close to the student's ability.
-
 **Adaptive Settings:**
 - Adaptation Rate: ${settings.adaptation_rate} (how aggressively the difficulty adapts)
 - Termination Criteria: Stop when confidence > ${settings.termination_criteria.confidence_threshold} or SE < ${settings.termination_criteria.standard_error_threshold}
-
 **Your Task:**
 1.  **Select the Next Question:** Choose the single best question from the available bank.
 2.  **Provide Reasoning:** Explain *why* you chose this question. (e.g., "This question's difficulty (0.6) is closest to the student's estimated ability (0.55), maximizing information gain.")
 3.  **Estimate Confidence:** Provide your confidence level in the current ability estimate.
 4.  **Determine Continuation:** Decide if the exam should continue based on the termination criteria.
-
 **Output Format (JSON):**
 \`\`\`json
 {
@@ -610,10 +555,8 @@ ${previous_responses.map(r => `  - Q-ID ${r.question_id}: Answered: "${Array.isA
   "continue_exam": true
 }
 \`\`\`
-
 **Question Bank Data:**
 ${available_questions.slice(0, 100).map(q => `- ID: ${q.id}, Difficulty: ${q.difficulty}, Topic: ${q.topic}, Type: ${q.type}`).join('\n')}
-
 Select the next question and provide the analysis in the specified JSON format.
 `
 
@@ -664,27 +607,23 @@ Select the next question and provide the analysis in the specified JSON format.
       priority: 'high' | 'medium' | 'low'
     }[]
   }> {
-    const performanceGap = student_learning_profile.goal_performance - exam_result.scoring.percentage
+    const performanceGap = student_learning_profile.goal_performance - exam_result.percentage
     
     const prompt = `
 As an expert AI learning coach, create a highly personalized and actionable study plan based on the student's exam results and learning profile.
-
 **Student's Exam Performance:**
 - Score: ${exam_result.percentage}%
 - Strengths: ${exam_result.analysis.strengths.join(', ')}
 - Weaknesses: ${exam_result.analysis.weaknesses.join(', ')}
 - Question-specific Feedback:
 ${exam_result.scored_questions.map(q => `  - Q-ID ${q.question_id}: Score ${q.score}, Feedback: ${q.feedback}`).join('\n')}
-
 **Student's Learning Profile:**
 - Learning Style: ${student_learning_profile.learning_style}
 - Difficulty Preference: ${student_learning_profile.difficulty_preference}/10
 - Daily Study Time: ${student_learning_profile.time_availability} minutes
 - Performance Goal: Achieve ${student_learning_profile.goal_performance}%
-
 **Your Task:**
 Generate a comprehensive study plan with the following components. The plan must be encouraging, clear, and structured.
-
 1.  **Immediate Actions (Quick Wins):** Suggest 2-3 immediate, simple actions the student can take right now to address the most critical errors from the exam.
 2.  **Short-Term Plan (Next 1-2 weeks):**
     -   Define key **focus areas** based on weaknesses.
@@ -696,10 +635,8 @@ Generate a comprehensive study plan with the following components. The plan must
     -   Propose a schedule for future assessments.
 4.  **Personalized Tips:** Provide advice tailored to their learning style and preferences.
 5.  **Resource Recommendations:** Recommend a prioritized list of different types of resources (readings, videos, interactive exercises). For each, provide a title, description, estimated time, and priority.
-
 **Output Format (JSON):**
 You must return the plan in a valid JSON format.
-
 \`\`\`json
 {
   "immediate_actions": ["Review concept X by re-reading chapter 3.", "Redo questions 5 and 8 from the exam."],
@@ -727,7 +664,6 @@ You must return the plan in a valid JSON format.
   ]
 }
 \`\`\`
-
 Now, generate the complete, personalized study plan in JSON format.
 `
 
@@ -773,22 +709,18 @@ Now, generate the complete, personalized study plan in JSON format.
     const prompt = `
 Analyze the following text from a user's document. Your task is to identify and extract the main topics or key concepts. 
 These topics will be used to help the user create a relevant study exam.
-
 **Instructions:**
 1.  Read the entire text carefully.
 2.  Identify the most important and recurring themes, subjects, or ideas.
 3.  List them as a clear, concise list of strings.
 4.  Do not invent topics not present in the text.
 5.  Return the output as a JSON array of strings.
-
 **Example:**
 If the text is about React, you might return: ["React Components", "State and Props", "React Hooks", "Conditional Rendering", "Lifecycle Methods"]
-
 **Text for Analysis:**
 ---
 ${textContent.substring(0, 15000)}
 ---
-
 Now, provide the list of key topics in a JSON array format.
 `;
 
@@ -799,8 +731,6 @@ Now, provide the list of key topics in a JSON array format.
         response_format: { type: "json_object" },
       });
       
-      // The response can be a JSON object `{"topics": [...]}` or a raw JSON array `[...]`.
-      // It might also be wrapped in markdown.
       const jsonMatch = response.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
       if (!jsonMatch) {
         console.error("AI response did not contain a valid JSON object or array:", response);
@@ -813,10 +743,8 @@ Now, provide the list of key topics in a JSON array format.
       let topics: string[] = [];
 
       if (Array.isArray(parsed)) {
-        // Handle case where the AI returns a raw array
         topics = parsed;
       } else if (parsed && typeof parsed === 'object') {
-        // Handle case where the AI returns an object like {"topics": [...] }
         topics = parsed.topics || parsed.result || parsed.keywords || [];
       }
 
@@ -828,7 +756,6 @@ Now, provide the list of key topics in a JSON array format.
       }
     } catch (error) {
       console.error('Failed to extract topics from document:', error);
-      // Fallback to a simpler keyword extraction if the structured approach fails
       return textContent.split(/\s+/).filter(word => word.length > 5).slice(0, 10);
     }
   }
@@ -845,13 +772,14 @@ Now, provide the list of key topics in a JSON array format.
       body: JSON.stringify({
         model: getAIModel(),
         messages: [{ role: 'user', content: prompt }],
-        temperature: options.temperature || 0.6,
-        max_tokens: options.max_tokens || 800
+        ...options,
       })
     })
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`)
+      const errorBody = await response.text();
+      console.error("OpenAI API Error:", response.status, errorBody);
+      throw new Error(`OpenAI API error: ${response.statusText} - ${errorBody}`);
     }
 
     const data = await response.json()
@@ -868,10 +796,8 @@ Now, provide the list of key topics in a JSON array format.
         throw new Error("AI response did not contain a valid JSON object.");
       }
       
-      // Use robust JSON parsing to handle control characters and other issues
       let parsed = this.parseRobustJSON(jsonMatch[0]);
 
-      // Handle cases where the response is nested under an "exam" key
       if (parsed.exam && parsed.exam.questions) {
         parsed = parsed.exam;
       }
@@ -882,18 +808,16 @@ Now, provide the list of key topics in a JSON array format.
         throw new Error('AI response did not contain any valid questions.');
       }
 
-      // Data Sanitization and Mapping from AI response to our internal types
       const sanitizedQuestions: ExamQuestion[] = questionsFromAI
         .map((q: any, index: number): ExamQuestion | null => {
-          const openEndedTypes = ['essay', 'short_answer', 'fill_in_the_blank', 'fill_blank']; // Handle both types
+          const openEndedTypes = ['essay', 'short_answer', 'fill_in_the_blank', 'fill_blank'];
           
-          // Solution: Handle both camelCase and snake_case for AI responses.
           const correctAnswer = q.correct_answer || q.answer || q.correctAnswer;
           const questionType = q.type === 'fill_blank' ? 'fill_in_the_blank' : q.type;
 
           if (!q.question || !questionType || (!correctAnswer && !openEndedTypes.includes(questionType))) {
             console.warn(`Filtering out invalid question due to missing fields: ${JSON.stringify(q)}`);
-            return null; // Filter out invalid question structures
+            return null;
           }
           
           return {
@@ -918,14 +842,13 @@ Now, provide the list of key topics in a JSON array format.
         throw new Error('AI response did not contain any valid questions after sanitization.');
       }
 
-      // Construct a valid GeneratedExam object matching the type definition
       const finalExam: GeneratedExam = {
         id: `exam_${Date.now()}`,
         config: {
             ...config,
             title: parsed.title || config.title,
             subject: parsed.subject || config.subject,
-            duration: parsed.duration || config.duration,
+            duration: parseInt(String(parsed.duration || config.duration), 10) || config.duration,
             total_points: parsed.total_points || config.total_points,
             topics: parsed.topics || config.topics,
         },
@@ -950,73 +873,20 @@ Now, provide the list of key topics in a JSON array format.
     }
   }
 
-  /**
-   * Robust JSON parsing with error recovery for malformed AI responses
-   */
   private parseRobustJSON(jsonString: string): any {
     try {
-      // First attempt: try direct parsing
       return JSON.parse(jsonString);
     } catch (error) {
       console.warn('Initial JSON parse failed, attempting to fix common issues:', error);
       
       try {
-        // Clean up common JSON issues
         let cleaned = jsonString
-          // Remove control characters (including \n, \r, \t, etc.)
           .replace(/[\x00-\x1F\x7F-\x9F]/g, ' ')
-          // Fix unescaped quotes in strings
-          .replace(/(?<!\\)"/g, (match, offset, string) => {
-            // Check if this quote is inside a string value
-            const beforeQuote = string.substring(0, offset);
-            const colonCount = (beforeQuote.match(/:/g) || []).length;
-            const quoteCount = (beforeQuote.match(/"/g) || []).length;
-            
-            // If we have an odd number of quotes before this one, we're inside a string
-            if (quoteCount % 2 === 1) {
-              return '\\"';
-            }
-            return match;
-          })
-          // Fix trailing commas
-          .replace(/,(\s*[}\]])/g, '$1')
-          // Fix missing quotes around property names
-          .replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":')
-          // Fix single quotes to double quotes
-          .replace(/'/g, '"')
-          // Remove any remaining control characters
-          .replace(/[\u0000-\u001F\u007F-\u009F]/g, ' ')
-          // Clean up multiple spaces
-          .replace(/\s+/g, ' ')
-          // Fix unterminated strings at the end
-          .replace(/("[^"]*?)$/, '$1"');
-
+          .replace(/,(\s*[}\]])/g, '$1');
         return JSON.parse(cleaned);
       } catch (secondError) {
-        console.warn('Second JSON parse attempt failed, trying more aggressive fixes:', secondError);
-        
-        try {
-          // More aggressive cleaning
-          let aggressivelyCleaned = jsonString
-            // Remove all control characters and replace with spaces
-            .replace(/[\x00-\x1F\x7F-\x9F]/g, ' ')
-            // Remove any non-printable characters
-            .replace(/[^\x20-\x7E]/g, ' ')
-            // Fix common escape sequence issues
-            .replace(/\\n/g, '\\\\n')
-            .replace(/\\r/g, '\\\\r')
-            .replace(/\\t/g, '\\\\t')
-            // Remove trailing commas more aggressively
-            .replace(/,(\s*[}\]])/g, '$1')
-            // Clean up spaces
-            .replace(/\s+/g, ' ')
-            .trim();
-
-          return JSON.parse(aggressivelyCleaned);
-        } catch (thirdError) {
-          console.error('All JSON parsing attempts failed:', thirdError);
-          throw new Error(`Unable to parse JSON after multiple attempts: ${thirdError instanceof Error ? thirdError.message : String(thirdError)}`);
-        }
+        console.error('Robust JSON parsing failed:', secondError);
+        throw new Error(`Unable to parse JSON after multiple attempts: ${secondError instanceof Error ? secondError.message : String(secondError)}`);
       }
     }
   }
@@ -1042,34 +912,16 @@ Now, provide the list of key topics in a JSON array format.
     try {
       return JSON.parse(response)
     } catch (error) {
-      return {
-        immediate_actions: ['Review weak areas', 'Create a study plan'],
-        short_term_plan: {
-          duration: '1-2 weeks',
-          daily_tasks: ['Review for 30 minutes daily'],
-          focus_areas: ['Basic concepts'],
-          practice_suggestions: ['Do practice problems']
-        },
-        long_term_strategy: {
-          duration: '1-2 months',
-          milestones: ['Improve score by 10 points'],
-          skill_development: ['Analytical skills'],
-          assessment_schedule: ['Weekly quiz']
-        },
-        personalized_tips: ['Maintain a regular study schedule'],
-        resource_recommendations: []
-      }
+      return this.getFallbackStudyRecommendations({} as any, {} as any);
     }
   }
 
-  // Fallback methods
   private getFallbackExam(cards: FSRSCard[], config: ExamConfiguration): GeneratedExam {
     console.warn("AI exam generation failed. Using fallback exam.");
     
-    // Create a basic exam structure from cards as a fallback
     const fallbackQuestions: ExamQuestion[] = cards.slice(0, 10).map((card, index) => ({
       id: `fallback_q_${index + 1}`,
-      type: 'short_answer', // Ensure this type is always valid
+      type: 'short_answer',
       question: card.question || "Missing question content",
       correct_answer: card.answer || "Missing answer content",
       points: 10,
@@ -1084,7 +936,7 @@ Now, provide the list of key topics in a JSON array format.
     return {
       id: `fallback_exam_${Date.now()}`,
       config: config,
-      questions: fallbackQuestions, // Ensure questions is always an array
+      questions: fallbackQuestions,
       metadata: {
         generated_at: new Date(),
         total_questions: fallbackQuestions.length,
@@ -1104,7 +956,7 @@ Now, provide the list of key topics in a JSON array format.
   }
 
   private getFallbackExamResult(exam: GeneratedExam, responses: ExamResponse[]): ExamResult {
-    const totalScore = responses.reduce((sum, r) => sum + (r.confidence_level || 3) * 2, 0); // Simple scoring based on confidence
+    const totalScore = responses.reduce((sum, r) => sum + (r.confidence_level || 3) * 2, 0);
     const maxScore = exam.config.total_points;
     const total_time_secs = responses.reduce((sum, r) => sum + r.response_time, 0);
 
@@ -1117,7 +969,7 @@ Now, provide the list of key topics in a JSON array format.
         const question = exam.questions.find(q => q.id === r.question_id);
         return {
           question_id: r.question_id,
-          is_correct: (r.confidence_level || 0) > 2, // Assume high confidence is correct
+          is_correct: (r.confidence_level || 0) > 2,
           score: (r.confidence_level || 3) * 2,
           feedback: 'AI scoring service is unavailable, this is a fallback feedback.',
         };
@@ -1133,32 +985,15 @@ Now, provide the list of key topics in a JSON array format.
           rushed_questions: [],
           over_time_questions: [],
         },
-        difficulty_analysis: {
-          easy_questions_performance: 0.9,
-          medium_questions_performance: 0.8,
-          hard_questions_performance: 0.7,
-        },
-        cognitive_analysis: {
-          remember_performance: 0.85,
-          understand_performance: 0.8,
-          apply_performance: 0.75,
-        },
-        topic_analysis: exam.config.topics.map(topic => ({
-          topic,
-          performance: 0.8,
-          question_count: Math.floor(exam.questions.length / (exam.config.topics.length || 1)),
-        })),
+        difficulty_analysis: {},
+        cognitive_analysis: {},
+        topic_analysis: [],
       },
-
-      feedback: [
-        'Overall performance is good, but some details need attention (fallback analysis).',
-        'AI scoring service is temporarily unavailable, some advanced analysis may be inaccurate.'
-      ],
+      feedback: ['Overall performance is good, but some details need attention (fallback analysis).'],
     };
   }
 
   private getFallbackAdaptiveSelection(ability: number, questions: ExamQuestion[]): any {
-    // Simple fallback: pick a question with difficulty closest to the current ability estimate
     const sorted = [...questions].sort((a, b) => 
       Math.abs((a.difficulty || 5) - ability) - Math.abs((b.difficulty || 5) - ability)
     );
@@ -1174,67 +1009,24 @@ Now, provide the list of key topics in a JSON array format.
 
   private getFallbackStudyRecommendations(result: ExamResult, profile: any): any {
     return {
-      immediate_actions: [
-        'Review incorrect questions from the exam',
-        'Identify main areas of weakness',
-        'Create a targeted study plan'
-      ],
+      immediate_actions: ['Review incorrect questions', 'Identify weak areas', 'Create study plan'],
       short_term_plan: {
         duration: '1-2 weeks',
-        daily_tasks: [
-          `Study for ${profile.time_availability} minutes daily`,
-          'Focus on reviewing weak knowledge points',
-          'Complete relevant practice problems'
-        ],
+        daily_tasks: [`Study for ${profile.time_availability} minutes daily`],
         focus_areas: result.analysis.weaknesses.slice(0, 3),
-        practice_suggestions: [
-          'Do more exercises of similar question types',
-          'Use spaced repetition for review',
-          'Seek help from teachers or classmates'
-        ]
+        practice_suggestions: ['Do more practice exercises']
       },
       long_term_strategy: {
         duration: '1-2 months',
-        milestones: [
-          'Improve score in weak areas by 10 points',
-          'Achieve overall score target',
-          'Establish stable study habits'
-        ],
-        skill_development: [
-          'Improve analytical thinking skills',
-          'Enhance problem-solving abilities',
-          'Develop critical thinking'
-        ],
-        assessment_schedule: [
-          'Self-test once a week',
-          'Mock exam every two weeks',
-          'Comprehensive assessment once a month'
-        ]
+        milestones: ['Improve score by 10 points', 'Achieve overall score target'],
+        skill_development: ['Improve analytical thinking skills'],
+        assessment_schedule: ['Self-test once a week', 'Mock exam every two weeks']
       },
-      personalized_tips: [
-        `Methods suitable for your ${profile.learning_style} learning style`,
-        'Maintain a regular study rhythm',
-        'Review promptly to avoid forgetting'
-      ],
-      resource_recommendations: [
-        {
-          type: 'practice' as const,
-          title: 'Targeted Practice Set',
-          description: 'Practice exercises focused on weak areas',
-          estimated_time: 30,
-          priority: 'high' as const
-        },
-        {
-          type: 'reading' as const,
-          title: 'Basic Concepts Review Materials',
-          description: 'Consolidate foundational knowledge',
-          estimated_time: 20,
-          priority: 'medium' as const
-        }
-      ]
+      personalized_tips: ['Maintain a regular study rhythm'],
+      resource_recommendations: []
     }
   }
 }
 
 export const examAI = new ExamAI()
-export default examAI 
+export default examAI

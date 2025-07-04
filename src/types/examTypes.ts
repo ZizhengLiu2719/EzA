@@ -86,7 +86,7 @@ export interface ExamSession {
   end_time?: Date
   current_question_index: number
   responses: ExamResponse[]
-  time_remaining: number // 秒
+  time_remaining?: number // 秒
   created_at: Date
 }
 
