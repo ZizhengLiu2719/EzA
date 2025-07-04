@@ -190,7 +190,7 @@ Output the complete exam structure in JSON format.
       
       // If the distribution calculation is complex, fallback to a simpler request
       if (remainingDistribution.length === 0 && questionsNeeded > 0) {
-          return [{ type: 'multiple_choice', count: questionsNeeded, points_per_question: 5 }];
+          return [{ type: 'single_choice', count: questionsNeeded, points_per_question: 5 }];
       }
 
       return remainingDistribution;

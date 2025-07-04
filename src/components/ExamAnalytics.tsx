@@ -56,7 +56,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
   const { strengths, weaknesses, recommendations } = analysis;
 
   const getFullCorrectAnswer = (question: ExamQuestion): string => {
-    if (!question.options || (question.type !== 'single_choice' && question.type !== 'multiple_choice')) {
+    if (!question.options || (question.type !== 'single_choice')) {
       return Array.isArray(question.correct_answer) ? question.correct_answer.join(', ') : String(question.correct_answer ?? 'N/A');
     }
     const correctKeys = Array.isArray(question.correct_answer) ? question.correct_answer : [question.correct_answer];
