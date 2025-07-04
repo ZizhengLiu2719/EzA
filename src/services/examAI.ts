@@ -302,216 +302,155 @@ Generate a complete exam based on the provided configuration and document conten
     exam: GeneratedExam,
     responses: ExamResponse[]
   ): Promise<ExamResult> {
-    const objectiveTypes = ['single_choice', 'true_false'];
-    
-    const objectiveResponses = responses.filter(r => {
-        const question = exam.questions.find(q => q.id === r.question_id);
-        return question && objectiveTypes.includes(question.type);
-    });
+    // 1. Calculate total time spent from responses
+    const totalTimeTaken = responses.reduce((sum, r) => sum + r.response_time, 0);
 
-    const subjectiveResponses = responses.filter(r => {
-        const question = exam.questions.find(q => q.id === r.question_id);
-        return question && !objectiveTypes.includes(question.type);
-    });
+    // 2. Perform objective scoring first, preserving response time
+    const scoredQuestions: any[] = responses.map(response => {
+      const question = exam.questions.find(q => q.id === response.question_id);
+      if (!question) return null;
 
-    const manuallyScoredQuestions: any[] = objectiveResponses.map(response => {
-        const question = exam.questions.find(q => q.id === response.question_id);
-        if (!question) return null;
+      let score = 0;
+      let is_correct = false;
+      const objectiveTypes = ['single_choice', 'true_false', 'multiple_choice'];
 
-        let score = 0;
-        let is_correct = false;
-        let feedback = '';
+      if (objectiveTypes.includes(question.type)) {
+        const getAnswerKey = (str: unknown): string => {
+            const s = String(str).toLowerCase().trim();
+            if (s === 'true' || s === 'false') return s;
+            const match = s.match(/^[a-z](?=[). ]|$)/);
+            return match ? match[0] : s;
+        };
 
-        switch (question.type) {
-            case 'single_choice':
-            case 'true_false': {
-                const getAnswerKey = (str: unknown): string => {
-                    const s = String(str).toLowerCase().trim();
-                    if (s === 'true' || s === 'false') return s;
-                    const match = s.match(/^[a-z](?=[). ]|$)/);
-                    return match ? match[0] : s;
-                };
-
-                const correctAnswerKey = getAnswerKey(question.correct_answer);
-                const studentAnswerKey = getAnswerKey(response.student_answer);
-
-                if (studentAnswerKey.startsWith(correctAnswerKey)) {
-                    score = question.points;
-                    is_correct = true;
-                }
-                feedback = is_correct ? 'Correct.' : `Incorrect. The correct answer is ${question.correct_answer}.`;
-                break;
-            }
-        }
+        const correctAnswerKey = getAnswerKey(question.correct_answer);
+        const studentAnswerKey = getAnswerKey(response.student_answer);
         
-        return {
-            question_id: response.question_id,
-            is_correct,
-            score: parseFloat(score.toFixed(2)),
-            feedback
-        };
-    }).filter(q => q !== null);
-
-    if (subjectiveResponses.length === 0) {
-        const totalScore = manuallyScoredQuestions.reduce((sum, q) => sum + q.score, 0);
-        const totalPossiblePoints = exam.config.total_points > 0 ? exam.config.total_points : exam.questions.reduce((sum, q) => sum + q.points, 0);
-        const percentage = totalPossiblePoints > 0 ? (totalScore / totalPossiblePoints) * 100 : 0;
-        let grade_level: 'A' | 'B' | 'C' | 'D' | 'F' = 'F';
-            if (percentage >= 90) grade_level = 'A';
-            else if (percentage >= 80) grade_level = 'B';
-            else if (percentage >= 70) grade_level = 'C';
-            else if (percentage >= 60) grade_level = 'D';
-
-        return {
-            totalScore: parseFloat(totalScore.toFixed(2)),
-            percentage: parseFloat(percentage.toFixed(2)),
-            grade_level,
-            scored_questions: manuallyScoredQuestions,
-            analysis: {
-                strengths: ["Performance on objective questions analyzed.", "All objective questions completed."],
-                weaknesses: manuallyScoredQuestions.some(q => !q.is_correct) ? ["Some objective questions were answered incorrectly."] : ["No significant weaknesses identified."],
-                recommendations: ["Review any incorrect objective answers."], 
-                time_analysis: { total_time: 0, average_time_per_question: 0, rushed_questions: [], over_time_questions: [] },
-                difficulty_analysis: {}, 
-                cognitive_analysis: {}, 
-                topic_analysis: []
-            },
-            feedback: ["Completed scoring for all objective questions."]
-        };
-    }
-    
-    const getCorrectAnswerText = (q: ExamQuestion): string => {
-      if (!q.options || (q.type !== 'single_choice')) {
-        return Array.isArray(q.correct_answer) ? q.correct_answer.join(', ') : String(q.correct_answer);
-      }
-      const correctKeys = Array.isArray(q.correct_answer) ? q.correct_answer : [String(q.correct_answer)];
-      
-      return correctKeys.map(key => {
-        const foundOption = q.options?.find(opt => {
-          if (typeof opt === 'string') {
-            return opt.startsWith(key);
-          }
-          return opt.option === key;
-        });
-
-        if (typeof foundOption === 'string') {
-          return foundOption;
+        if (studentAnswerKey.startsWith(correctAnswerKey)) {
+            score = question.points;
+            is_correct = true;
         }
-        if (typeof foundOption === 'object' && foundOption !== null) {
-          return foundOption.text;
-        }
-        return key;
-      }).join(', ');
-    };
-    
-    const prompt = `
-You are an AI educational analyst. You will score a SUBSET of exam questions that are subjective (e.g., short answer, essay). Objective questions have already been scored.
-### Scoring Instructions
-- Base your judgment on the *meaning and substance* of the answer.
-- Award reasonable partial credit for incomplete but correct answers.
-### Task Requirements
-1.  **Per-Question Scoring**: For each question, provide \`is_correct\` (true/false), a \`score\`, and brief \`feedback\`.
-2.  **Overall Analysis**: Summarize Strengths and Weaknesses based ONLY on the subjective questions provided.
-3.  **Return ONLY JSON** that adheres to the documented structure.
-### Required JSON Format:
-{
-  "questions": [
-    {
-      "id": "question_id",
-      "is_correct": true,
-      "score": 5,
-      "feedback": "Detailed feedback here"
-    }
-  ],
-  "overall_analysis": {
-    "strengths": ["Strength 1", "Strength 2"],
-    "weaknesses": ["Weakness 1", "Weakness 2"]
-  }
-}
-**CRITICAL**: strengths and weaknesses MUST be arrays of strings, not single strings.
----
-### Subjective Questions for Analysis
-**Exam Information:**
-- Title: ${exam.config.title}
-- Total Points for this subset: ${subjectiveResponses.reduce((sum, r) => exam.questions.find(q => q.id === r.question_id)?.points || 0, 0)}
-**Questions & Correct Answers:**
-${exam.questions.filter(q => subjectiveResponses.some(r => r.question_id === q.id)).map(q => `
-- Question ID: ${q.id}
-  - Question: ${q.question}
-  - Correct Answer: ${getCorrectAnswerText(q)}
-  - Points: ${q.points}
-`).join('')}
-**Student Answers:**
-${subjectiveResponses.map(r => `
-- Question ID: ${r.question_id}
-  - Student Answer: ${Array.isArray(r.student_answer) ? r.student_answer.join(', ') : r.student_answer}
-`).join('')}
----
-Provide your analysis in the exact JSON format specified above. Remember: strengths and weaknesses must be arrays.
-`;
-
-    const response = await this.callOpenAI(prompt, {
-      temperature: 0.3,
-      max_tokens: 3000,
-      response_format: { type: "json_object" },
-    })
-
-    try {
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) { throw new Error("AI response did not contain a valid JSON object."); }
-      let parsed = JSON.parse(jsonMatch[0]);
-
-      if (parsed.ExamResult) parsed = parsed.ExamResult;
-      
-      const analysis = parsed.analysis || parsed.overall_analysis;
-      const scored_questions = parsed.scored_questions || parsed.questions;
-
-      if (!analysis || !scored_questions) {
-        throw new Error("AI response is missing required fields (analysis/overall_analysis or scored_questions/questions).");
       }
-
-      const allScoredQuestions = [...manuallyScoredQuestions, ...scored_questions];
-
-      const totalScore = allScoredQuestions.reduce((sum, q) => sum + (q.score || 0), 0);
-      const totalPossiblePoints = exam.config.total_points > 0 ? exam.config.total_points : exam.questions.reduce((sum, q) => sum + q.points, 0);
-      const percentage = totalPossiblePoints > 0 ? (totalScore / totalPossiblePoints) * 100 : 0;
-      
-      let finalGrade: 'A' | 'B' | 'C' | 'D' | 'F' = 'F';
-      if (percentage >= 90) finalGrade = 'A';
-      else if (percentage >= 80) finalGrade = 'B';
-      else if (percentage >= 70) finalGrade = 'C';
-      else if (percentage >= 60) finalGrade = 'D';
-
-      if (typeof analysis.strengths === 'string') {
-        analysis.strengths = [analysis.strengths];
-      } else if (!Array.isArray(analysis.strengths)) {
-        analysis.strengths = [];
-      }
-      
-      if (typeof analysis.weaknesses === 'string') {
-        analysis.weaknesses = [analysis.weaknesses];
-      } else if (!Array.isArray(analysis.weaknesses)) {
-        analysis.weaknesses = [];
-      }
-
-      analysis.strengths.push("Objective questions were scored deterministically.");
 
       return {
-        ...parsed,
-        analysis,
-        totalScore: parseFloat(totalScore.toFixed(2)),
-        percentage: parseFloat(percentage.toFixed(2)),
-        grade_level: finalGrade,
-        scored_questions: allScoredQuestions,
-      } as ExamResult;
+        question_id: response.question_id,
+        is_correct,
+        score: parseFloat(score.toFixed(2)),
+        feedback: is_correct ? 'Correct.' : `The correct answer is ${question.correct_answer}.`,
+        response_time: response.response_time
+      };
+    }).filter(q => q !== null);
 
-    } catch (error: any) {
-      console.error('Failed to parse scored exam from AI:', error, 'Raw response:', response);
-      throw new Error(`AI failed to return a valid scored exam. ${error.message}`);
+    // 3. Get rich AI-driven analysis for the entire exam performance
+    const analysis = await this.getAIAnalysis(exam, scoredQuestions);
+
+    // 4. Calculate final scores
+    const totalScore = scoredQuestions.reduce((sum, q) => sum + q.score, 0);
+    const totalPossiblePoints = exam.config.total_points > 0 ? exam.config.total_points : exam.questions.reduce((sum, q) => sum + q.points, 0);
+    const percentage = totalPossiblePoints > 0 ? (totalScore / totalPossiblePoints) * 100 : 0;
+    
+    let finalGrade: 'A' | 'B' | 'C' | 'D' | 'F' = 'F';
+    if (percentage >= 90) finalGrade = 'A';
+    else if (percentage >= 80) finalGrade = 'B';
+    else if (percentage >= 70) finalGrade = 'C';
+    else if (percentage >= 60) finalGrade = 'D';
+
+    // 5. Populate the final result object
+    return {
+      totalScore: parseFloat(totalScore.toFixed(2)),
+      percentage: parseFloat(percentage.toFixed(2)),
+      grade_level: finalGrade,
+      scored_questions: scoredQuestions,
+      analysis: {
+        ...analysis, // Rich analysis from the new AI call
+        time_analysis: {
+          total_time: totalTimeTaken,
+          average_time_per_question: totalTimeTaken / (exam.questions.length || 1),
+          rushed_questions: [], // These could be populated by AI in the future
+          over_time_questions: [], // These could be populated by AI in the future
+        },
+      },
+      feedback: ["Exam scoring and analysis complete."]
+    };
+  }
+
+  /**
+   * Generates a rich, AI-driven analysis of the entire exam performance.
+   */
+  private async getAIAnalysis(
+    exam: GeneratedExam,
+    scoredQuestions: any[]
+  ): Promise<{
+    strengths: string[];
+    weaknesses: string[];
+    recommendations: string[];
+    topic_analysis: { topic: string; performance: number; question_count: number }[];
+  }> {
+    const prompt = `
+You are an expert educational diagnostician. Analyze the provided exam results to identify student's strengths, weaknesses, and actionable recommendations. Go beyond simple right/wrong counts and identify underlying patterns.
+
+**CRITICAL INSTRUCTIONS:**
+- Provide insightful, personalized feedback. Avoid generic statements.
+- Base your analysis on all available data: topics, question text, correctness, and response times.
+- The output MUST be a valid JSON object.
+
+**JSON OUTPUT STRUCTURE:**
+{
+  "strengths": ["Identified Strength 1", "Identified Strength 2"],
+  "weaknesses": ["Identified Weakness 1 (e.g., 'Struggles with questions requiring mathematical calculation')", "Identified Weakness 2 (e.g., 'Consistently misses questions related to Topic X')"],
+  "recommendations": ["Actionable Recommendation 1", "Actionable Recommendation 2"],
+  "topic_analysis": [
+    {"topic": "Topic A", "performance": 0.8, "question_count": 5},
+    {"topic": "Topic B", "performance": 0.4, "question_count": 5}
+  ]
+}
+
+---
+### EXAM DATA FOR ANALYSIS
+
+**Exam Configuration:**
+- Subject: ${exam.config.subject}
+- Topics: ${exam.config.topics.join(', ')}
+
+**Student Performance Data:**
+${scoredQuestions.map(sq => {
+  const question = exam.questions.find(q => q.id === sq.question_id);
+  return `
+- Question: "${question?.question}"
+  - Topic: ${question?.topic || 'N/A'}
+  - Correct: ${sq.is_correct}
+  - Points: ${sq.score}/${question?.points}
+  - Response Time: ${sq.response_time.toFixed(1)}s
+`;
+}).join('')}
+---
+
+Provide your expert analysis in the specified JSON format.
+`;
+
+    try {
+      const response = await this.callOpenAI(prompt, {
+        temperature: 0.5,
+        max_tokens: 2000,
+        response_format: { type: "json_object" },
+      });
+      // Use robust parsing just in case
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("AI analysis response did not contain a valid JSON object.");
+      }
+      return this.parseRobustJSON(jsonMatch[0]);
+    } catch (error) {
+      console.error('Failed to get AI analysis:', error);
+      // Fallback to a simple analysis if AI fails
+      return {
+        strengths: ["Completed all questions."],
+        weaknesses: ["AI analysis service failed. Please review your answers manually."],
+        recommendations: ["Retry the analysis later."],
+        topic_analysis: []
+      };
     }
   }
 
-  // ... (The rest of the file remains the same)
   /**
    * Adaptive Exam Engine
    */

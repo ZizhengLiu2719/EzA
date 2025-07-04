@@ -63,7 +63,6 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now())
 
   const timerRef = useRef<NodeJS.Timeout>()
-  const responseStartTime = useRef<number | null>(null)
   
   useEffect(() => {
     if (isCompleting) {
@@ -157,8 +156,6 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
         setTimer((prev) => ({ ...prev, isRunning: true }))
       }
       
-      responseStartTime.current = Date.now()
-
       setSession((prevSession) => {
         const question = exam.questions.find(q => q.id === questionId);
         if (!question) {
@@ -191,7 +188,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
         const newResponse: ExamResponse = {
           question_id: questionId,
           student_answer: finalAnswer,
-          response_time: Date.now() - (responseStartTime.current || Date.now()),
+          response_time: (Date.now() - questionStartTime) / 1000, // in seconds
           confidence_level: confidence_level || 3,
           timestamp: new Date(),
         };
@@ -209,7 +206,7 @@ const ExamRunner: React.FC<ExamRunnerProps> = ({
         return updatedSession;
       })
     },
-    [exam.questions, timer.isRunning]
+    [exam.questions, timer.isRunning, questionStartTime]
   );
 
   const navigateToQuestion = useCallback((index: number) => {
