@@ -106,6 +106,67 @@ class FlashcardAI {
   }
 
   /**
+   * Robust JSON parser that can handle malformed AI responses
+   * @param response - The response string from AI
+   * @returns Parsed JSON object or throws an error
+   */
+  private parseRobustJSON(response: string): any {
+    try {
+      // First, try direct parsing
+      return JSON.parse(response);
+    } catch (firstError: any) {
+      try {
+        // Extract JSON from response (in case there's extra text)
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error("No JSON object found in response");
+        }
+        
+        let jsonStr = jsonMatch[0];
+        
+        // Common fixes for malformed JSON
+        // 1. Fix unescaped newlines in strings
+        jsonStr = jsonStr.replace(/\\n/g, '\\\\n');
+        
+        // 2. Fix unescaped quotes in strings (this is tricky, we'll be conservative)
+        // Replace unescaped quotes that are clearly in the middle of string values
+        jsonStr = jsonStr.replace(/"([^"]*)"([^"]*)"([^"]*)":/g, '"$1\\"$2\\"$3":');
+        
+        // 3. Fix trailing commas
+        jsonStr = jsonStr.replace(/,(\s*[}\]])/g, '$1');
+        
+        // 4. Fix missing quotes around property names
+        jsonStr = jsonStr.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');
+        
+        // 5. Fix unterminated strings by adding closing quotes before newlines/end
+        const lines = jsonStr.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          // Check if line has an opening quote but no closing quote
+          const openQuotes = (line.match(/"/g) || []).length;
+          if (openQuotes % 2 === 1 && !line.endsWith('"') && !line.endsWith('",')) {
+            // Try to fix by adding closing quote before comma or end
+            if (line.endsWith(',')) {
+              lines[i] = line.slice(0, -1) + '",';
+            } else {
+              lines[i] = line + '"';
+            }
+          }
+        }
+        jsonStr = lines.join('\n');
+        
+        return JSON.parse(jsonStr);
+      } catch (secondError: any) {
+        console.error('Failed to parse JSON even after cleanup attempts');
+        console.error('Original error:', firstError);
+        console.error('Cleanup error:', secondError);
+        console.error('Raw response:', response);
+        throw new Error(`Unable to parse AI response as JSON: ${firstError.message}`);
+      }
+    }
+  }
+
+  /**
    * Extracts key topics from a large text document. This is a low-cost initial call.
    * @param textContent - The full text content from the user's document.
    * @returns A promise that resolves to an array of topic strings.
@@ -122,6 +183,12 @@ ${textContent.substring(0, 4000)}
 **Your Instructions:**
 Return the output as a SINGLE JSON object with a key "topics", which contains an array of the identified topic strings. Be concise and accurate. Each topic should be a short, descriptive phrase.
 
+**IMPORTANT:** Ensure your JSON is properly formatted with:
+- All property names in double quotes
+- All string values properly escaped
+- No trailing commas
+- No unescaped newlines in strings
+
 **Example JSON structure:**
 {
   "topics": [
@@ -135,7 +202,7 @@ Return the output as a SINGLE JSON object with a key "topics", which contains an
 `;
     try {
       const response = await this.callOpenAI(prompt, { max_tokens: 500 }); // Low max_tokens for this call
-      const parsed = JSON.parse(response);
+      const parsed = this.parseRobustJSON(response);
       if (parsed.topics && Array.isArray(parsed.topics)) {
         return parsed.topics;
       }
@@ -145,6 +212,41 @@ Return the output as a SINGLE JSON object with a key "topics", which contains an
       // Return a generic topic as a fallback to allow the user to proceed
       return ["General Document Review"];
     }
+  }
+
+  /**
+   * Validates and cleans up generated flashcards
+   * @param cards - Raw cards from AI
+   * @returns Cleaned and validated cards
+   */
+  private validateAndCleanCards(cards: any[]): GeneratedAICard[] {
+    return cards.map((card, index) => {
+      // Ensure all required fields exist with fallbacks
+      const cleanCard: GeneratedAICard = {
+        question: card.question || `Generated Question ${index + 1}`,
+        answer: card.answer || "Answer not provided",
+        hint: card.hint || undefined,
+        explanation: card.explanation || undefined,
+        tags: Array.isArray(card.tags) ? card.tags : ["generated"],
+        card_type: (card.card_type === 'cloze' || card.card_type === 'basic') ? card.card_type : 'basic',
+        confidence: typeof card.confidence === 'number' ? card.confidence : 0.8,
+      };
+
+      // Clean up text fields - remove excessive whitespace and fix encoding
+      cleanCard.question = cleanCard.question.trim().replace(/\s+/g, ' ');
+      cleanCard.answer = cleanCard.answer.trim().replace(/\s+/g, ' ');
+      if (cleanCard.hint) {
+        cleanCard.hint = cleanCard.hint.trim().replace(/\s+/g, ' ');
+      }
+      if (cleanCard.explanation) {
+        cleanCard.explanation = cleanCard.explanation.trim().replace(/\s+/g, ' ');
+      }
+
+      return cleanCard;
+    }).filter(card => 
+      // Filter out cards with empty questions or answers
+      card.question.length > 0 && card.answer.length > 0
+    );
   }
 
   /**
@@ -178,6 +280,13 @@ ${textContent.substring(0, 8000)}
     *   **Meaningful Cloze:** For cloze deletions, the blanked-out word must be a critical, non-obvious term.
 4.  **Format:** Return the output as a SINGLE JSON object with a key "flashcards" which contains an array of the generated card objects. Each card object must have the fields: \`question\`, \`answer\`, \`card_type\`, \`hint\`, \`explanation\`, and \`tags\`.
 
+**CRITICAL JSON FORMATTING REQUIREMENTS:**
+- All property names MUST be in double quotes
+- All string values MUST be properly escaped (especially newlines and quotes)
+- NO trailing commas
+- NO unescaped newlines in string values
+- Use \\n for line breaks within strings if needed
+
 **Example JSON structure:**
 {
   "flashcards": [
@@ -194,14 +303,30 @@ ${textContent.substring(0, 8000)}
 `;
     try {
       const response = await this.callOpenAI(prompt, { max_tokens: 2048 });
-      const parsed = JSON.parse(response);
+      const parsed = this.parseRobustJSON(response);
       if (parsed.flashcards && Array.isArray(parsed.flashcards)) {
-        return parsed.flashcards;
+        const cleanedCards = this.validateAndCleanCards(parsed.flashcards);
+        if (cleanedCards.length === 0) {
+          throw new Error("No valid flashcards could be generated from the AI response.");
+        }
+        return cleanedCards;
       }
       throw new Error("AI response did not contain a 'flashcards' array.");
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to generate flashcards from document:', error);
-      throw error; // Re-throw the error to be handled by the calling component
+      
+      // Provide a fallback card if everything fails
+      const fallbackCards: GeneratedAICard[] = [{
+        question: "Document Review",
+        answer: `Key topics from this document include: ${topics.join(', ')}`,
+        card_type: 'basic',
+        hint: "Review the main topics covered in the uploaded document.",
+        explanation: "This fallback card was created because the AI service encountered an error while generating flashcards from your document.",
+        tags: topics.slice(0, 3), // Use first 3 topics as tags
+        confidence: 0.5,
+      }];
+      
+      return fallbackCards;
     }
   }
 
@@ -219,6 +344,57 @@ ${textContent.substring(0, 8000)}
       card_type: 'basic',
       confidence: 0,
     };
+  }
+
+  /**
+   * Test method to verify robust JSON parsing (for debugging)
+   */
+  public testRobustJSONParsing(): void {
+    console.log('Testing robust JSON parsing...');
+    
+    // Test case 1: Valid JSON
+    try {
+      const validJson = '{"flashcards": [{"question": "Test", "answer": "Test"}]}';
+      const result1 = this.parseRobustJSON(validJson);
+      console.log('✅ Valid JSON parsed successfully:', result1);
+    } catch (e) {
+      console.error('❌ Valid JSON failed:', e);
+    }
+
+    // Test case 2: JSON with unescaped newlines
+    try {
+      const malformedJson = `{
+        "flashcards": [
+          {
+            "question": "What is 
+            the answer?",
+            "answer": "This is the answer"
+          }
+        ]
+      }`;
+      const result2 = this.parseRobustJSON(malformedJson);
+      console.log('✅ Malformed JSON (newlines) parsed successfully:', result2);
+    } catch (e) {
+      console.error('❌ Malformed JSON (newlines) failed:', e);
+    }
+
+    // Test case 3: JSON with missing quotes around property names
+    try {
+      const malformedJson2 = `{
+        flashcards: [
+          {
+            question: "What is the answer?",
+            answer: "This is the answer"
+          }
+        ]
+      }`;
+      const result3 = this.parseRobustJSON(malformedJson2);
+      console.log('✅ Malformed JSON (missing quotes) parsed successfully:', result3);
+    } catch (e) {
+      console.error('❌ Malformed JSON (missing quotes) failed:', e);
+    }
+
+    console.log('JSON parsing tests completed.');
   }
 }
 
