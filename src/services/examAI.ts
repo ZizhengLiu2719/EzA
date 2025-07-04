@@ -75,6 +75,38 @@ As an expert in exam design, generate a highly personalized exam based on the pr
 
 ${ generatedQuestions.length > 0 ? `AVOID REPEATING: You have already generated ${generatedQuestions.length} questions. Do not generate questions similar to these existing ones.` : '' }
 
+**CRITICAL JSON FORMAT REQUIREMENTS:**
+- Return ONLY valid JSON without any markdown formatting or code blocks
+- Use double quotes for all strings
+- Avoid control characters (newlines, tabs, etc.) within string values
+- Use proper JSON escaping for quotes within strings
+- No trailing commas
+- All property names must be quoted
+
+**Required JSON Structure:**
+{
+  "title": "Exam Title",
+  "subject": "Subject Name",
+  "duration": "Duration in minutes",
+  "totalPoints": 100,
+  "questions": [
+    {
+      "id": "q_1",
+      "type": "single_choice",
+      "question": "Question text without control characters",
+      "options": [
+        {"option": "A", "text": "Option A text"},
+        {"option": "B", "text": "Option B text"}
+      ],
+      "correctAnswer": "A",
+      "points": 5,
+      "difficulty": 5,
+      "cognitiveLevel": "understand",
+      "hint": "Helpful hint text"
+    }
+  ]
+}
+
 **Creativity & Variety Mandate:**
 You MUST ensure a high degree of novelty in the generated questions. AVOID rephrasing or slightly modifying questions from the source flashcards. Instead, generate questions that test the underlying concepts in NEW and UNEXPECTED ways. Each question should be distinct from the source material and any other questions in this exam.
 
@@ -112,15 +144,15 @@ ${cards.length > 150 ? `\n... and ${cards.length - 150} other cards` : ''}
 Learning Objectives:
 ${config.learning_objectives.join('\n')}
 
-Please generate a complete exam including the following:
+Generate a complete exam with:
 1. A diverse mix of question types
 2. Conformance to the specified difficulty and cognitive distributions
-3. Clear question wording
+3. Clear question wording WITHOUT control characters
 4. Accurate answers and grading criteria
 5. Helpful hints and explanations
-6. Detailed answer rationales
+6. Clean, parseable JSON format
 
-Output the complete exam structure in JSON format.
+Return the complete exam structure in the exact JSON format specified above.
 `
     try {
       const response = await this.callOpenAI(prompt, {
@@ -284,10 +316,13 @@ Output the complete exam structure in JSON format.
             grade_level,
             scored_questions: manuallyScoredQuestions,
             analysis: {
-                strengths: ["Performance on objective questions analyzed."],
-                weaknesses: ["No subjective questions to analyze."],
-                recommendations: [], time_analysis: { total_time: 0, average_time_per_question: 0, rushed_questions: [], over_time_questions: [] },
-                difficulty_analysis: {}, cognitive_analysis: {}, topic_analysis: []
+                strengths: ["Performance on objective questions analyzed.", "All objective questions completed."],
+                weaknesses: manuallyScoredQuestions.some(q => !q.is_correct) ? ["Some objective questions were answered incorrectly."] : ["No significant weaknesses identified."],
+                recommendations: ["Review any incorrect objective answers."], 
+                time_analysis: { total_time: 0, average_time_per_question: 0, rushed_questions: [], over_time_questions: [] },
+                difficulty_analysis: {}, 
+                cognitive_analysis: {}, 
+                topic_analysis: []
             },
             feedback: ["Completed scoring for all objective questions."]
         };
@@ -313,6 +348,24 @@ You are an AI educational analyst. You will score a SUBSET of exam questions tha
 2.  **Overall Analysis**: Summarize Strengths and Weaknesses based ONLY on the subjective questions provided.
 3.  **Return ONLY JSON** that adheres to the documented structure.
 
+### Required JSON Format:
+{
+  "questions": [
+    {
+      "id": "question_id",
+      "is_correct": true,
+      "score": 5,
+      "feedback": "Detailed feedback here"
+    }
+  ],
+  "overall_analysis": {
+    "strengths": ["Strength 1", "Strength 2"],
+    "weaknesses": ["Weakness 1", "Weakness 2"]
+  }
+}
+
+**CRITICAL**: strengths and weaknesses MUST be arrays of strings, not single strings.
+
 ---
 ### Subjective Questions for Analysis
 
@@ -334,7 +387,7 @@ ${subjectiveResponses.map(r => `
   - Student Answer: ${Array.isArray(r.student_answer) ? r.student_answer.join(', ') : r.student_answer}
 `).join('')}
 ---
-Provide your analysis for this subset in the specified JSON format.
+Provide your analysis in the exact JSON format specified above. Remember: strengths and weaknesses must be arrays.
 `;
 
     const response = await this.callOpenAI(prompt, {
@@ -369,8 +422,20 @@ Provide your analysis for this subset in the specified JSON format.
       else if (percentage >= 70) finalGrade = 'C';
       else if (percentage >= 60) finalGrade = 'D';
 
-      analysis.strengths = analysis.strengths || [];
-      analysis.weaknesses = analysis.weaknesses || [];
+      // Ensure strengths and weaknesses are arrays, not strings
+      if (typeof analysis.strengths === 'string') {
+        analysis.strengths = [analysis.strengths];
+      } else if (!Array.isArray(analysis.strengths)) {
+        analysis.strengths = [];
+      }
+      
+      if (typeof analysis.weaknesses === 'string') {
+        analysis.weaknesses = [analysis.weaknesses];
+      } else if (!Array.isArray(analysis.weaknesses)) {
+        analysis.weaknesses = [];
+      }
+
+      // Now it's safe to use array methods
       analysis.strengths.push("Objective questions were scored deterministically.");
 
       return {
@@ -693,7 +758,9 @@ Now, provide the list of key topics in a JSON array format.
       if (!jsonMatch) {
         throw new Error("AI response did not contain a valid JSON object.");
       }
-      let parsed = JSON.parse(jsonMatch[0]);
+      
+      // Use robust JSON parsing to handle control characters and other issues
+      let parsed = this.parseRobustJSON(jsonMatch[0]);
 
       // Handle cases where the response is nested under an "exam" key
       if (parsed.exam && parsed.exam.questions) {
@@ -709,18 +776,20 @@ Now, provide the list of key topics in a JSON array format.
       // Data Sanitization and Mapping from AI response to our internal types
       const sanitizedQuestions: ExamQuestion[] = questionsFromAI
         .map((q: any, index: number): ExamQuestion | null => {
-          const openEndedTypes = ['essay', 'short_answer']; // Types that might not have a predefined correct answer
-          const correctAnswer = q.correct_answer || q.answer;
+          const openEndedTypes = ['essay', 'short_answer', 'fill_in_the_blank', 'fill_blank']; // Handle both types
+          
+          // Solution: Handle both camelCase and snake_case for AI responses.
+          const correctAnswer = q.correct_answer || q.answer || q.correctAnswer;
+          const questionType = q.type === 'fill_blank' ? 'fill_in_the_blank' : q.type;
 
-          // For objective questions, a correct answer is mandatory.
-          // For open-ended questions, it's optional.
-          if (!q.question || !q.type || (!correctAnswer && !openEndedTypes.includes(q.type))) {
+          if (!q.question || !questionType || (!correctAnswer && !openEndedTypes.includes(questionType))) {
+            console.warn(`Filtering out invalid question due to missing fields: ${JSON.stringify(q)}`);
             return null; // Filter out invalid question structures
           }
           
           return {
             id: q.id || `q_${Date.now()}_${index}`,
-            type: q.type,
+            type: questionType,
             question: q.question,
             options: q.options || [],
             correct_answer: correctAnswer,
@@ -769,6 +838,77 @@ Now, provide the list of key topics in a JSON array format.
     } catch (error: any) {
       console.error('Failed to parse generated exam from AI:', error, 'Raw response:', response);
       throw new Error(`AI failed to return a valid exam structure. ${error.message}`);
+    }
+  }
+
+  /**
+   * Robust JSON parsing with error recovery for malformed AI responses
+   */
+  private parseRobustJSON(jsonString: string): any {
+    try {
+      // First attempt: try direct parsing
+      return JSON.parse(jsonString);
+    } catch (error) {
+      console.warn('Initial JSON parse failed, attempting to fix common issues:', error);
+      
+      try {
+        // Clean up common JSON issues
+        let cleaned = jsonString
+          // Remove control characters (including \n, \r, \t, etc.)
+          .replace(/[\x00-\x1F\x7F-\x9F]/g, ' ')
+          // Fix unescaped quotes in strings
+          .replace(/(?<!\\)"/g, (match, offset, string) => {
+            // Check if this quote is inside a string value
+            const beforeQuote = string.substring(0, offset);
+            const colonCount = (beforeQuote.match(/:/g) || []).length;
+            const quoteCount = (beforeQuote.match(/"/g) || []).length;
+            
+            // If we have an odd number of quotes before this one, we're inside a string
+            if (quoteCount % 2 === 1) {
+              return '\\"';
+            }
+            return match;
+          })
+          // Fix trailing commas
+          .replace(/,(\s*[}\]])/g, '$1')
+          // Fix missing quotes around property names
+          .replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":')
+          // Fix single quotes to double quotes
+          .replace(/'/g, '"')
+          // Remove any remaining control characters
+          .replace(/[\u0000-\u001F\u007F-\u009F]/g, ' ')
+          // Clean up multiple spaces
+          .replace(/\s+/g, ' ')
+          // Fix unterminated strings at the end
+          .replace(/("[^"]*?)$/, '$1"');
+
+        return JSON.parse(cleaned);
+      } catch (secondError) {
+        console.warn('Second JSON parse attempt failed, trying more aggressive fixes:', secondError);
+        
+        try {
+          // More aggressive cleaning
+          let aggressivelyCleaned = jsonString
+            // Remove all control characters and replace with spaces
+            .replace(/[\x00-\x1F\x7F-\x9F]/g, ' ')
+            // Remove any non-printable characters
+            .replace(/[^\x20-\x7E]/g, ' ')
+            // Fix common escape sequence issues
+            .replace(/\\n/g, '\\\\n')
+            .replace(/\\r/g, '\\\\r')
+            .replace(/\\t/g, '\\\\t')
+            // Remove trailing commas more aggressively
+            .replace(/,(\s*[}\]])/g, '$1')
+            // Clean up spaces
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          return JSON.parse(aggressivelyCleaned);
+        } catch (thirdError) {
+          console.error('All JSON parsing attempts failed:', thirdError);
+          throw new Error(`Unable to parse JSON after multiple attempts: ${thirdError instanceof Error ? thirdError.message : String(thirdError)}`);
+        }
+      }
     }
   }
 

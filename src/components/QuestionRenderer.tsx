@@ -64,62 +64,66 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   const renderSingleChoice = () => (
     <div className={styles.optionsContainer}>
       {question?.options?.map((option, index) => {
-        const isSelected = currentAnswer === option
+        const optionValue = typeof option === 'object' && option.option ? option.option : String(option);
+        const optionText = typeof option === 'object' && option.text ? option.text : String(option);
+        const isSelected = currentAnswer === optionValue;
 
         return (
           <motion.button
             key={index}
-            onClick={() => handleSelectionChange(option)}
+            onClick={() => handleSelectionChange(optionValue)}
             className={`${styles.optionButton} ${isSelected ? styles.selected : ''}`}
             whileHover={!disabled ? { scale: 1.03 } : {}}
             whileTap={!disabled ? { scale: 0.98 } : {}}
             disabled={disabled}
           >
             <span className={styles.optionLetter}>{String.fromCharCode(65 + index)}</span>
-            <span className={styles.optionText}>{option}</span>
+            <span className={styles.optionText}>{optionText}</span>
             {isSelected && <Check className={styles.checkIcon} />}
           </motion.button>
-        )
+        );
       })}
     </div>
   )
 
   // Render multiple choice question
   const renderMultipleChoice = () => {
-    // Defensive check to ensure options is an array before mapping
     if (!Array.isArray(question?.options)) {
       return <div className={styles.errorText}>This multiple-choice question has no options available.</div>;
     }
-    const currentAnswers = Array.isArray(currentAnswer) ? currentAnswer : []
-    const handleSelect = (option: string) => {
-      const newAnswers = currentAnswers.includes(option)
-        ? currentAnswers.filter(a => a !== option)
-        : [...currentAnswers, option]
-      handleSelectionChange(newAnswers)
-    }
+    const currentAnswers = Array.isArray(currentAnswer) ? currentAnswer : [];
+    
+    const handleSelect = (optionValue: string) => {
+      const newAnswers = currentAnswers.includes(optionValue)
+        ? currentAnswers.filter(a => a !== optionValue)
+        : [...currentAnswers, optionValue];
+      handleSelectionChange(newAnswers);
+    };
 
     return (
       <div className={styles.optionsContainer}>
         {question?.options?.map((option, index) => {
-          const isSelected = currentAnswers.includes(option)
+          const optionValue = typeof option === 'object' && option.option ? option.option : String(option);
+          const optionText = typeof option === 'object' && option.text ? option.text : String(option);
+          const isSelected = currentAnswers.includes(optionValue);
 
           return (
             <motion.button
               key={index}
-              onClick={() => handleSelect(option)}
+              onClick={() => handleSelect(optionValue)}
               className={`${styles.optionButton} ${isSelected ? styles.selected : ''}`}
               whileHover={!disabled ? { scale: 1.03 } : {}}
               whileTap={!disabled ? { scale: 0.98 } : {}}
               disabled={disabled}
             >
               <span className={styles.optionLetter}>{String.fromCharCode(65 + index)}</span>
-              <span className={styles.optionText}>{option}</span>
+              <span className={styles.optionText}>{optionText}</span>
               {isSelected && <Check className={styles.checkIcon} />}
             </motion.button>
-          )
+          );
         })}
       </div>
-    )
+    );
   }
 
   // Render true/false question
@@ -173,7 +177,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   // Render fill-in-the-blank question
   const renderFillBlank = () => {
     const questionParts = question.question.split('___')
-    const answers = Array.isArray(currentAnswer) ? currentAnswer : (currentAnswer ? [currentAnswer] : [])
+    const answers = Array.isArray(currentAnswer) ? currentAnswer : (currentAnswer ? [String(currentAnswer)] : [])
     
     const handleBlankChange = (index: number, value: string) => {
       if (disabled) return
@@ -198,8 +202,8 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                   type="text"
                   value={answers[index] || ''}
                   onChange={(e) => handleBlankChange(index, e.target.value)}
+                  className={styles.fillBlankInput}
                   disabled={disabled}
-                  className={`${styles.fillBlankInput} inline-block mx-1 px-2 py-1 border-b-2 bg-transparent focus:outline-none min-w-[80px] text-center ${disabled ? 'cursor-not-allowed' : ''}`}
                 />
               )}
             </span>
@@ -305,16 +309,12 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
         return renderShortAnswer()
       case 'essay':
         return renderEssay()
-      case 'fill_blank':
+      case 'fill_in_the_blank':
         return renderFillBlank()
       case 'matching':
         return renderMatching()
       default:
-        return (
-          <div className={styles.unsupported}>
-            Unsupported question type: {question.type}
-          </div>
-        )
+        return <div className={styles.errorText}>Unsupported question type: {question.type}</div>;
     }
   }
 

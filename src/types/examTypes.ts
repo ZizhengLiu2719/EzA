@@ -4,9 +4,9 @@
 
 export interface ExamQuestion {
   id: string
-  type: 'single_choice' | 'true_false' | 'short_answer' | 'essay' | 'fill_blank' | 'matching'
+  type: 'single_choice' | 'multiple_choice' | 'true_false' | 'short_answer' | 'essay' | 'fill_in_the_blank' | 'matching'
   question: string
-  options?: string[] // for multiple choice
+  options?: ({ option: string; text: string } | string)[] // handle both object and string options
   correct_answer: string | string[]
   points: number
   difficulty: number // 1-10
