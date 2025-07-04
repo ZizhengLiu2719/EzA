@@ -5,13 +5,13 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-    BarChart3,
-    Brain,
-    CheckCircle,
-    Clock,
-    Lightbulb,
-    Target,
-    XCircle
+  BarChart3,
+  Brain,
+  CheckCircle,
+  Clock,
+  Lightbulb,
+  Target,
+  XCircle
 } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
 import { createSetFromMistakes } from '../api/flashcards'
@@ -46,9 +46,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
   onContinueStudy,
   className = ''
 }) => {
-  const [activeTab, setActiveTab] = useState<
-    'overview' | 'detailed' | 'recommendations'
-  >('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'detailed'>('overview')
   const [showExplanations, setShowExplanations] = useState<string[]>([])
   const [isCreatingSet, setIsCreatingSet] = useState(false)
   const [creationStatus, setCreationStatus] = useState<'idle' | 'success' | 'error' | 'loading'>('idle')
@@ -213,70 +211,10 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
   const tabItems = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
     { id: 'detailed', label: 'Detailed Analysis', icon: Clock },
-    { id: 'recommendations', label: 'Recommendations', icon: Lightbulb },
   ]
-
-  const renderRecommendations = () => {
-    // Mocked AI-generated recommendations based on exam analysis
-    const aiRecommendations = [
-      {
-        icon: Target,
-        title: `Focus on: ${weaknesses[0] || 'Core Concepts'}`,
-        description: `Your performance in ${weaknesses[0] || 'this area'} was lower. Spend extra time reviewing related flashcards and lecture notes.`,
-        type: 'focus'
-      },
-      {
-        icon: Brain,
-        title: 'Strengthen via Spaced Repetition',
-        description: 'We have identified several key concepts from your incorrect answers. Create a new flashcard set from your mistakes to reinforce your learning.',
-        type: 'action'
-      },
-      {
-        icon: Clock,
-        title: 'Improve Time Management on Problem-Solving questions',
-        description: 'Your response time for problem-solving questions was higher than average. Practice with timed quizzes to improve your speed and confidence.',
-        type: 'skill'
-      }
-    ];
-
-    if (!recommendations || recommendations.length === 0) {
-      return (
-        <div className={styles.card}>
-          <div className={styles.placeholder}>
-            <Lightbulb size={48} />
-            <h3>Generating AI Learning Recommendations...</h3>
-            <p>Please wait a moment while our AI analyzes your performance.</p>
-          </div>
-        </div>
-      );
-    }
-    
-    return (
-      <div className={styles.recommendationsGrid}>
-        {aiRecommendations.map((rec, index) => (
-          <motion.div 
-            key={index}
-            className={`${styles.card} ${styles.recommendationCard}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <div className={styles.recommendationIcon} data-type={rec.type}>
-              <rec.icon size={24} />
-            </div>
-            <div className={styles.recommendationContent}>
-              <h4 className={styles.recommendationTitle}>{rec.title}</h4>
-              <p className={styles.recommendationDesc}>{rec.description}</p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    );
-  };
 
   return (
     <div className={`${styles.analyticsContainer} ${className}`}>
-      {/* Header */}
       <motion.div 
         className={styles.header}
         initial={{ opacity: 0, y: -20 }}
@@ -291,21 +229,21 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
               Time taken: {Math.floor((analysis?.time_analysis?.total_time || 0) / 60)}m {Math.round(analysis?.time_analysis?.total_time || 0) % 60}s
             </p>
           </div>
-          <BackToDashboardButton />
-        </div>
 
-        <div className={styles.scoreContainer}>
-          <div className={`${styles.gradeBadge} ${getGradeColor(grade_level || 'N/A')}`}>
-            {grade_level || 'N/A'}
-          </div>
-          <div className={styles.scoreText}>
-            <div className={styles.percentage}>
-              {(percentage || 0).toFixed(1)}%
+          <div className={styles.scoreContainer}>
+            <div className={`${styles.gradeBadge} ${getGradeColor(grade_level || 'N/A')}`}>
+              {grade_level || 'N/A'}
             </div>
-            <div className={styles.scoreDetail}>
-              {totalScore || 0}/{exam.config.total_points} Points
+            <div className={styles.scoreText}>
+              <div className={styles.percentage}>
+                {(percentage || 0).toFixed(1)}%
+              </div>
+              <div className={styles.scoreDetail}>
+                {totalScore || 0}/{exam.config.total_points} Points
+              </div>
             </div>
           </div>
+          <BackToDashboardButton />
         </div>
       </motion.div>
 
@@ -316,7 +254,7 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
             key={tab.id}
             onClick={() =>
               setActiveTab(
-                tab.id as 'overview' | 'detailed' | 'recommendations'
+                tab.id as 'overview' | 'detailed'
               )
             }
             className={`${styles.tabButton} ${
@@ -330,276 +268,266 @@ const ExamAnalytics: React.FC<ExamAnalyticsProps> = ({
       </div>
 
       {/* Core Content Area */}
-      <AnimatePresence mode="wait">
-        {activeTab === 'overview' && (
-          <motion.div
-            key="overview"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className={styles.tabContent}
-          >
-            <div className={styles.mainContent}>
-              {/* Left Panel */}
-              <div className={styles.leftPanel}>
-                {/* AI Smart Diagnosis */}
-                <div className={`${styles.card} ${styles.aiDiagnosisCard}`}>
-                  <h2 className={styles.cardTitle}>
-                    <Brain size={20} /> AI Diagnosis
-                  </h2>
-                  <div className={styles.diagnosisContent}>
-                    <h3 className={styles.strengthsTitle}>
-                      ✅ Strengths
-                    </h3>
-                    {(strengths || []).map((s, i) => (
-                      <p key={`strength-${i}`} className={styles.diagnosisText}>
-                        {s}
-                      </p>
-                    ))}
-                    {strengths?.length === 0 && (
-                      <p className={styles.diagnosisText}>
-                        No significant areas of strength were identified in this exam.
-                      </p>
-                    )}
+      <div className={styles.tabs}>
+        <AnimatePresence>
+          {activeTab === 'overview' && (
+            <motion.div
+              key="overview"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className={styles.tabContent}
+            >
+              <div className={styles.mainContent}>
+                {/* Left Panel */}
+                <div className={styles.leftPanel}>
+                  {/* AI Smart Diagnosis */}
+                  <div className={`${styles.card} ${styles.aiDiagnosisCard}`}>
+                    <h2 className={styles.cardTitle}>
+                      <Brain size={20} /> AI Diagnosis
+                    </h2>
+                    <div className={styles.diagnosisContent}>
+                      <h3 className={styles.strengthsTitle}>
+                        ✅ Strengths
+                      </h3>
+                      {(strengths || []).map((s, i) => (
+                        <p key={`strength-${i}`} className={styles.diagnosisText}>
+                          {s}
+                        </p>
+                      ))}
+                      {strengths?.length === 0 && (
+                        <p className={styles.diagnosisText}>
+                          No significant areas of strength were identified in this exam.
+                        </p>
+                      )}
 
-                    <h3 className={styles.weaknessesTitle}>
-                      ⚠️ Weaknesses & Error Patterns
-                    </h3>
-                    {(weaknesses || []).map((w, i) => (
-                      <p key={`weakness-${i}`} className={styles.diagnosisText}>
-                        {w}
-                      </p>
-                    ))}
-                    {weaknesses?.length === 0 && (
-                      <p className={styles.diagnosisText}>
-                        Congratulations! No significant weaknesses were found in this exam.
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    className={styles.createSetButton}
-                    onClick={handleCreateMistakeSet}
-                    disabled={isCreatingSet}
-                  >
-                    {isCreatingSet
-                      ? 'Creating...'
-                      : 'Create Mistake Set'}
-                  </button>
-                </div>
-
-                {/* Comprehensive Performance Radar Chart */}
-                <div className={styles.card}>
-                  <h2 className={styles.cardTitle}>
-                    <Target size={20} /> Overall Performance
-                  </h2>
-                  <div className={styles.radarChartContainer}>
-                    {radarData.map((data, index) => (
-                      <div key={data.metric} className={styles.radarItem}>
-                        <span className={styles.radarLabel}>{data.metric}</span>
-                        <div className={styles.radarBar}>
-                          <motion.div
-                            className={styles.radarFill}
-                            initial={{ width: 0 }}
-                            animate={{ width: `${data.value}%` }}
-                            transition={{ duration: 1, delay: index * 0.1 }}
-                          />
-                        </div>
-                        <span className={styles.radarValue}>
-                          {data.value.toFixed(0)}%
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Panel */}
-              <div className={styles.rightPanel}>
-                {/* Comprehensive Metrics */}
-                <div className={styles.card}>
-                  <h2 className={styles.cardTitle}>
-                    <Target size={20} /> Key Metrics
-                  </h2>
-                  <div className={styles.metricsGrid}>
-                    <div className={styles.metricItem}>
-                      <span className={styles.metricLabel}>Accuracy</span>
-                      <span className={styles.metricValue}>
-                        {metrics.accuracy.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className={styles.metricItem}>
-                      <span className={styles.metricLabel}>Pace</span>
-                      <span className={styles.metricValue}>
-                        {metrics.speed.toFixed(1)} q/min
-                      </span>
-                    </div>
-                    <div className={styles.metricItem}>
-                      <span className={styles.metricLabel}>Consistency</span>
-                      <span className={styles.metricValue}>
-                        {metrics.consistency.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className={styles.metricItem}>
-                      <span className={styles.metricLabel}>Confidence</span>
-                      <span className={styles.metricValue}>
-                        {metrics.confidence.toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Performance by Difficulty */}
-                <div className={styles.card}>
-                  <h2 className={styles.cardTitle}>
-                    <BarChart3 size={20} /> Performance by Difficulty
-                  </h2>
-                  <div className={styles.difficultyContainer}>
-                    {Object.entries(metrics.difficulty_performance).map(
-                      ([level, score], index) => (
-                        <div key={`diff-${level}-${index}-${score}`} className={styles.difficultyItem}>
-                          <span className={styles.difficultyLabel}>
-                            {level as string}
-                          </span>
-                          <div className={styles.difficultyBar}>
-                            <div
-                              className={styles.difficultyFill}
-                              style={{
-                                width: `${score as number}%`,
-                                backgroundColor:
-                                  (score as number) >= 80
-                                    ? '#4ade80'
-                                    : (score as number) >= 60
-                                    ? '#facc15'
-                                    : '#f87171',
-                              }}
-                            />
-                          </div>
-                          <span className={styles.difficultyValue}>
-                            {(score as number).toFixed(0)}%
-                          </span>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {activeTab === 'detailed' && (
-          <motion.div
-            key="detailed"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className={styles.tabContent}
-          >
-            <div className={`${styles.card} ${styles.detailedAnalysisCard}`}>
-              <h2 className={styles.cardTitle}>
-                <Clock size={20} /> Detailed Question Analysis
-              </h2>
-              <div className={styles.questionsList}>
-                {exam.questions.map((question, index) => {
-                  const questionResult = scored_questions.find(
-                    (r) => r.question_id === question.id
-                  )
-                  const response = session.responses.find(
-                    (r) => r.question_id === question.id
-                  )
-                  const isCorrect = questionResult?.is_correct || false
-                  const showExplanation = showExplanations.includes(
-                    question.id
-                  )
-
-                  return (
-                    <div key={question.id} className={styles.questionItem}>
-                      <div className={styles.questionHeader}>
-                        <span
-                          className={`${styles.questionNumber} ${
-                            isCorrect ? styles.correct : styles.incorrect
-                          }`}
-                        >
-                          {index + 1}
-                        </span>
-                        <p className={styles.questionText}>{question.question}</p>
-                        <span
-                          className={`${styles.questionScore} ${
-                            isCorrect ? styles.correct : styles.incorrect
-                          }`}
-                        >
-                          {questionResult?.score || 0} / {question.points}
-                        </span>
-                        {isCorrect ? (
-                          <CheckCircle className={styles.correct} size={20} />
-                        ) : (
-                          <XCircle className={styles.incorrect} size={20} />
-                        )}
-                      </div>
-                      <div className={styles.questionDetailsGrid}>
-                        <div className={styles.answerDetail}>
-                          <span className={styles.label}>Your Answer:</span>
-                          <span className={styles.answerText}>
-                            {Array.isArray(response?.student_answer)
-                              ? response.student_answer.join(', ')
-                              : String(response?.student_answer ?? 'Not Answered')}
-                          </span>
-                        </div>
-                        <div className={styles.answerDetail}>
-                          <span className={styles.label}>Correct Answer:</span>
-                          <span className={styles.correctText}>{getFullCorrectAnswer(question)}</span>
-                        </div>
-                        <div className={styles.answerDetail}>
-                          <span className={styles.label}>Response Time:</span>
-                          <span className={styles.answerText}>
-                            {response
-                              ? (response.response_time / 1000).toFixed(1)
-                              : 0}
-                            s
-                          </span>
-                        </div>
-                      </div>
-
-                      {question.explanation && (
-                        <div className={styles.explanationContainer}>
-                          <button
-                            onClick={() => toggleExplanation(question.id)}
-                            className={styles.explanationToggle}
-                          >
-                            <Lightbulb size={16} />
-                            {showExplanation ? 'Hide Explanation' : 'Show Explanation'}
-                          </button>
-                          {showExplanation && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              className={styles.explanation}
-                            >
-                              <strong>Explanation:</strong> {question.explanation}
-                            </motion.div>
-                          )}
-                        </div>
+                      <h3 className={styles.weaknessesTitle}>
+                        ⚠️ Weaknesses & Error Patterns
+                      </h3>
+                      {(weaknesses || []).map((w, i) => (
+                        <p key={`weakness-${i}`} className={styles.diagnosisText}>
+                          {w}
+                        </p>
+                      ))}
+                      {weaknesses?.length === 0 && (
+                        <p className={styles.diagnosisText}>
+                          Congratulations! No significant weaknesses were found in this exam.
+                        </p>
                       )}
                     </div>
-                  )
-                })}
-              </div>
-            </div>
-          </motion.div>
-        )}
+                    <button
+                      className={styles.createSetButton}
+                      onClick={handleCreateMistakeSet}
+                      disabled={isCreatingSet}
+                    >
+                      {isCreatingSet
+                        ? 'Creating...'
+                        : 'Create Mistake Set'}
+                    </button>
+                  </div>
 
-        {activeTab === 'recommendations' && (
-          <motion.div
-            key="recommendations"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className={styles.tabContent}
-          >
-            {renderRecommendations()}
-          </motion.div>
-        )}
-      </AnimatePresence>
+                  {/* Comprehensive Performance Radar Chart */}
+                  <div className={styles.card}>
+                    <h2 className={styles.cardTitle}>
+                      <Target size={20} /> Overall Performance
+                    </h2>
+                    <div className={styles.radarChartContainer}>
+                      {radarData.map((data, index) => (
+                        <div key={data.metric} className={styles.radarItem}>
+                          <span className={styles.radarLabel}>{data.metric}</span>
+                          <div className={styles.radarBar}>
+                            <motion.div
+                              className={styles.radarFill}
+                              initial={{ width: 0 }}
+                              animate={{ width: `${data.value}%` }}
+                              transition={{ duration: 1, delay: index * 0.1 }}
+                            />
+                          </div>
+                          <span className={styles.radarValue}>
+                            {data.value.toFixed(0)}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Panel */}
+                <div className={styles.rightPanel}>
+                  {/* Comprehensive Metrics */}
+                  <div className={styles.card}>
+                    <h2 className={styles.cardTitle}>
+                      <Target size={20} /> Key Metrics
+                    </h2>
+                    <div className={styles.metricsGrid}>
+                      <div className={styles.metricItem}>
+                        <span className={styles.metricLabel}>Accuracy</span>
+                        <span className={styles.metricValue}>
+                          {metrics.accuracy.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className={styles.metricItem}>
+                        <span className={styles.metricLabel}>Pace</span>
+                        <span className={styles.metricValue}>
+                          {metrics.speed.toFixed(1)} q/min
+                        </span>
+                      </div>
+                      <div className={styles.metricItem}>
+                        <span className={styles.metricLabel}>Consistency</span>
+                        <span className={styles.metricValue}>
+                          {metrics.consistency.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className={styles.metricItem}>
+                        <span className={styles.metricLabel}>Confidence</span>
+                        <span className={styles.metricValue}>
+                          {metrics.confidence.toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Performance by Difficulty */}
+                  <div className={styles.card}>
+                    <h2 className={styles.cardTitle}>
+                      <BarChart3 size={20} /> Performance by Difficulty
+                    </h2>
+                    <div className={styles.difficultyContainer}>
+                      {Object.entries(metrics.difficulty_performance).map(
+                        ([level, score], index) => (
+                          <div key={`diff-${level}-${index}-${score}`} className={styles.difficultyItem}>
+                            <span className={styles.difficultyLabel}>
+                              {level as string}
+                            </span>
+                            <div className={styles.difficultyBar}>
+                              <div
+                                className={styles.difficultyFill}
+                                style={{
+                                  width: `${score as number}%`,
+                                  backgroundColor:
+                                    (score as number) >= 80
+                                      ? '#4ade80'
+                                      : (score as number) >= 60
+                                      ? '#facc15'
+                                      : '#f87171',
+                                }}
+                              />
+                            </div>
+                            <span className={styles.difficultyValue}>
+                              {(score as number).toFixed(0)}%
+                            </span>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'detailed' && (
+            <motion.div
+              key="detailed"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className={styles.tabContent}
+            >
+              <div className={`${styles.card} ${styles.detailedAnalysisCard}`}>
+                <h2 className={styles.cardTitle}>
+                  <Clock size={20} /> Detailed Question Analysis
+                </h2>
+                <div className={styles.questionsList}>
+                  {exam.questions.map((question, index) => {
+                    const questionResult = scored_questions.find(
+                      (r) => r.question_id === question.id
+                    )
+                    const response = session.responses.find(
+                      (r) => r.question_id === question.id
+                    )
+                    const isCorrect = questionResult?.is_correct || false
+                    const showExplanation = showExplanations.includes(
+                      question.id
+                    )
+
+                    return (
+                      <div key={question.id} className={styles.questionItem}>
+                        <div className={styles.questionHeader}>
+                          <span
+                            className={`${styles.questionNumber} ${
+                              isCorrect ? styles.correct : styles.incorrect
+                            }`}
+                          >
+                            {index + 1}
+                          </span>
+                          <p className={styles.questionText}>{question.question}</p>
+                          <span
+                            className={`${styles.questionScore} ${
+                              isCorrect ? styles.correct : styles.incorrect
+                            }`}
+                          >
+                            {questionResult?.score || 0} / {question.points}
+                          </span>
+                          {isCorrect ? (
+                            <CheckCircle className={styles.correct} size={20} />
+                          ) : (
+                            <XCircle className={styles.incorrect} size={20} />
+                          )}
+                        </div>
+                        <div className={styles.questionDetailsGrid}>
+                          <div className={styles.answerDetail}>
+                            <span className={styles.label}>Your Answer:</span>
+                            <span className={styles.answerText}>
+                              {Array.isArray(response?.student_answer)
+                                ? response.student_answer.join(', ')
+                                : String(response?.student_answer ?? 'Not Answered')}
+                            </span>
+                          </div>
+                          <div className={styles.answerDetail}>
+                            <span className={styles.label}>Correct Answer:</span>
+                            <span className={styles.correctText}>{getFullCorrectAnswer(question)}</span>
+                          </div>
+                          <div className={styles.answerDetail}>
+                            <span className={styles.label}>Response Time:</span>
+                            <span className={styles.answerText}>
+                              {response
+                                ? (response.response_time / 1000).toFixed(1)
+                                : 0}
+                              s
+                            </span>
+                          </div>
+                        </div>
+
+                        {question.explanation && (
+                          <div className={styles.explanationContainer}>
+                            <button
+                              onClick={() => toggleExplanation(question.id)}
+                              className={styles.explanationToggle}
+                            >
+                              <Lightbulb size={16} />
+                              {showExplanation ? 'Hide Explanation' : 'Show Explanation'}
+                            </button>
+                            {showExplanation && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                className={styles.explanation}
+                              >
+                                <strong>Explanation:</strong> {question.explanation}
+                              </motion.div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   )
 }

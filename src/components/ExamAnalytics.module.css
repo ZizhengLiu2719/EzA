@@ -20,9 +20,9 @@
 }
 
 .headerContent {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
   width: 100%;
   gap: 20px;
 }
