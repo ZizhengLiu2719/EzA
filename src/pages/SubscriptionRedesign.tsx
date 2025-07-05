@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, BarChart, BookOpen, BrainCircuit, CheckCircle, Cpu, FileUp, FlaskConical, Mic, Star, Users, Zap } from 'lucide-react';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './SubscriptionRedesign.module.css';
 
 // Define the structure for a plan
@@ -84,6 +85,7 @@ const currentUsage = {
 
 const SubscriptionRedesign: React.FC = () => {
   const [currentPlan] = useState<'free' | 'pro' | 'ultimate'>('free');
+  const navigate = useNavigate();
 
   const getThemeStyles = (theme: 'dark' | 'blue' | 'purple') => {
     if (theme === 'blue') return styles.blueTheme;
@@ -108,7 +110,10 @@ const SubscriptionRedesign: React.FC = () => {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <button className={styles.backButton}>
+        <button 
+          className={styles.backButton}
+          onClick={() => navigate('/dashboard')}
+        >
           <ArrowLeft size={18} /> RETURN TO MAIN
         </button>
         <div className={styles.titleContainer}>
