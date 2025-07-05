@@ -5,13 +5,13 @@ import Login from '@/pages/Login'
 import Planner from '@/pages/Planner'
 import Register from '@/pages/Register'
 import Review from '@/pages/Review'
-import Subscription from '@/pages/Subscription'
 import TaskAssistant from '@/pages/TaskAssistant'
 import UploadCourse from '@/pages/UploadCourse'
 import { Route, Routes } from 'react-router-dom'
 import Dashboard from './pages/Dashboard'
 import DatabaseSetup from './pages/DatabaseSetup'
 import FlashcardTest from './pages/FlashcardTest'
+import SubscriptionRedesign from './pages/SubscriptionRedesign'
 
 function App() {
   return (
@@ -29,7 +29,7 @@ function App() {
         <Route path="/review" element={<Review />} />
         <Route path="/database-setup" element={<DatabaseSetup />} />
         <Route path="/flashcard-test" element={<FlashcardTest />} />
-        <Route path="/subscription" element={<Subscription />} />
+        <Route path="/subscription" element={<SubscriptionRedesign />} />
         <Route path="/courses/:courseId" element={<CourseDetail />} />
       </Routes>
     </div>
